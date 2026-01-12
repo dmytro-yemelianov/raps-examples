@@ -1,0 +1,176 @@
+name: Nightly Full Validation
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_size:
+        description: 'Test data size for performance tests'
+        required: false
+        default: '500mb'
+        type: choice
+        options:
+          - '100mb'
+          - '500mb'
+          - '1gb'
+          - '3.4gb'
+
+env:
+  REPORT_DIR: ./reports
+  DATA_DIR: ./data/generated
+
+jobs:
+  full-benchmark-suite:
+    name: Full Benchmark Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: raps-examples:nightly
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create directories
+        run: mkdir -p reports data/generated
+
+      - name: Generate large test data
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/data:/workspace/data \
+            raps-examples:nightly \
+            python3 ./scripts/generate-test-data.py \
+              --output /workspace/data/generated \
+              --size ${{ github.event.inputs.test_size || '500mb' }}
+
+      - name: Run full benchmark suite
+        env:
+          APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
+          APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/reports:/workspace/reports \
+            -v ${{ github.workspace }}/data:/workspace/data \
+            -e APS_CLIENT_ID \
+            -e APS_CLIENT_SECRET \
+            -e REPORT_DIR=/workspace/reports \
+            -e DATA_DIR=/workspace/data/generated \
+            raps-examples:nightly \
+            bash -c "./scripts/run-all-benchmarks.sh"
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-benchmark-results-${{ github.run_number }}
+          path: |
+            reports/
+          retention-days: 90
+
+      - name: Upload test data metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-data-metadata-${{ github.run_number }}
+          path: data/generated/*.meta.json
+          retention-days: 30
+
+      - name: Generate badge data
+        run: |
+          if [ -f reports/combined-results.json ]; then
+            PASS_RATE=$(python3 -c "import json; d=json.load(open('reports/combined-results.json')); print(d.get('summary',{}).get('pass_rate',0))")
+            echo "PASS_RATE=$PASS_RATE" >> $GITHUB_ENV
+
+            # Create badge JSON
+            if [ $(echo "$PASS_RATE >= 90" | bc) -eq 1 ]; then
+              COLOR="brightgreen"
+            elif [ $(echo "$PASS_RATE >= 70" | bc) -eq 1 ]; then
+              COLOR="yellow"
+            else
+              COLOR="red"
+            fi
+
+            echo "{\"schemaVersion\": 1, \"label\": \"validations\", \"message\": \"${PASS_RATE}%\", \"color\": \"${COLOR}\"}" > reports/badge.json
+          fi
+
+      - name: Upload badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-badge
+          path: reports/badge.json
+          retention-days: 90
+
+      - name: Add report to job summary
+        run: |
+          echo "# Nightly Benchmark Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -Iseconds)" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Size:** ${{ github.event.inputs.test_size || '500mb' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/metrics-report.md ]; then
+            cat reports/metrics-report.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [full-benchmark-suite]
+    if: failure()
+
+    steps:
+      - name: Create issue on failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Nightly benchmark failed on ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Nightly Benchmark Failure
+
+            The nightly benchmark run failed. Please investigate.
+
+            **Run:** [${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Date:** ${new Date().toISOString()}
+
+            ### Next Steps
+            1. Check the workflow logs for errors
+            2. Verify test data generation succeeded
+            3. Check if RAPS CLI is accessible
+            4. Review any infrastructure issues
+            `;
+
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-failure'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['nightly-failure', 'automated']
+              });
+            }

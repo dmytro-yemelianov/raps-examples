@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Main benchmark runner
+  benchmarks:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+      - ./data:/workspace/data
+    environment:
+      - APS_CLIENT_ID=${APS_CLIENT_ID:-}
+      - APS_CLIENT_SECRET=${APS_CLIENT_SECRET:-}
+      - APS_CALLBACK_URL=${APS_CALLBACK_URL:-}
+      - REPORT_DIR=/workspace/reports
+      - DATA_DIR=/workspace/data/generated
+    command: ["bash", "-c", "./scripts/run-all-benchmarks.sh"]
+
+  # Run specific benchmark suites
+  rust-vs-nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+      - ./data:/workspace/data
+    environment:
+      - REPORT_DIR=/workspace/reports
+      - DATA_DIR=/workspace/data/generated
+    command: ["bash", "-c", "./benchmarks/rust-vs-nodejs/run.sh"]
+
+  feature-validation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+    command: ["bash", "-c", "./benchmarks/feature-validation/run.sh"]
+
+  automation-timing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+    command: ["bash", "-c", "./benchmarks/automation-timing/run.sh"]
+
+  auth-flows:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+    environment:
+      - APS_CLIENT_ID=${APS_CLIENT_ID:-}
+      - APS_CLIENT_SECRET=${APS_CLIENT_SECRET:-}
+    command: ["bash", "-c", "./benchmarks/auth-flows/run.sh"]
+
+  # Report generator
+  reporter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./reports:/workspace/reports
+    command: ["python3", "./scripts/generate-report.py"]
+
+  # Test data generator
+  data-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/workspace/data
+    command: ["python3", "./scripts/generate-test-data.py", "--output", "/workspace/data/generated", "--size", "500mb"]
+
+networks:
+  default:
+    name: raps-examples

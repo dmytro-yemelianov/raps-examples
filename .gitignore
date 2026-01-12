@@ -1,0 +1,37 @@
+# Generated data
+data/generated/
+*.json.meta.json
+
+# Reports (generated, not tracked)
+reports/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node modules (for Node.js baseline tests)
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Temporary files
+*.tmp
+*.log

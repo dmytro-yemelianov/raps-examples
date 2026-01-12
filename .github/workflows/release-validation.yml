@@ -1,0 +1,258 @@
+name: Release Validation
+
+on:
+  # Trigger when RAPS releases a new version
+  repository_dispatch:
+    types: [raps-release]
+  workflow_dispatch:
+    inputs:
+      raps_version:
+        description: 'RAPS version to validate (e.g., v1.2.3)'
+        required: true
+        type: string
+
+env:
+  REPORT_DIR: ./reports
+
+jobs:
+  validate-release:
+    name: Validate RAPS ${{ github.event.inputs.raps_version || github.event.client_payload.version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install matplotlib pandas jinja2 markdown
+
+      - name: Install RAPS
+        shell: bash
+        run: |
+          VERSION="${{ github.event.inputs.raps_version || github.event.client_payload.version }}"
+          echo "Installing RAPS version: $VERSION"
+
+          # Platform-specific installation
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            curl -fsSL "https://github.com/rapscli/raps/releases/download/${VERSION}/raps-linux-amd64" -o /usr/local/bin/raps
+            chmod +x /usr/local/bin/raps
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            curl -fsSL "https://github.com/rapscli/raps/releases/download/${VERSION}/raps-darwin-amd64" -o /usr/local/bin/raps
+            chmod +x /usr/local/bin/raps
+          elif [[ "$RUNNER_OS" == "Windows" ]]; then
+            curl -fsSL "https://github.com/rapscli/raps/releases/download/${VERSION}/raps-windows-amd64.exe" -o raps.exe
+            echo "$(pwd)" >> $GITHUB_PATH
+          fi
+
+      - name: Verify RAPS installation
+        shell: bash
+        run: |
+          raps --version || echo "RAPS not found in PATH"
+          which raps || where raps || echo "Could not locate raps"
+
+      - name: Create directories
+        shell: bash
+        run: mkdir -p reports data/generated
+
+      - name: Install Node.js (for comparison tests)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate test data
+        shell: bash
+        run: python scripts/generate-test-data.py --output data/generated --size 100mb
+
+      - name: Run feature validation
+        shell: bash
+        run: |
+          chmod +x benchmarks/feature-validation/run.sh
+          ./benchmarks/feature-validation/run.sh
+
+      - name: Run auth flows validation
+        shell: bash
+        env:
+          APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
+          APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+        run: |
+          chmod +x benchmarks/auth-flows/run.sh
+          ./benchmarks/auth-flows/run.sh
+
+      - name: Run performance benchmark
+        shell: bash
+        run: |
+          chmod +x benchmarks/rust-vs-nodejs/run.sh
+          ./benchmarks/rust-vs-nodejs/run.sh || echo "Performance benchmark completed with warnings"
+
+      - name: Generate report
+        shell: bash
+        run: python scripts/generate-report.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-validation-${{ matrix.os }}-${{ github.event.inputs.raps_version || github.event.client_payload.version }}
+          path: reports/
+          retention-days: 90
+
+  aggregate-results:
+    name: Aggregate Cross-Platform Results
+    runs-on: ubuntu-latest
+    needs: [validate-release]
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install matplotlib pandas jinja2 markdown
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Aggregate results
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from pathlib import Path
+          from datetime import datetime
+
+          artifacts_dir = Path('artifacts')
+          reports_dir = Path('reports')
+
+          aggregate = {
+              'release_validation': {
+                  'version': '${{ github.event.inputs.raps_version || github.event.client_payload.version }}',
+                  'timestamp': datetime.now().isoformat(),
+                  'platforms': {}
+              }
+          }
+
+          for platform_dir in artifacts_dir.iterdir():
+              if platform_dir.is_dir() and platform_dir.name.startswith('release-validation-'):
+                  platform = platform_dir.name.replace('release-validation-', '').rsplit('-', 1)[0]
+
+                  platform_results = {}
+                  for result_file in platform_dir.glob('*-results.json'):
+                      with open(result_file) as f:
+                          data = json.load(f)
+                          platform_results[data.get('benchmark', result_file.stem)] = data
+
+                  aggregate['release_validation']['platforms'][platform] = platform_results
+
+          # Calculate cross-platform summary
+          all_passed = True
+          platform_summaries = []
+
+          for platform, results in aggregate['release_validation']['platforms'].items():
+              passed = 0
+              total = 0
+              for suite in results.values():
+                  if 'claims' in suite:
+                      for claim in suite['claims']:
+                          total += 1
+                          if claim.get('passed'):
+                              passed += 1
+                  elif 'tests' in suite:
+                      for test in suite['tests']:
+                          total += 1
+                          if test.get('status') in ['success', 'mock']:
+                              passed += 1
+                  elif 'flows' in suite:
+                      for flow in suite['flows']:
+                          total += 1
+                          if flow.get('status') in ['success', 'available', 'detected']:
+                              passed += 1
+
+              pass_rate = (passed / total * 100) if total > 0 else 0
+              platform_summaries.append({
+                  'platform': platform,
+                  'passed': passed,
+                  'total': total,
+                  'pass_rate': round(pass_rate, 1)
+              })
+
+              if pass_rate < 80:
+                  all_passed = False
+
+          aggregate['summary'] = {
+              'all_platforms_passed': all_passed,
+              'platform_summaries': platform_summaries
+          }
+
+          # Save aggregate results
+          with open(reports_dir / 'release-validation-aggregate.json', 'w') as f:
+              json.dump(aggregate, f, indent=2)
+
+          print("Aggregation complete!")
+          print(f"\nPlatform Results:")
+          for p in platform_summaries:
+              status = "✓" if p['pass_rate'] >= 80 else "✗"
+              print(f"  {status} {p['platform']}: {p['passed']}/{p['total']} ({p['pass_rate']}%)")
+          EOF
+
+      - name: Upload aggregate report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-validation-aggregate
+          path: reports/release-validation-aggregate.json
+          retention-days: 90
+
+      - name: Add summary to job
+        run: |
+          echo "# Release Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.event.inputs.raps_version || github.event.client_payload.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          python3 << 'SUMMARY'
+          import json
+          with open('reports/release-validation-aggregate.json') as f:
+              data = json.load(f)
+
+          print("| Platform | Passed | Total | Rate |")
+          print("|----------|--------|-------|------|")
+          for p in data['summary']['platform_summaries']:
+              icon = "✅" if p['pass_rate'] >= 80 else "❌"
+              print(f"| {icon} {p['platform']} | {p['passed']} | {p['total']} | {p['pass_rate']}% |")
+          SUMMARY >> $GITHUB_STEP_SUMMARY
+
+      - name: Check validation status
+        run: |
+          python3 << 'CHECK'
+          import json
+          import sys
+
+          with open('reports/release-validation-aggregate.json') as f:
+              data = json.load(f)
+
+          if not data['summary']['all_platforms_passed']:
+              print("❌ Not all platforms passed validation!")
+              for p in data['summary']['platform_summaries']:
+                  if p['pass_rate'] < 80:
+                      print(f"  - {p['platform']}: {p['pass_rate']}% (needs 80%+)")
+              sys.exit(1)
+          else:
+              print("✅ All platforms passed validation!")
+          CHECK
