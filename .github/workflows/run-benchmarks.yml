@@ -1,0 +1,116 @@
+name: Run Benchmarks
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  benchmarks:
+    name: Run All Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Python dependencies
+        run: pip install matplotlib pandas jinja2 markdown
+
+      - name: Create directories
+        run: mkdir -p reports data/generated
+
+      - name: Make scripts executable
+        run: |
+          chmod +x scripts/*.sh scripts/*.py
+          chmod +x benchmarks/*/*.sh
+
+      - name: Generate test data (100MB)
+        run: python scripts/generate-test-data.py --output data/generated --size 100mb
+
+      - name: Run Feature Validation
+        run: ./benchmarks/feature-validation/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Automation Timing
+        run: ./benchmarks/automation-timing/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Pipeline Timing
+        run: ./benchmarks/pipeline-timing/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Auth Flows
+        run: ./benchmarks/auth-flows/run.sh
+        env:
+          REPORT_DIR: ./reports
+          APS_CLIENT_ID: ${{ secrets.APS_CLIENT_ID }}
+          APS_CLIENT_SECRET: ${{ secrets.APS_CLIENT_SECRET }}
+        continue-on-error: true
+
+      - name: Run Translation Performance
+        run: ./benchmarks/translation-performance/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Design Automation
+        run: ./benchmarks/design-automation/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Version Compatibility
+        run: ./benchmarks/version-compatibility/run.sh
+        env:
+          REPORT_DIR: ./reports
+        continue-on-error: true
+
+      - name: Run Rust vs Node.js
+        run: ./benchmarks/rust-vs-nodejs/run.sh
+        env:
+          REPORT_DIR: ./reports
+          DATA_DIR: ./data/generated
+        continue-on-error: true
+
+      - name: Generate HTML Report
+        run: python scripts/generate-report.py
+        env:
+          REPORT_DIR: ./reports
+
+      - name: List reports
+        run: ls -la reports/
+
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: reports/
+          retention-days: 30
+
+      - name: Add summary to job
+        run: |
+          echo "# Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f reports/metrics-report.md ]; then
+            cat reports/metrics-report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Reports generated - see artifacts" >> $GITHUB_STEP_SUMMARY
+          fi
