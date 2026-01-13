@@ -145,10 +145,10 @@ echo "Savings Calculation"
 echo "--------------------"
 echo ""
 
-python3 << 'SAVINGS_SCRIPT'
+python3 << SAVINGS_SCRIPT
 import json
 
-with open("$RESULTS_FILE".replace("$RESULTS_FILE", "reports/automation-timing-results.json"), 'r') as f:
+with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
 
 manual = data['manual_process']
@@ -225,7 +225,7 @@ data['savings'] = {
     }
 }
 
-with open("$RESULTS_FILE".replace("$RESULTS_FILE", "reports/automation-timing-results.json"), 'w') as f:
+with open('$RESULTS_FILE', 'w') as f:
     json.dump(data, f, indent=2)
 SAVINGS_SCRIPT
 

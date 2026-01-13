@@ -35,19 +35,22 @@ add_flow_result() {
     local duration="$3"
     local notes="$4"
 
-    python3 -c "
+    # Handle empty duration
+    [ -z "$duration" ] && duration="0"
+
+    python3 << PYEOF
 import json
 with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
 data['flows'].append({
     'flow': '$flow',
     'status': '$status',
-    'duration_seconds': $duration,
-    'notes': '$notes'
+    'duration_seconds': float('$duration') if '$duration' else 0,
+    'notes': '''$notes'''
 })
 with open('$RESULTS_FILE', 'w') as f:
     json.dump(data, f, indent=2)
-"
+PYEOF
 }
 
 # ============================================

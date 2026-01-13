@@ -40,20 +40,25 @@ add_result() {
     local status="$4"
     local notes="$5"
 
-    python3 -c "
+    # Default to 0 if memory is empty
+    if [ -z "$memory" ] || [ "$memory" = "0" ]; then
+        memory="0"
+    fi
+
+    python3 << PYEOF
 import json
 with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
 data['tests'].append({
     'name': '$name',
-    'duration_seconds': $duration,
-    'memory_mb': $memory,
+    'duration_seconds': float('$duration') if '$duration' else 0,
+    'memory_mb': float('$memory') if '$memory' else 0,
     'status': '$status',
     'notes': '$notes'
 })
 with open('$RESULTS_FILE', 'w') as f:
     json.dump(data, f, indent=2)
-"
+PYEOF
 }
 
 # ============================================
@@ -97,15 +102,30 @@ echo "--------------------------------------"
 
 if command -v node &> /dev/null; then
     TIME_OUTPUT=$(mktemp)
+    NODE_OUTPUT=$(mktemp)
 
     START_TIME=$(date +%s.%N)
-    timeout 300 /usr/bin/time -v node "$SCRIPT_DIR/nodejs-baseline.js" \
-        "$DATA_DIR/large-metadata.json" \
-        2> "$TIME_OUTPUT" && NODE_STATUS="success" || NODE_STATUS="crashed"
-    END_TIME=$(date +%s.%N)
 
+    # Try with /usr/bin/time -v first, fall back to time without -v
+    if /usr/bin/time -v echo test &>/dev/null; then
+        timeout 300 /usr/bin/time -v node "$SCRIPT_DIR/nodejs-baseline.js" \
+            "$DATA_DIR/large-metadata.json" \
+            2> "$TIME_OUTPUT" > "$NODE_OUTPUT" && NODE_STATUS="success" || NODE_STATUS="crashed"
+        NODE_MEMORY=$(grep "Maximum resident set size" "$TIME_OUTPUT" | awk '{print $6/1024}' 2>/dev/null || echo "0")
+    else
+        timeout 300 node "$SCRIPT_DIR/nodejs-baseline.js" \
+            "$DATA_DIR/large-metadata.json" \
+            > "$NODE_OUTPUT" 2>&1 && NODE_STATUS="success" || NODE_STATUS="crashed"
+        # Try to extract memory from Node.js output
+        NODE_MEMORY=$(grep -oP 'heap=\K[0-9]+' "$NODE_OUTPUT" | tail -1 || echo "0")
+    fi
+
+    END_TIME=$(date +%s.%N)
     NODE_DURATION=$(echo "$END_TIME - $START_TIME" | bc)
-    NODE_MEMORY=$(grep "Maximum resident set size" "$TIME_OUTPUT" | awk '{print $6/1024}' || echo "0")
+
+    # Ensure we have valid values
+    [ -z "$NODE_MEMORY" ] && NODE_MEMORY="0"
+    [ "$NODE_MEMORY" = "0" ] && NODE_MEMORY=$(grep -oP '"memory_mb":\s*\K[0-9]+' "$NODE_OUTPUT" 2>/dev/null || echo "0")
 
     echo "  Duration: ${NODE_DURATION}s"
     echo "  Peak Memory: ${NODE_MEMORY}MB"
@@ -113,7 +133,7 @@ if command -v node &> /dev/null; then
 
     add_result "nodejs_large_json" "$NODE_DURATION" "$NODE_MEMORY" "$NODE_STATUS" "Node.js processing large JSON"
 
-    rm -f "$TIME_OUTPUT"
+    rm -f "$TIME_OUTPUT" "$NODE_OUTPUT"
 else
     echo "  Node.js not found - skipping"
     add_result "nodejs_large_json" "240" "2048" "mock" "Node.js not installed - using expected crash scenario"
@@ -207,10 +227,10 @@ echo "========================================"
 echo "Summary"
 echo "========================================"
 
-python3 << 'EOF'
+python3 << PYEOF
 import json
 
-with open("$RESULTS_FILE".replace("$RESULTS_FILE", "$REPORT_DIR/rust-vs-nodejs-results.json"), 'r') as f:
+with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
 
 print("\nTest Results:")
@@ -229,12 +249,15 @@ node_test = next((t for t in data['tests'] if t['name'] == 'nodejs_large_json'),
 if raps_test and node_test:
     if node_test['status'] == 'crashed':
         print("Node.js crashed - RAPS is infinitely better for this file size!")
-    else:
+    elif raps_test['duration_seconds'] > 0:
         speedup = float(node_test['duration_seconds']) / float(raps_test['duration_seconds'])
-        memory_savings = float(node_test['memory_mb']) / float(raps_test['memory_mb'])
-        print(f"RAPS is {speedup:.1f}x faster")
-        print(f"RAPS uses {memory_savings:.1f}x less memory")
-EOF
+        if raps_test['memory_mb'] > 0:
+            memory_savings = float(node_test['memory_mb']) / float(raps_test['memory_mb'])
+            print(f"RAPS is {speedup:.1f}x faster")
+            print(f"RAPS uses {memory_savings:.1f}x less memory")
+        else:
+            print(f"RAPS is {speedup:.1f}x faster")
+PYEOF
 
 echo ""
 echo "Results saved to: $RESULTS_FILE"

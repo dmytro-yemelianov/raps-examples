@@ -28,7 +28,13 @@ add_claim() {
     local passed="$4"
     local notes="$5"
 
-    python3 -c "
+    # Convert bash true/false to Python True/False
+    local py_passed="False"
+    if [ "$passed" = "true" ]; then
+        py_passed="True"
+    fi
+
+    python3 << PYEOF
 import json
 with open('$RESULTS_FILE', 'r') as f:
     data = json.load(f)
@@ -36,12 +42,12 @@ data['claims'].append({
     'claim': '$claim',
     'expected': '$expected',
     'actual': '$actual',
-    'passed': $passed,
-    'notes': '$notes'
+    'passed': $py_passed,
+    'notes': '''$notes'''
 })
 with open('$RESULTS_FILE', 'w') as f:
     json.dump(data, f, indent=2)
-"
+PYEOF
 }
 
 # ============================================
