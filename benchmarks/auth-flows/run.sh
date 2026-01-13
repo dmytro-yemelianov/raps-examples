@@ -62,8 +62,8 @@ echo "---------------------------------------------"
 if command -v raps &> /dev/null && [ -n "${APS_CLIENT_ID:-}" ] && [ -n "${APS_CLIENT_SECRET:-}" ]; then
     START_TIME=$(date +%s.%N)
 
-    # Capture both stdout and stderr for debugging
-    AUTH_OUTPUT=$(raps auth login --2legged 2>&1) && AUTH_SUCCESS=true || AUTH_SUCCESS=false
+    # Use 'raps auth test' for 2-legged (client credentials) authentication
+    AUTH_OUTPUT=$(raps auth test 2>&1) && AUTH_SUCCESS=true || AUTH_SUCCESS=false
 
     if [ "$AUTH_SUCCESS" = "true" ]; then
         END_TIME=$(date +%s.%N)
