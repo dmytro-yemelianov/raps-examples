@@ -36,8 +36,14 @@ jobs:
           chmod +x scripts/*.sh scripts/*.py
           chmod +x benchmarks/*/*.sh
 
-      - name: Generate test data (100MB)
-        run: python scripts/generate-test-data.py --output data/generated --size 100mb
+      - name: Generate test data
+        run: |
+          echo "Generating test data files..."
+          python scripts/generate-test-data.py --output data/generated --size 100mb --name small-metadata
+          python scripts/generate-test-data.py --output data/generated --size 500mb --name medium-metadata
+          python scripts/generate-test-data.py --output data/generated --size 1gb --name large-metadata
+          echo "Generated files:"
+          ls -lh data/generated/*.json
 
       - name: Run Feature Validation
         run: ./benchmarks/feature-validation/run.sh
