@@ -49,19 +49,39 @@ EOF
 # ============================================
 # Generate Test Data (if needed)
 # ============================================
-echo "Step 1: Checking test data..."
-echo "-----------------------------"
+echo "Step 1: Generating test data..."
+echo "-------------------------------"
 
-if [ ! -f "$DATA_DIR/large-metadata.json" ]; then
-    echo "Generating test data (this may take a while for large files)..."
+# Generate all required test files
+# Small (100MB) - quick baseline
+if [ ! -f "$DATA_DIR/small-metadata.json" ]; then
+    echo "Generating small-metadata.json (100MB)..."
     python3 "$SCRIPT_DIR/generate-test-data.py" \
         --output "$DATA_DIR" \
         --size 100mb \
-        --name "large-metadata"
-    echo "Test data generated."
-else
-    echo "Test data already exists."
+        --name "small-metadata"
 fi
+
+# Medium (500MB) - shows memory pressure
+if [ ! -f "$DATA_DIR/medium-metadata.json" ]; then
+    echo "Generating medium-metadata.json (500MB)..."
+    python3 "$SCRIPT_DIR/generate-test-data.py" \
+        --output "$DATA_DIR" \
+        --size 500mb \
+        --name "medium-metadata"
+fi
+
+# Large (1GB) - significant stress test
+if [ ! -f "$DATA_DIR/large-metadata.json" ]; then
+    echo "Generating large-metadata.json (1GB)..."
+    python3 "$SCRIPT_DIR/generate-test-data.py" \
+        --output "$DATA_DIR" \
+        --size 1gb \
+        --name "large-metadata"
+fi
+
+echo "Test data ready."
+ls -lh "$DATA_DIR"/*.json 2>/dev/null | grep -v meta || echo "No data files found"
 echo ""
 
 # ============================================
