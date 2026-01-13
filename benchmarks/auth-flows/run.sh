@@ -62,14 +62,18 @@ echo "---------------------------------------------"
 if command -v raps &> /dev/null && [ -n "${APS_CLIENT_ID:-}" ] && [ -n "${APS_CLIENT_SECRET:-}" ]; then
     START_TIME=$(date +%s.%N)
 
-    if raps auth login --2legged 2>/dev/null; then
+    # Capture both stdout and stderr for debugging
+    AUTH_OUTPUT=$(raps auth login --2legged 2>&1) && AUTH_SUCCESS=true || AUTH_SUCCESS=false
+
+    if [ "$AUTH_SUCCESS" = "true" ]; then
         END_TIME=$(date +%s.%N)
         DURATION=$(echo "$END_TIME - $START_TIME" | bc)
         echo "  ✓ 2-legged auth successful in ${DURATION}s"
         add_flow_result "2-legged" "success" "$DURATION" "Client credentials flow works"
     else
-        add_flow_result "2-legged" "failed" "0" "Authentication failed"
         echo "  ✗ 2-legged auth failed"
+        echo "  Error: $AUTH_OUTPUT"
+        add_flow_result "2-legged" "failed" "0" "Authentication failed: ${AUTH_OUTPUT:0:100}"
     fi
 else
     echo "  ○ Skipped (no credentials or RAPS not installed)"
