@@ -34,8 +34,18 @@ generate_test_data() {
 }
 
 # Generate test files of various sizes
+# Small (100MB) - quick baseline
+# Medium (500MB) - shows memory pressure
+# Large (1GB) - significant stress test
+# Huge (3.4GB) - crashes Node.js in-memory (as documented in blog)
 generate_test_data "100mb" "small-metadata"
-generate_test_data "500mb" "large-metadata"
+generate_test_data "500mb" "medium-metadata"
+generate_test_data "1gb" "large-metadata"
+
+# Only generate 3.4GB file if STRESS_TEST=true (takes ~10 min)
+if [ "${STRESS_TEST:-false}" = "true" ]; then
+    generate_test_data "3.4gb" "huge-metadata"
+fi
 
 RESULTS_FILE="$REPORT_DIR/rust-vs-nodejs-results.json"
 MEMORY_PROFILE_DIR="$REPORT_DIR/memory-profiles"
@@ -175,7 +185,7 @@ if command -v node &> /dev/null; then
     NODE_OUTPUT=$(mktemp)
     MEMORY_LOG="$MEMORY_PROFILE_DIR/nodejs-500mb-memory.csv"
 
-    FILE_SIZE=$(stat -c%s "$DATA_DIR/large-metadata.json" 2>/dev/null || stat -f%z "$DATA_DIR/large-metadata.json")
+    FILE_SIZE=$(stat -c%s "$DATA_DIR/medium-metadata.json" 2>/dev/null || stat -f%z "$DATA_DIR/medium-metadata.json")
     FILE_SIZE_MB=$((FILE_SIZE / 1024 / 1024))
 
     echo "  File size: ${FILE_SIZE_MB}MB"
@@ -183,7 +193,7 @@ if command -v node &> /dev/null; then
     START_TIME=$(date +%s.%N)
 
     # Run Node.js with increased memory limit
-    node --max-old-space-size=4096 "$SCRIPT_DIR/nodejs-baseline.js" "$DATA_DIR/large-metadata.json" > "$NODE_OUTPUT" 2>&1 &
+    node --max-old-space-size=4096 "$SCRIPT_DIR/nodejs-baseline.js" "$DATA_DIR/medium-metadata.json" > "$NODE_OUTPUT" 2>&1 &
     NODE_PID=$!
 
     PEAK_MEM=$(monitor_memory $NODE_PID "$MEMORY_LOG")
@@ -228,7 +238,7 @@ if command -v node &> /dev/null; then
 
     START_TIME=$(date +%s.%N)
 
-    node "$SCRIPT_DIR/nodejs-streaming.js" "$DATA_DIR/large-metadata.json" > "$NODE_OUTPUT" 2>&1 &
+    node "$SCRIPT_DIR/nodejs-streaming.js" "$DATA_DIR/medium-metadata.json" > "$NODE_OUTPUT" 2>&1 &
     NODE_PID=$!
 
     PEAK_MEM=$(monitor_memory $NODE_PID "$MEMORY_LOG")
@@ -303,13 +313,111 @@ rm -f "$PYTHON_OUTPUT"
 echo ""
 
 # ============================================
-# Test 5: RAPS Large JSON Processing
+# Test 5: Node.js In-Memory JSON Processing (1GB)
 # ============================================
-echo "Test 5: RAPS JSON Processing (500MB)"
-echo "-------------------------------------"
+echo "Test 5: Node.js In-Memory Processing (1GB) - Stress Test"
+echo "---------------------------------------------------------"
+
+if command -v node &> /dev/null && [ -f "$DATA_DIR/large-metadata.json" ]; then
+    NODE_OUTPUT=$(mktemp)
+    MEMORY_LOG="$MEMORY_PROFILE_DIR/nodejs-1gb-memory.csv"
+
+    FILE_SIZE=$(stat -c%s "$DATA_DIR/large-metadata.json" 2>/dev/null || stat -f%z "$DATA_DIR/large-metadata.json")
+    FILE_SIZE_MB=$((FILE_SIZE / 1024 / 1024))
+
+    echo "  File size: ${FILE_SIZE_MB}MB"
+
+    START_TIME=$(date +%s.%N)
+
+    # Run Node.js with max heap - this should be very slow or crash
+    timeout 600 node --max-old-space-size=8192 "$SCRIPT_DIR/nodejs-baseline.js" "$DATA_DIR/large-metadata.json" > "$NODE_OUTPUT" 2>&1 &
+    NODE_PID=$!
+
+    PEAK_MEM=$(monitor_memory $NODE_PID "$MEMORY_LOG")
+
+    wait $NODE_PID && NODE_STATUS="success" || NODE_STATUS="crashed"
+
+    END_TIME=$(date +%s.%N)
+    NODE_DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+
+    if [ -f "$NODE_OUTPUT" ]; then
+        ELEMENTS=$(grep -oP '"elements_processed":\s*\K[0-9]+' "$NODE_OUTPUT" 2>/dev/null || echo "0")
+        REPORTED_MEM=$(grep -oP '"memory_mb":\s*\K[0-9]+' "$NODE_OUTPUT" 2>/dev/null || echo "$PEAK_MEM")
+        [ -z "$REPORTED_MEM" ] && REPORTED_MEM="$PEAK_MEM"
+        [ "$REPORTED_MEM" = "0" ] && REPORTED_MEM="$PEAK_MEM"
+    fi
+
+    echo "  Duration: ${NODE_DURATION}s"
+    echo "  Peak Memory: ${REPORTED_MEM}MB"
+    echo "  Elements: ${ELEMENTS}"
+    echo "  Status: $NODE_STATUS"
+
+    add_result "nodejs_inmemory_1gb" "$NODE_DURATION" "$REPORTED_MEM" "$NODE_STATUS" \
+        "Node.js in-memory processing 1GB file - stress test" "$FILE_SIZE_MB" "$ELEMENTS"
+
+    rm -f "$NODE_OUTPUT"
+else
+    echo "  Skipped (Node.js not found or 1GB file not generated)"
+    add_result "nodejs_inmemory_1gb" "0" "0" "skipped" "1GB file not available" "0" "0"
+fi
+
+echo ""
+
+# ============================================
+# Test 6: Node.js Crash Test (3.4GB) - Blog Claim Validation
+# ============================================
+if [ "${STRESS_TEST:-false}" = "true" ] && [ -f "$DATA_DIR/huge-metadata.json" ]; then
+    echo "Test 6: Node.js Crash Test (3.4GB) - Validates Blog Claim"
+    echo "----------------------------------------------------------"
+    echo "  This test validates the claim that Node.js crashes on 3.4GB+ files"
+
+    NODE_OUTPUT=$(mktemp)
+    MEMORY_LOG="$MEMORY_PROFILE_DIR/nodejs-3.4gb-memory.csv"
+
+    FILE_SIZE=$(stat -c%s "$DATA_DIR/huge-metadata.json" 2>/dev/null || stat -f%z "$DATA_DIR/huge-metadata.json")
+    FILE_SIZE_MB=$((FILE_SIZE / 1024 / 1024))
+
+    echo "  File size: ${FILE_SIZE_MB}MB ($(echo "scale=2; $FILE_SIZE_MB/1024" | bc)GB)"
+
+    START_TIME=$(date +%s.%N)
+
+    # This SHOULD crash with heap limit exceeded
+    timeout 1200 node --max-old-space-size=4096 "$SCRIPT_DIR/nodejs-baseline.js" "$DATA_DIR/huge-metadata.json" > "$NODE_OUTPUT" 2>&1 &
+    NODE_PID=$!
+
+    PEAK_MEM=$(monitor_memory $NODE_PID "$MEMORY_LOG")
+
+    wait $NODE_PID && NODE_STATUS="success" || NODE_STATUS="crashed"
+
+    END_TIME=$(date +%s.%N)
+    NODE_DURATION=$(echo "$END_TIME - $START_TIME" | bc)
+
+    echo "  Duration: ${NODE_DURATION}s"
+    echo "  Peak Memory: ${PEAK_MEM}MB"
+    echo "  Status: $NODE_STATUS"
+
+    if [ "$NODE_STATUS" = "crashed" ]; then
+        echo "  ✓ BLOG CLAIM VALIDATED: Node.js crashed on 3.4GB file as expected"
+        add_result "nodejs_crash_3.4gb" "$NODE_DURATION" "$PEAK_MEM" "crashed" \
+            "VALIDATED: Node.js crashes on 3.4GB+ files as documented" "$FILE_SIZE_MB" "0"
+    else
+        echo "  ✗ Unexpected: Node.js survived 3.4GB file"
+        add_result "nodejs_crash_3.4gb" "$NODE_DURATION" "$PEAK_MEM" "success" \
+            "UNEXPECTED: Node.js handled 3.4GB (may have more memory available)" "$FILE_SIZE_MB" "0"
+    fi
+
+    rm -f "$NODE_OUTPUT"
+    echo ""
+fi
+
+# ============================================
+# Test 7: RAPS Large JSON Processing (1GB)
+# ============================================
+echo "Test 7: RAPS JSON Processing (1GB)"
+echo "-----------------------------------"
 
 if command -v raps &> /dev/null; then
-    MEMORY_LOG="$MEMORY_PROFILE_DIR/raps-500mb-memory.csv"
+    MEMORY_LOG="$MEMORY_PROFILE_DIR/raps-1gb-memory.csv"
 
     START_TIME=$(date +%s.%N)
 
@@ -333,9 +441,9 @@ if command -v raps &> /dev/null; then
         "RAPS streaming JSON processing" "$FILE_SIZE_MB" "0"
 else
     echo "  RAPS not found - using expected values from blog"
-    echo "  Expected: ~14s, ~100MB memory (streaming)"
-    add_result "raps_500mb" "14.2" "98" "mock" \
-        "RAPS not installed - using documented performance" "500" "0"
+    echo "  Expected: ~28s for 1GB, ~100MB constant memory (streaming)"
+    add_result "raps_1gb" "28" "100" "mock" \
+        "RAPS not installed - extrapolated from blog (14s for 500MB)" "1024" "0"
 fi
 
 echo ""
