@@ -34,16 +34,25 @@ jobs:
           # Download latest release
           RAPS_VERSION=$(curl -s https://api.github.com/repos/dmytro-yemelianov/raps/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
           if [ -z "$RAPS_VERSION" ]; then
-            RAPS_VERSION="v0.5.9"  # Fallback to known version
+            RAPS_VERSION="v3.10.1"  # Fallback to known version
           fi
           echo "Installing RAPS $RAPS_VERSION"
-          curl -fsSL "https://github.com/dmytro-yemelianov/raps/releases/download/${RAPS_VERSION}/raps-${RAPS_VERSION#v}-x86_64-unknown-linux-gnu.tar.gz" -o raps.tar.gz || true
-          if [ -f raps.tar.gz ]; then
-            tar -xzf raps.tar.gz
-            sudo mv raps /usr/local/bin/ || mv raps ~/.local/bin/
-            rm raps.tar.gz
-            echo "RAPS installed successfully"
-            raps --version || echo "RAPS binary installed but may need different path"
+          # Asset format: raps-cli-x86_64-unknown-linux-gnu.tar.xz
+          ASSET_URL="https://github.com/dmytro-yemelianov/raps/releases/download/${RAPS_VERSION}/raps-cli-x86_64-unknown-linux-gnu.tar.xz"
+          echo "Downloading from: $ASSET_URL"
+          curl -fsSL "$ASSET_URL" -o raps.tar.xz || true
+          if [ -f raps.tar.xz ]; then
+            tar -xJf raps.tar.xz
+            # Binary might be in a subdirectory
+            find . -name "raps" -type f -executable | head -1 | xargs -I {} sudo mv {} /usr/local/bin/raps || true
+            rm -f raps.tar.xz
+            if command -v raps &> /dev/null; then
+              echo "RAPS installed successfully"
+              raps --version
+            else
+              echo "RAPS binary not found after extraction"
+              ls -la
+            fi
           else
             echo "RAPS release not found - benchmarks will run in mock mode"
           fi
