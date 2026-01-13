@@ -135,11 +135,12 @@ echo "Weekly/Yearly Projections"
 echo "--------------------------"
 echo ""
 
-python3 << 'PROJECTIONS'
+python3 << PROJECTIONS
 import json
 
 # Load current results
-with open("reports/pipeline-timing-results.json", 'r') as f:
+results_file = "$RESULTS_FILE"
+with open(results_file, 'r') as f:
     data = json.load(f)
 
 # Calculate totals
@@ -203,7 +204,7 @@ data['total_pipeline'] = {
     'claim_validated': difference < 2
 }
 
-with open("reports/pipeline-timing-results.json", 'w') as f:
+with open(results_file, 'w') as f:
     json.dump(data, f, indent=2)
 PROJECTIONS
 

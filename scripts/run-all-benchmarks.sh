@@ -25,11 +25,15 @@ PASSED_TESTS=0
 FAILED_TESTS=0
 SKIPPED_TESTS=0
 
-# Benchmark suites to run
+# Benchmark suites to run (matches workflow configuration)
 BENCHMARKS=(
     "feature-validation"
     "automation-timing"
+    "pipeline-timing"
     "auth-flows"
+    "translation-performance"
+    "design-automation"
+    "version-compatibility"
     "rust-vs-nodejs"
 )
 
