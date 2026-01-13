@@ -124,14 +124,15 @@ def parse_size(size_str: str) -> int:
     """Parse size string (e.g., '500mb', '3.4gb') to bytes."""
     size_str = size_str.lower().strip()
 
-    multipliers = {
-        'b': 1,
-        'kb': 1024,
-        'mb': 1024 ** 2,
-        'gb': 1024 ** 3
-    }
+    # Check longest suffixes first to avoid 'mb' matching 'b'
+    multipliers = [
+        ('gb', 1024 ** 3),
+        ('mb', 1024 ** 2),
+        ('kb', 1024),
+        ('b', 1),
+    ]
 
-    for suffix, multiplier in multipliers.items():
+    for suffix, multiplier in multipliers:
         if size_str.endswith(suffix):
             number = float(size_str[:-len(suffix)])
             return int(number * multiplier)
