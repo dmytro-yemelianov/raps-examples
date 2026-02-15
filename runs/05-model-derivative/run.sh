@@ -53,25 +53,25 @@ run_sample "SR-095" "translate-preset-list" \
 
 # SR-096: Create a translation preset
 run_sample "SR-096" "translate-preset-create" \
-  "raps translate preset create --name \"svf2-default\" --format svf2" \
+  "raps translate preset create \"svf2-default\" -f svf2" \
   "Expected: Creates a reusable translation preset" \
   "Review: Exit 0; output confirms preset saved with name and format"
 
 # SR-097: Show a translation preset
 run_sample "SR-097" "translate-preset-show" \
-  "raps translate preset show --name \"svf2-default\"" \
+  "raps translate preset show \"svf2-default\"" \
   "Expected: Displays details of the specified preset" \
   "Review: Contains preset name, target format, and configuration"
 
 # SR-098: Use a preset for translation
 run_sample "SR-098" "translate-preset-use" \
-  "raps translate preset use --name \"svf2-default\" \$OBJECT_URN" \
+  "raps translate preset use \$OBJECT_URN \"svf2-default\"" \
   "Expected: Starts a translation using the saved preset configuration" \
   "Review: Exit 0; translation job started with preset settings"
 
 # SR-099: Delete a translation preset
 run_sample "SR-099" "translate-preset-delete" \
-  "raps translate preset delete --name \"svf2-default\"" \
+  "raps translate preset delete \"svf2-default\"" \
   "Expected: Deletes the specified preset" \
   "Review: Exit 0; preset no longer appears in list"
 
@@ -91,11 +91,11 @@ lifecycle_end
 
 # SR-101: Preset CRUD + use lifecycle
 lifecycle_start "SR-101" "translate-preset-lifecycle" "Preset CRUD + use"
-lifecycle_step 1 "raps translate preset create --name \"ifc-to-svf\" --format svf2"
+lifecycle_step 1 "raps translate preset create \"ifc-to-svf\" -f svf2"
 lifecycle_step 2 "raps translate preset list"
-lifecycle_step 3 "raps translate preset show --name \"ifc-to-svf\""
-lifecycle_step 4 "raps translate preset use --name \"ifc-to-svf\" \$URN"
-lifecycle_step 5 "raps translate preset delete --name \"ifc-to-svf\""
+lifecycle_step 3 "raps translate preset show \"ifc-to-svf\""
+lifecycle_step 4 "raps translate preset use \$URN \"ifc-to-svf\""
+lifecycle_step 5 "raps translate preset delete \"ifc-to-svf\""
 lifecycle_end
 
 section_end

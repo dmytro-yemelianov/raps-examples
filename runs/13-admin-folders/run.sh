@@ -36,7 +36,7 @@ run_sample "SR-222" "admin-folder-rights-from-file" \
 
 # SR-223: List companies in account
 run_sample "SR-223" "admin-company-list" \
-  "raps admin company-list -a \$ACCOUNT_ID" \
+  "raps admin company-list -a \$ACCT" \
   "Expected: Lists all companies in the account" \
   "Review: Contains company names and IDs"
 

@@ -101,8 +101,8 @@ Complete index of all sample runs defined across 25 section scripts.
 | SR-057 | atomic | object-info | `raps object info --bucket $BUCKET --key sample.ifc` | Shows detailed information for a specific object |
 | SR-058 | atomic | object-download | `raps object download --bucket $BUCKET --key sample.ifc --out-file ./downloads/` | Downloads object to the specified directory |
 | SR-059 | atomic | object-signed-url | `raps object signed-url --bucket $BUCKET --key sample.ifc` | Generates a pre-signed URL for the object |
-| SR-060 | atomic | object-copy | `raps object copy --bucket $BUCKET --key sample.ifc --dest-bucket $DEST_BUCKET ...` | Copies object to destination bucket with new key |
-| SR-061 | atomic | object-rename | `raps object rename --bucket $BUCKET --key sample-copy.ifc --new-key renamed.ifc` | Renames object by changing its key |
+| SR-060 | atomic | object-copy | `raps object copy --source-bucket $BUCKET --source-object sample.ifc --dest-bucket $DEST_BUCKET --dest-object sample-copy.ifc` | Copies object to destination bucket with new key |
+| SR-061 | atomic | object-rename | `raps object rename $BUCKET sample-copy.ifc --new-key renamed.ifc` | Renames object by changing its key |
 | SR-062 | atomic | object-delete | `raps object delete --bucket $BUCKET --key renamed.ifc --yes` | Deletes the specified object |
 | SR-063 | lifecycle | bucket-full-lifecycle | Clean CRUD cycle for buckets (5 steps) | -- |
 | SR-064 | lifecycle | object-full-lifecycle | Upload through delete (10 steps) | -- |
@@ -141,10 +141,10 @@ Complete index of all sample runs defined across 25 section scripts.
 | SR-093 | atomic | translate-derivatives | `raps translate derivatives --urn $OBJECT_URN` | Lists all available derivative outputs for the model |
 | SR-094 | atomic | translate-download | `raps translate download --urn $OBJECT_URN --output ./derivatives/` | Downloads derivative files to the specified directory |
 | SR-095 | atomic | translate-preset-list | `raps translate preset list` | Lists all saved translation presets |
-| SR-096 | atomic | translate-preset-create | `raps translate preset create --name "svf2-default" --format svf2` | Creates a reusable translation preset |
-| SR-097 | atomic | translate-preset-show | `raps translate preset show --name "svf2-default"` | Displays details of the specified preset |
-| SR-098 | atomic | translate-preset-use | `raps translate preset use --name "svf2-default" --urn $OBJECT_URN` | Starts a translation using the saved preset configuration |
-| SR-099 | atomic | translate-preset-delete | `raps translate preset delete --name "svf2-default"` | Deletes the specified preset |
+| SR-096 | atomic | translate-preset-create | `raps translate preset create "svf2-default" -f svf2` | Creates a reusable translation preset |
+| SR-097 | atomic | translate-preset-show | `raps translate preset show "svf2-default"` | Displays details of the specified preset |
+| SR-098 | atomic | translate-preset-use | `raps translate preset use $OBJECT_URN "svf2-default"` | Starts a translation using the saved preset configuration |
+| SR-099 | atomic | translate-preset-delete | `raps translate preset delete "svf2-default"` | Deletes the specified preset |
 | SR-100 | lifecycle | translate-full-pipeline | Upload and translate a model (8 steps) | -- |
 | SR-101 | lifecycle | translate-preset-lifecycle | Preset CRUD + use (5 steps) | -- |
 

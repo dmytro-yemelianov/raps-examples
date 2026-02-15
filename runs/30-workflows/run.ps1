@@ -4,6 +4,28 @@
 
 Start-Section -Name "30-workflows" -Title "Cross-Domain Workflows"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:URN) { $env:URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw" }
+if (-not $env:URN1) { $env:URN1 = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvbW9kZWwxLnJ2dA" }
+if (-not $env:URN2) { $env:URN2 = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvbW9kZWwyLnJ2dA" }
+if (-not $env:PID) { $env:PID = "b.demo-project-001" }
+if (-not $env:I1) { $env:I1 = "demo-issue-001" }
+if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
+if (-not $env:NEW_PID) { $env:NEW_PID = "b.demo-project-002" }
+if (-not $env:INPUT_URL) { $env:INPUT_URL = "https://developer.api.autodesk.com/oss/v2/signedresources/demo-input" }
+if (-not $env:OUTPUT_URL) { $env:OUTPUT_URL = "https://developer.api.autodesk.com/oss/v2/signedresources/demo-output" }
+if (-not $env:WI_ID) { $env:WI_ID = "demo-workitem-001" }
+if (-not $env:JID) { $env:JID = "demo-reality-job-001" }
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:FOLDER_ID) { $env:FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-001" }
+if (-not $env:OP_ID) { $env:OP_ID = "op-demo-001" }
+if (-not $env:WH1) { $env:WH1 = "demo-webhook-001" }
+if (-not $env:WH2) { $env:WH2 = "demo-webhook-002" }
+if (-not $env:CLIENT_A_ID) { $env:CLIENT_A_ID = "demo-client-a-id" }
+if (-not $env:CLIENT_A_SECRET) { $env:CLIENT_A_SECRET = "demo-client-a-secret" }
+if (-not $env:CLIENT_B_ID) { $env:CLIENT_B_ID = "demo-client-b-id" }
+if (-not $env:CLIENT_B_SECRET) { $env:CLIENT_B_SECRET = "demo-client-b-secret" }
+
 # -- Lifecycles ------------------------------------------------------------
 
 # SR-400: Architect uploads, translates, creates issues

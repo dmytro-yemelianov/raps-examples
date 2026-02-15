@@ -7,6 +7,28 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "30-workflows" "Cross-Domain Workflows"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${URN:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw}"
+: "${URN1:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvbW9kZWwxLnJ2dA}"
+: "${URN2:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvbW9kZWwyLnJ2dA}"
+: "${PID:=b.demo-project-001}"
+: "${I1:=demo-issue-001}"
+: "${ACCT:=demo-account-001}"
+: "${NEW_PID:=b.demo-project-002}"
+: "${INPUT_URL:=https://developer.api.autodesk.com/oss/v2/signedresources/demo-input}"
+: "${OUTPUT_URL:=https://developer.api.autodesk.com/oss/v2/signedresources/demo-output}"
+: "${WI_ID:=demo-workitem-001}"
+: "${JID:=demo-reality-job-001}"
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${FOLDER_ID:=urn:adsk.wipprod:fs.folder:co.demo-folder-001}"
+: "${OP_ID:=op-demo-001}"
+: "${WH1:=demo-webhook-001}"
+: "${WH2:=demo-webhook-002}"
+: "${CLIENT_A_ID:=demo-client-a-id}"
+: "${CLIENT_A_SECRET:=demo-client-a-secret}"
+: "${CLIENT_B_ID:=demo-client-b-id}"
+: "${CLIENT_B_SECRET:=demo-client-b-secret}"
+
 # ── Lifecycles ───────────────────────────────────────────────────
 
 # SR-400: Architect uploads, translates, creates issues

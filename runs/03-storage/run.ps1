@@ -75,13 +75,13 @@ Invoke-Sample -Id "SR-059" -Slug "object-signed-url" `
 
 # SR-060: Copy an object to another bucket
 Invoke-Sample -Id "SR-060" -Slug "object-copy" `
-  -Command "raps object copy $env:BUCKET sample.ifc $env:DEST_BUCKET sample-copy.ifc" `
+  -Command "raps object copy --source-bucket $env:BUCKET --source-object sample.ifc --dest-bucket $env:DEST_BUCKET --dest-object sample-copy.ifc" `
   -Expects "Expected: Copies object to destination bucket with new key" `
   -Review "Review: Exit 0; object exists in destination bucket"
 
 # SR-061: Rename an object
 Invoke-Sample -Id "SR-061" -Slug "object-rename" `
-  -Command "raps object rename $env:BUCKET sample-copy.ifc renamed.ifc" `
+  -Command "raps object rename $env:BUCKET sample-copy.ifc --new-key renamed.ifc" `
   -Expects "Expected: Renames object by changing its key" `
   -Review "Review: Exit 0; old key gone, new key present in list"
 
@@ -110,7 +110,7 @@ Invoke-LifecycleStep -StepNum 3  -Command "raps object list obj-lifecycle"
 Invoke-LifecycleStep -StepNum 4  -Command "raps object info obj-lifecycle sample.ifc"
 Invoke-LifecycleStep -StepNum 5  -Command "raps object signed-url obj-lifecycle sample.ifc"
 Invoke-LifecycleStep -StepNum 6  -Command "raps object download obj-lifecycle sample.ifc -o ./tmp/"
-Invoke-LifecycleStep -StepNum 7  -Command "raps object rename obj-lifecycle sample.ifc moved.ifc"
+Invoke-LifecycleStep -StepNum 7  -Command "raps object rename obj-lifecycle sample.ifc --new-key moved.ifc"
 Invoke-LifecycleStep -StepNum 8  -Command "raps object list obj-lifecycle"
 Invoke-LifecycleStep -StepNum 9  -Command "raps object delete obj-lifecycle moved.ifc"
 Invoke-LifecycleStep -StepNum 10 -Command "raps bucket delete obj-lifecycle"

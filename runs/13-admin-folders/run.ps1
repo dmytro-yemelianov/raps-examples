@@ -33,7 +33,7 @@ Invoke-Sample -Id "SR-222" -Slug "admin-folder-rights-from-file" `
 
 # SR-223: List companies in account
 Invoke-Sample -Id "SR-223" -Slug "admin-company-list" `
-  -Command "raps admin company-list -a $env:ACCOUNT_ID" `
+  -Command "raps admin company-list -a $env:ACCT" `
   -Expects "Expected: Lists all companies in the account" `
   -Review "Review: Contains company names and IDs"
 

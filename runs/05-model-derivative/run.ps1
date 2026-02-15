@@ -50,25 +50,25 @@ Invoke-Sample -Id "SR-095" -Slug "translate-preset-list" `
 
 # SR-096: Create a translation preset
 Invoke-Sample -Id "SR-096" -Slug "translate-preset-create" `
-  -Command "raps translate preset create --name 'svf2-default' --format svf2" `
+  -Command "raps translate preset create 'svf2-default' -f svf2" `
   -Expects "Expected: Creates a reusable translation preset" `
   -Review "Review: Exit 0; output confirms preset saved with name and format"
 
 # SR-097: Show a translation preset
 Invoke-Sample -Id "SR-097" -Slug "translate-preset-show" `
-  -Command "raps translate preset show --name 'svf2-default'" `
+  -Command "raps translate preset show 'svf2-default'" `
   -Expects "Expected: Displays details of the specified preset" `
   -Review "Review: Contains preset name, target format, and configuration"
 
 # SR-098: Use a preset for translation
 Invoke-Sample -Id "SR-098" -Slug "translate-preset-use" `
-  -Command "raps translate preset use --name 'svf2-default' $env:OBJECT_URN" `
+  -Command "raps translate preset use $env:OBJECT_URN 'svf2-default'" `
   -Expects "Expected: Starts a translation using the saved preset configuration" `
   -Review "Review: Exit 0; translation job started with preset settings"
 
 # SR-099: Delete a translation preset
 Invoke-Sample -Id "SR-099" -Slug "translate-preset-delete" `
-  -Command "raps translate preset delete --name 'svf2-default'" `
+  -Command "raps translate preset delete 'svf2-default'" `
   -Expects "Expected: Deletes the specified preset" `
   -Review "Review: Exit 0; preset no longer appears in list"
 
@@ -88,11 +88,11 @@ End-Lifecycle
 
 # SR-101: Preset CRUD + use lifecycle
 Start-Lifecycle -Id "SR-101" -Slug "translate-preset-lifecycle" -Description "Preset CRUD + use"
-Invoke-LifecycleStep -StepNum 1 -Command "raps translate preset create --name 'ifc-to-svf' --format svf2"
+Invoke-LifecycleStep -StepNum 1 -Command "raps translate preset create 'ifc-to-svf' -f svf2"
 Invoke-LifecycleStep -StepNum 2 -Command "raps translate preset list"
-Invoke-LifecycleStep -StepNum 3 -Command "raps translate preset show --name 'ifc-to-svf'"
-Invoke-LifecycleStep -StepNum 4 -Command "raps translate preset use --name 'ifc-to-svf' $env:URN"
-Invoke-LifecycleStep -StepNum 5 -Command "raps translate preset delete --name 'ifc-to-svf'"
+Invoke-LifecycleStep -StepNum 3 -Command "raps translate preset show 'ifc-to-svf'"
+Invoke-LifecycleStep -StepNum 4 -Command "raps translate preset use $env:URN 'ifc-to-svf'"
+Invoke-LifecycleStep -StepNum 5 -Command "raps translate preset delete 'ifc-to-svf'"
 End-Lifecycle
 
 End-Section

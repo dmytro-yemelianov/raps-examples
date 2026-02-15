@@ -7,6 +7,10 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "99-cross-cutting" "Cross-Cutting"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${ACCOUNT_ID:=demo-account-001}"
+
 # ── Output format matrix: bucket list ────────────────────────────
 
 # SR-500: bucket list --output table

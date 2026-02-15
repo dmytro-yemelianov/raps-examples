@@ -4,6 +4,10 @@
 
 Start-Section -Name "99-cross-cutting" -Title "Cross-Cutting"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
+
 # -- Output format matrix: bucket list ------------------------------------
 
 # SR-500: bucket list --output table

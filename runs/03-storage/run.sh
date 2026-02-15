@@ -78,13 +78,13 @@ run_sample "SR-059" "object-signed-url" \
 
 # SR-060: Copy an object to another bucket
 run_sample "SR-060" "object-copy" \
-  "raps object copy \$BUCKET sample.ifc \$DEST_BUCKET sample-copy.ifc" \
+  "raps object copy --source-bucket \$BUCKET --source-object sample.ifc --dest-bucket \$DEST_BUCKET --dest-object sample-copy.ifc" \
   "Expected: Copies object to destination bucket with new key" \
   "Review: Exit 0; object exists in destination bucket"
 
 # SR-061: Rename an object
 run_sample "SR-061" "object-rename" \
-  "raps object rename \$BUCKET sample-copy.ifc renamed.ifc" \
+  "raps object rename \$BUCKET sample-copy.ifc --new-key renamed.ifc" \
   "Expected: Renames object by changing its key" \
   "Review: Exit 0; old key gone, new key present in list"
 
@@ -113,7 +113,7 @@ lifecycle_step 3  "raps object list obj-lifecycle"
 lifecycle_step 4  "raps object info obj-lifecycle sample.ifc"
 lifecycle_step 5  "raps object signed-url obj-lifecycle sample.ifc"
 lifecycle_step 6  "raps object download obj-lifecycle sample.ifc -o ./tmp/"
-lifecycle_step 7  "raps object rename obj-lifecycle sample.ifc moved.ifc"
+lifecycle_step 7  "raps object rename obj-lifecycle sample.ifc --new-key moved.ifc"
 lifecycle_step 8  "raps object list obj-lifecycle"
 lifecycle_step 9  "raps object delete obj-lifecycle moved.ifc"
 lifecycle_step 10 "raps bucket delete obj-lifecycle"
