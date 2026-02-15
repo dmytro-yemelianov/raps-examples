@@ -17,7 +17,6 @@ Invoke-Sample -Id "SR-002" -Slug "setup-mock-server" `
   -Review "Review: Invoke-WebRequest http://localhost:3000/health returns 200"
 
 # SR-003: Generate test files for subsequent sections
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 Invoke-Sample -Id "SR-003" -Slug "setup-generate-test-files" `
   -Command "raps generate files -c 5 -o ./test-data --complexity medium" `
   -Expects "Expected: Generates 5 files of each type in ./test-data/" `

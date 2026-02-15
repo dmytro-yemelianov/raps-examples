@@ -4,6 +4,15 @@
 
 Start-Section -Name "07-acc-issues" -Title "ACC Issues"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:ISSUE_ID) { $env:ISSUE_ID = "8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b" }
+if (-not $env:COMMENT_ID) { $env:COMMENT_ID = "cmt-demo-001" }
+if (-not $env:ID) { $env:ID = "8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b" }
+if (-not $env:A) { $env:A = "issue-a-demo-001" }
+if (-not $env:B) { $env:B = "issue-b-demo-002" }
+if (-not $env:C) { $env:C = "issue-c-demo-003" }
+
 # -- Issue atomics -----------------------------------------------------
 
 # SR-130: List issues

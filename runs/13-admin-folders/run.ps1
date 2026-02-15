@@ -4,6 +4,13 @@
 
 Start-Section -Name "13-admin-folders" -Title "Admin: Folder Permissions & Operations"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
+if (-not $env:OPERATION_ID) { $env:OPERATION_ID = "op-demo-001" }
+if (-not $env:OP_ID) { $env:OP_ID = "op-demo-001" }
+if (-not $env:OP2_ID) { $env:OP2_ID = "op-demo-002" }
+if (-not $env:PID) { $env:PID = "b.demo-project-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-220: Grant folder rights dry-run

@@ -7,6 +7,9 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "01-auth" "Authentication"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${EXTERNAL_TOKEN:=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.demo-token-for-testing}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-010: Test 2-legged auth (client credentials)

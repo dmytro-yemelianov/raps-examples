@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "08-acc-rfi" "ACC RFIs"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${RFI_ID:=rfi-demo-001}"
+: "${ID:=rfi-demo-001}"
+: "${USER_ID:=demo-user-001}"
+: "${STRUCT_ENG:=demo-struct-eng-001}"
+
 # ── RFI atomics ──────────────────────────────────────────────────
 
 # SR-150: List RFIs

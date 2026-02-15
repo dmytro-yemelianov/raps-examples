@@ -4,6 +4,10 @@
 
 Start-Section -Name "02-config" -Title "Configuration"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:HUB_ID) { $env:HUB_ID = "b.demo-hub-001" }
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+
 # -- Atomic commands ---------------------------------------------------
 
 # SR-030: Show full configuration
@@ -49,7 +53,6 @@ Invoke-Sample -Id "SR-036" -Slug "config-profile-current" `
   -Review "Review: Output shows 'staging'"
 
 # SR-037: Export a profile to JSON
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 Invoke-Sample -Id "SR-037" -Slug "config-profile-export" `
   -Command "raps config profile export -n staging" `
   -Expects "Expected: Profile exported as JSON" `
@@ -100,7 +103,7 @@ Invoke-LifecycleStep -StepNum 2  -Command "raps config profile list"
 Invoke-LifecycleStep -StepNum 3  -Command "raps config profile use test-profile"
 Invoke-LifecycleStep -StepNum 4  -Command "raps config profile current"
 Invoke-LifecycleStep -StepNum 5  -Command "raps config set output_format yaml"
-Invoke-LifecycleStep -StepNum 6  -Command "raps config profile export -n test-profile"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+Invoke-LifecycleStep -StepNum 6  -Command "raps config profile export -n test-profile"
 Invoke-LifecycleStep -StepNum 7  -Command "raps config profile diff default test-profile"
 Invoke-LifecycleStep -StepNum 8  -Command "raps config profile use default"
 Invoke-LifecycleStep -StepNum 9  -Command "raps config profile delete test-profile"

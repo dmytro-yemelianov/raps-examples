@@ -4,6 +4,23 @@
 
 Start-Section -Name "09-acc-modules" -Title "ACC Modules: Assets, Submittals, Checklists"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:CATEGORY_ID) { $env:CATEGORY_ID = "cat-demo-001" }
+if (-not $env:ASSET_ID) { $env:ASSET_ID = "ast-demo-001" }
+if (-not $env:STATUS_ID) { $env:STATUS_ID = "st-demo-001" }
+if (-not $env:SUBMITTAL_ID) { $env:SUBMITTAL_ID = "sub-demo-001" }
+if (-not $env:CHECKLIST_ID) { $env:CHECKLIST_ID = "chk-demo-001" }
+if (-not $env:TEMPLATE_ID) { $env:TEMPLATE_ID = "tpl-demo-001" }
+if (-not $env:PID) { $env:PID = "b.demo-project-001" }
+if (-not $env:MECH_CAT) { $env:MECH_CAT = "cat-mechanical-001" }
+if (-not $env:CH01) { $env:CH01 = "ast-chiller-01" }
+if (-not $env:CH02) { $env:CH02 = "ast-chiller-02" }
+if (-not $env:DELIVERED_STATUS) { $env:DELIVERED_STATUS = "st-delivered-001" }
+if (-not $env:INSTALLED_STATUS) { $env:INSTALLED_STATUS = "st-installed-001" }
+if (-not $env:TPL) { $env:TPL = "tpl-demo-001" }
+if (-not $env:FOLDER_ID) { $env:FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-001" }
+
 # -- Asset atomics -----------------------------------------------------
 
 # SR-160: List assets

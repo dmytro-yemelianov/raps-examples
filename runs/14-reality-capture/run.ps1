@@ -4,6 +4,11 @@
 
 Start-Section -Name "14-reality-capture" -Title "Reality Capture"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:JOB_ID) { $env:JOB_ID = "job-demo-001" }
+if (-not $env:JID) { $env:JID = "job-demo-001" }
+if (-not $env:ID) { $env:ID = "job-demo-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-230: List reality capture jobs

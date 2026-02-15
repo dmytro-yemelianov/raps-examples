@@ -44,7 +44,7 @@ Complete index of all sample runs defined across 25 section scripts.
 |----|------|------|---------|----------|
 | SR-001 | atomic | setup-env-file | `env \| grep -E '^APS_(CLIENT_ID\|CLIENT_SECRET\|CALLBACK_URL)='` | Environment variables are set |
 | SR-002 | atomic | setup-mock-server | `echo 'Verify raps-mock is running on port 3000'` | Server listening on port 3000 |
-| SR-003 | atomic | setup-generate-test-files | `raps generate files --count 5 --output ./test-data --complexity medium` | Generates 5 files of each type in ./test-data/ |
+| SR-003 | atomic | setup-generate-test-files | `raps generate files --count 5 --out-dir ./test-data --complexity medium` | Generates 5 files of each type in ./test-data/ |
 
 ## Section 01 -- Authentication
 
@@ -99,7 +99,7 @@ Complete index of all sample runs defined across 25 section scripts.
 | SR-055 | atomic | object-upload-batch | `raps object upload-batch --bucket $BUCKET --dir ./test-data/` | Uploads all files from the directory |
 | SR-056 | atomic | object-list | `raps object list --bucket $BUCKET` | Lists all objects in the bucket |
 | SR-057 | atomic | object-info | `raps object info --bucket $BUCKET --key sample.ifc` | Shows detailed information for a specific object |
-| SR-058 | atomic | object-download | `raps object download --bucket $BUCKET --key sample.ifc --output ./downloads/` | Downloads object to the specified directory |
+| SR-058 | atomic | object-download | `raps object download --bucket $BUCKET --key sample.ifc --out-file ./downloads/` | Downloads object to the specified directory |
 | SR-059 | atomic | object-signed-url | `raps object signed-url --bucket $BUCKET --key sample.ifc` | Generates a pre-signed URL for the object |
 | SR-060 | atomic | object-copy | `raps object copy --bucket $BUCKET --key sample.ifc --dest-bucket $DEST_BUCKET ...` | Copies object to destination bucket with new key |
 | SR-061 | atomic | object-rename | `raps object rename --bucket $BUCKET --key sample-copy.ifc --new-key renamed.ifc` | Renames object by changing its key |
@@ -328,7 +328,7 @@ Complete index of all sample runs defined across 25 section scripts.
 
 | ID | Type | Slug | Command | Expected |
 |----|------|------|---------|----------|
-| SR-270 | atomic | pipeline-sample | `raps pipeline sample --output ./sample-pipeline.yaml` | Generates sample YAML |
+| SR-270 | atomic | pipeline-sample | `raps pipeline sample --out-file ./sample-pipeline.yaml` | Generates sample YAML |
 | SR-271 | atomic | pipeline-validate | `raps pipeline validate --file ./sample-pipeline.yaml` | Validates structure |
 | SR-272 | atomic | pipeline-run | `raps pipeline run --file ./sample-pipeline.yaml` | Executes pipeline |
 | SR-273 | lifecycle | pipeline-author-and-run | DevOps creates and runs pipeline (3 steps) | -- |
@@ -347,8 +347,8 @@ Complete index of all sample runs defined across 25 section scripts.
 
 | ID | Type | Slug | Command | Expected |
 |----|------|------|---------|----------|
-| SR-290 | atomic | generate-files-simple | `raps generate files --count 1 --output ./gen-simple/ --complexity simple` | Generates simple files |
-| SR-291 | atomic | generate-files-complex | `raps generate files --count 10 --output ./gen-complex/ --complexity complex` | Generates complex files |
+| SR-290 | atomic | generate-files-simple | `raps generate files --count 1 --out-dir ./gen-simple/ --complexity simple` | Generates simple files |
+| SR-291 | atomic | generate-files-complex | `raps generate files --count 10 --out-dir ./gen-complex/ --complexity complex` | Generates complex files |
 
 ## Section 21 -- Shell, Serve, Completions
 

@@ -7,6 +7,10 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "02-config" "Configuration"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${HUB_ID:=b.demo-hub-001}"
+: "${PROJECT_ID:=b.demo-project-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-030: Show full configuration
@@ -52,7 +56,6 @@ run_sample "SR-036" "config-profile-current" \
   "Review: Output shows 'staging'"
 
 # SR-037: Export a profile to JSON
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 run_sample "SR-037" "config-profile-export" \
   "raps config profile export -n staging" \
   "Expected: Profile exported as JSON" \
@@ -103,7 +106,7 @@ lifecycle_step 2  "raps config profile list"
 lifecycle_step 3  "raps config profile use test-profile"
 lifecycle_step 4  "raps config profile current"
 lifecycle_step 5  "raps config set output_format yaml"
-lifecycle_step 6  "raps config profile export -n test-profile"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+lifecycle_step 6  "raps config profile export -n test-profile"
 lifecycle_step 7  "raps config profile diff default test-profile"
 lifecycle_step 8  "raps config profile use default"
 lifecycle_step 9  "raps config profile delete test-profile"

@@ -4,6 +4,12 @@
 
 Start-Section -Name "19-api-raw" -Title "Raw API"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:HUB_ID) { $env:HUB_ID = "b.demo-hub-001" }
+if (-not $env:PID) { $env:PID = "b.demo-project-001" }
+if (-not $env:CID) { $env:CID = "demo-container-001" }
+if (-not $env:IID) { $env:IID = "demo-issue-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-280: GET request

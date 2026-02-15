@@ -4,6 +4,9 @@
 
 Start-Section -Name "15-reporting" -Title "Portfolio Reports"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-240: RFI summary report

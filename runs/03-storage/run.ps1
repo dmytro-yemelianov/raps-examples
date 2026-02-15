@@ -4,6 +4,11 @@
 
 Start-Section -Name "03-storage" -Title "Storage: Buckets + Objects"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:BUCKET_NAME) { $env:BUCKET_NAME = "demo-test-bucket-raps" }
+if (-not $env:BUCKET) { $env:BUCKET = "demo-test-bucket-raps" }
+if (-not $env:DEST_BUCKET) { $env:DEST_BUCKET = "demo-backup-bucket-raps" }
+
 # -- Bucket atomics ----------------------------------------------------
 
 # SR-050: Create a new OSS bucket
@@ -113,7 +118,7 @@ End-Lifecycle
 
 # SR-065: Batch upload lifecycle
 Start-Lifecycle -Id "SR-065" -Slug "batch-upload-lifecycle" -Description "Batch upload test"
-Invoke-LifecycleStep -StepNum 1 -Command "raps generate files -c 3 -o ./batch-test/ --complexity simple"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+Invoke-LifecycleStep -StepNum 1 -Command "raps generate files -c 3 -o ./batch-test/ --complexity simple"
 Invoke-LifecycleStep -StepNum 2 -Command "raps bucket create"
 Invoke-LifecycleStep -StepNum 3 -Command "raps object upload-batch batch-test ./batch-test/"
 Invoke-LifecycleStep -StepNum 4 -Command "raps object list batch-test"

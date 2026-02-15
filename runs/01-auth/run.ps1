@@ -4,6 +4,9 @@
 
 Start-Section -Name "01-auth" -Title "Authentication"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:EXTERNAL_TOKEN) { $env:EXTERNAL_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.demo-token-for-testing" }
+
 # -- Atomic commands ---------------------------------------------------
 
 # SR-010: Test 2-legged auth (client credentials)

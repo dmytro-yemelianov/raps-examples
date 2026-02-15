@@ -4,6 +4,10 @@
 
 Start-Section -Name "10-webhooks" -Title "Webhooks"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:WEBHOOK_ID) { $env:WEBHOOK_ID = "wh-demo-001" }
+if (-not $env:ID) { $env:ID = "wh-demo-001" }
+
 # -- Webhook atomics ---------------------------------------------------
 
 # SR-180: List event types

@@ -7,6 +7,10 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "10-webhooks" "Webhooks"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${WEBHOOK_ID:=wh-demo-001}"
+: "${ID:=wh-demo-001}"
+
 # ── Webhook atomics ──────────────────────────────────────────────
 
 # SR-180: List event types

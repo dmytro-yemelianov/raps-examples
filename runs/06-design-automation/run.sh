@@ -7,6 +7,12 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "06-design-automation" "Design Automation"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${SIGNED_URL:=https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/model.rvt?token=demo}"
+: "${INPUT_URL:=https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/input.rvt?token=demo}"
+: "${OUTPUT_URL:=https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/output.json?token=demo}"
+: "${WORKITEM_ID:=demo-workitem-001}"
+
 # ── Engine & AppBundle atomics ────────────────────────────────────
 
 # SR-110: List DA engines
@@ -93,7 +99,7 @@ lifecycle_step 2 "raps object signed-url --bucket da-test --key model.rvt"
 lifecycle_step 3 "raps da run \"ExtractAct\" -i input=\$INPUT_URL -o output=\$OUTPUT_URL -w"
 lifecycle_step 4 "raps da status \$WORKITEM_ID"
 lifecycle_step 5 "raps da workitems"
-lifecycle_step 6 "raps object download --bucket da-test --key output.json --output ./results/"
+lifecycle_step 6 "raps object download --bucket da-test --key output.json --out-file ./results/"
 lifecycle_end
 
 section_end

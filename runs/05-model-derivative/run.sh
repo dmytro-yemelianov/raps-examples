@@ -7,6 +7,12 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "05-model-derivative" "Model Derivative / Translation"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${OBJECT_URN:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw}"
+: "${URN:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw}"
+: "${ITEM_ID:=urn:adsk.wipprod:dm.lineage:demo-item-001}"
+: "${FOLDER_ID:=urn:adsk.wipprod:fs.folder:co.demo-folder-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-090: Start a translation job

@@ -7,6 +7,12 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "19-api-raw" "Raw API"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${HUB_ID:=b.demo-hub-001}"
+: "${PID:=b.demo-project-001}"
+: "${CID:=demo-container-001}"
+: "${IID:=demo-issue-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-280: GET request

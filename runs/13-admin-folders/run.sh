@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "13-admin-folders" "Admin: Folder Permissions & Operations"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${ACCT:=demo-account-001}"
+: "${OPERATION_ID:=op-demo-001}"
+: "${OP_ID:=op-demo-001}"
+: "${OP2_ID:=op-demo-002}"
+: "${PID:=b.demo-project-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-220: Grant folder rights dry-run

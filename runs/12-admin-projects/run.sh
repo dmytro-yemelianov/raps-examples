@@ -7,6 +7,12 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "12-admin-projects" "Admin: Project Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${ACCOUNT_ID:=demo-account-001}"
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${ACCT:=demo-account-001}"
+: "${PID:=b.demo-project-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-210: List all projects in account

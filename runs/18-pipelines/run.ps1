@@ -7,7 +7,6 @@ Start-Section -Name "18-pipelines" -Title "Pipelines"
 # -- Atomic commands -------------------------------------------------------
 
 # SR-270: Generate sample pipeline YAML
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 Invoke-Sample -Id "SR-270" -Slug "pipeline-sample" `
   -Command "raps pipeline sample -o ./sample-pipeline.yaml" `
   -Expects "Expected: Generates sample YAML" `
@@ -29,7 +28,7 @@ Invoke-Sample -Id "SR-272" -Slug "pipeline-run" `
 
 # SR-273: DevOps creates and runs pipeline
 Start-Lifecycle -Id "SR-273" -Slug "pipeline-author-and-run" -Description "DevOps creates and runs pipeline"
-Invoke-LifecycleStep -StepNum 1 -Command "raps pipeline sample -o ./my-pipeline.yaml"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+Invoke-LifecycleStep -StepNum 1 -Command "raps pipeline sample -o ./my-pipeline.yaml"
 Invoke-LifecycleStep -StepNum 2 -Command "raps pipeline validate ./my-pipeline.yaml"
 Invoke-LifecycleStep -StepNum 3 -Command "raps pipeline run ./my-pipeline.yaml"
 End-Lifecycle

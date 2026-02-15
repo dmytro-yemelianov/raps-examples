@@ -7,6 +7,21 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "04-data-management" "Data Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${HUB_ID:=b.demo-hub-001}"
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${FOLDER_ID:=urn:adsk.wipprod:fs.folder:co.demo-folder-001}"
+: "${NEW_FOLDER_ID:=urn:adsk.wipprod:fs.folder:co.demo-folder-002}"
+: "${ITEM_ID:=urn:adsk.wipprod:dm.lineage:demo-item-001}"
+: "${OBJECT_URN:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw}"
+: "${URN:=dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw}"
+: "${ROOT_FOLDER:=urn:adsk.wipprod:fs.folder:co.demo-root-001}"
+: "${ROOT:=urn:adsk.wipprod:fs.folder:co.demo-root-001}"
+: "${PHASE1:=urn:adsk.wipprod:fs.folder:co.demo-phase1-001}"
+: "${STRUCTURAL:=urn:adsk.wipprod:fs.folder:co.demo-structural-001}"
+: "${MEP:=urn:adsk.wipprod:fs.folder:co.demo-mep-001}"
+: "${SUBFOLDER:=urn:adsk.wipprod:fs.folder:co.demo-subfolder-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-070: List all hubs

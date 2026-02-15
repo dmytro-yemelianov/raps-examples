@@ -136,9 +136,9 @@ lifecycle_end
 
 # SR-409: Create, validate, run pipeline
 lifecycle_start "SR-409" "workflow-pipeline-yaml-automation" "Create, validate, run pipeline"
-lifecycle_step 1 "raps pipeline sample -o ./my-pipeline.yaml"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+lifecycle_step 1 "raps pipeline sample -o ./my-pipeline.yaml"
 lifecycle_step 2 "raps pipeline validate ./my-pipeline.yaml"
-lifecycle_step 3 "raps generate files -c 3 -o ./pipeline-input/ --complexity medium"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+lifecycle_step 3 "raps generate files -c 3 -o ./pipeline-input/ --complexity medium"
 lifecycle_step 4 "raps pipeline run ./my-pipeline.yaml"
 lifecycle_step 5 "raps admin operation list --limit 1"
 lifecycle_end

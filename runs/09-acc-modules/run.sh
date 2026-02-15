@@ -7,6 +7,23 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "09-acc-modules" "ACC Modules: Assets, Submittals, Checklists"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${CATEGORY_ID:=cat-demo-001}"
+: "${ASSET_ID:=ast-demo-001}"
+: "${STATUS_ID:=st-demo-001}"
+: "${SUBMITTAL_ID:=sub-demo-001}"
+: "${CHECKLIST_ID:=chk-demo-001}"
+: "${TEMPLATE_ID:=tpl-demo-001}"
+: "${PID:=b.demo-project-001}"
+: "${MECH_CAT:=cat-mechanical-001}"
+: "${CH01:=ast-chiller-01}"
+: "${CH02:=ast-chiller-02}"
+: "${DELIVERED_STATUS:=st-delivered-001}"
+: "${INSTALLED_STATUS:=st-installed-001}"
+: "${TPL:=tpl-demo-001}"
+: "${FOLDER_ID:=urn:adsk.wipprod:fs.folder:co.demo-folder-001}"
+
 # ── Asset atomics ────────────────────────────────────────────────
 
 # SR-160: List assets

@@ -7,6 +7,9 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "15-reporting" "Portfolio Reports"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${ACCOUNT_ID:=demo-account-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-240: RFI summary report

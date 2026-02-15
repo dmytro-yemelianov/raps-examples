@@ -4,6 +4,21 @@
 
 Start-Section -Name "04-data-management" -Title "Data Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:HUB_ID) { $env:HUB_ID = "b.demo-hub-001" }
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:FOLDER_ID) { $env:FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-001" }
+if (-not $env:NEW_FOLDER_ID) { $env:NEW_FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-002" }
+if (-not $env:ITEM_ID) { $env:ITEM_ID = "urn:adsk.wipprod:dm.lineage:demo-item-001" }
+if (-not $env:OBJECT_URN) { $env:OBJECT_URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw" }
+if (-not $env:URN) { $env:URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw" }
+if (-not $env:ROOT_FOLDER) { $env:ROOT_FOLDER = "urn:adsk.wipprod:fs.folder:co.demo-root-001" }
+if (-not $env:ROOT) { $env:ROOT = "urn:adsk.wipprod:fs.folder:co.demo-root-001" }
+if (-not $env:PHASE1) { $env:PHASE1 = "urn:adsk.wipprod:fs.folder:co.demo-phase1-001" }
+if (-not $env:STRUCTURAL) { $env:STRUCTURAL = "urn:adsk.wipprod:fs.folder:co.demo-structural-001" }
+if (-not $env:MEP) { $env:MEP = "urn:adsk.wipprod:fs.folder:co.demo-mep-001" }
+if (-not $env:SUBFOLDER) { $env:SUBFOLDER = "urn:adsk.wipprod:fs.folder:co.demo-subfolder-001" }
+
 # -- Atomic commands ---------------------------------------------------
 
 # SR-070: List all hubs

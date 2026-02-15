@@ -4,6 +4,13 @@
 
 Start-Section -Name "08-acc-rfi" -Title "ACC RFIs"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:RFI_ID) { $env:RFI_ID = "rfi-demo-001" }
+if (-not $env:ID) { $env:ID = "rfi-demo-001" }
+if (-not $env:USER_ID) { $env:USER_ID = "demo-user-001" }
+if (-not $env:STRUCT_ENG) { $env:STRUCT_ENG = "demo-struct-eng-001" }
+
 # -- RFI atomics -------------------------------------------------------
 
 # SR-150: List RFIs

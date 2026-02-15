@@ -4,6 +4,15 @@
 
 Start-Section -Name "11-admin-users" -Title "Admin: Bulk User Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:ROLE_ID) { $env:ROLE_ID = "role-demo-001" }
+if (-not $env:USER_ID) { $env:USER_ID = "demo-user-001" }
+if (-not $env:NEW_ROLE_ID) { $env:NEW_ROLE_ID = "role-demo-002" }
+if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
+if (-not $env:OLD_PROJECT) { $env:OLD_PROJECT = "b.demo-old-project-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-190: List all users in account

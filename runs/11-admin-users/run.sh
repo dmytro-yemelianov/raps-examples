@@ -7,6 +7,15 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "11-admin-users" "Admin: Bulk User Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${ACCOUNT_ID:=demo-account-001}"
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${ROLE_ID:=role-demo-001}"
+: "${USER_ID:=demo-user-001}"
+: "${NEW_ROLE_ID:=role-demo-002}"
+: "${ACCT:=demo-account-001}"
+: "${OLD_PROJECT:=b.demo-old-project-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-190: List all users in account

@@ -4,6 +4,12 @@
 
 Start-Section -Name "06-design-automation" -Title "Design Automation"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:SIGNED_URL) { $env:SIGNED_URL = "https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/model.rvt?token=demo" }
+if (-not $env:INPUT_URL) { $env:INPUT_URL = "https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/input.rvt?token=demo" }
+if (-not $env:OUTPUT_URL) { $env:OUTPUT_URL = "https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/output.json?token=demo" }
+if (-not $env:WORKITEM_ID) { $env:WORKITEM_ID = "demo-workitem-001" }
+
 # -- Engine & AppBundle atomics ----------------------------------------
 
 # SR-110: List DA engines
@@ -90,7 +96,7 @@ Invoke-LifecycleStep -StepNum 2 -Command "raps object signed-url --bucket da-tes
 Invoke-LifecycleStep -StepNum 3 -Command "raps da run `"ExtractAct`" -i input=$env:INPUT_URL -o output=$env:OUTPUT_URL -w"
 Invoke-LifecycleStep -StepNum 4 -Command "raps da status $env:WORKITEM_ID"
 Invoke-LifecycleStep -StepNum 5 -Command "raps da workitems"
-Invoke-LifecycleStep -StepNum 6 -Command "raps object download --bucket da-test --key output.json --output ./results/"
+Invoke-LifecycleStep -StepNum 6 -Command "raps object download --bucket da-test --key output.json --out-file ./results/"
 End-Lifecycle
 
 End-Section

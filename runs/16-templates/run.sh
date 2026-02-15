@@ -7,6 +7,12 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "16-templates" "Templates"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${ACCOUNT_ID:=demo-account-001}"
+: "${TEMPLATE_ID:=tpl-demo-001}"
+: "${ACCT:=demo-account-001}"
+: "${TPL_ID:=tpl-demo-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-250: List templates

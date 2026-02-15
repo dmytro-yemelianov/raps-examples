@@ -7,6 +7,11 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "03-storage" "Storage: Buckets + Objects"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${BUCKET_NAME:=demo-test-bucket-raps}"
+: "${BUCKET:=demo-test-bucket-raps}"
+: "${DEST_BUCKET:=demo-backup-bucket-raps}"
+
 # ── Bucket atomics ───────────────────────────────────────────────
 
 # SR-050: Create a new OSS bucket
@@ -116,7 +121,7 @@ lifecycle_end
 
 # SR-065: Batch upload lifecycle
 lifecycle_start "SR-065" "batch-upload-lifecycle" "Batch upload test"
-lifecycle_step 1 "raps generate files -c 3 -o ./batch-test/ --complexity simple"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
+lifecycle_step 1 "raps generate files -c 3 -o ./batch-test/ --complexity simple"
 lifecycle_step 2 "raps bucket create"
 lifecycle_step 3 "raps object upload-batch batch-test ./batch-test/"
 lifecycle_step 4 "raps object list batch-test"

@@ -7,6 +7,11 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "14-reality-capture" "Reality Capture"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${JOB_ID:=job-demo-001}"
+: "${JID:=job-demo-001}"
+: "${ID:=job-demo-001}"
+
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-230: List reality capture jobs

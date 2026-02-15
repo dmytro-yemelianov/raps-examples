@@ -4,6 +4,12 @@
 
 Start-Section -Name "12-admin-projects" -Title "Admin: Project Management"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
+if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
+if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
+if (-not $env:PID) { $env:PID = "b.demo-project-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-210: List all projects in account

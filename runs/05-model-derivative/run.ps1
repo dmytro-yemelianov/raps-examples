@@ -4,6 +4,12 @@
 
 Start-Section -Name "05-model-derivative" -Title "Model Derivative / Translation"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:OBJECT_URN) { $env:OBJECT_URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw" }
+if (-not $env:URN) { $env:URN = "dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6ZGVtby1idWNrZXQvc2FtcGxlLmlmYw" }
+if (-not $env:ITEM_ID) { $env:ITEM_ID = "urn:adsk.wipprod:dm.lineage:demo-item-001" }
+if (-not $env:FOLDER_ID) { $env:FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-001" }
+
 # -- Atomic commands ---------------------------------------------------
 
 # SR-090: Start a translation job

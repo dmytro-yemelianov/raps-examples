@@ -10,14 +10,12 @@ section_start "20-generation" "Generation"
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-290: Generate simple files
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 run_sample "SR-290" "generate-files-simple" \
   "raps generate files -c 1 -o ./gen-simple/ --complexity simple" \
   "Expected: Generates simple files" \
   "Review: Exit 0; files created in output directory"
 
 # SR-291: Generate complex files
-# NOTE: raps bug - clap output flag conflict, exit 101 expected
 run_sample "SR-291" "generate-files-complex" \
   "raps generate files -c 10 -o ./gen-complex/ --complexity complex" \
   "Expected: Generates complex files" \

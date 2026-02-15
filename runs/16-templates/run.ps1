@@ -4,6 +4,12 @@
 
 Start-Section -Name "16-templates" -Title "Templates"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
+if (-not $env:TEMPLATE_ID) { $env:TEMPLATE_ID = "tpl-demo-001" }
+if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
+if (-not $env:TPL_ID) { $env:TPL_ID = "tpl-demo-001" }
+
 # -- Atomic commands -------------------------------------------------------
 
 # SR-250: List templates

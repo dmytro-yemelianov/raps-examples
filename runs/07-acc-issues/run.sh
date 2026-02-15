@@ -7,6 +7,15 @@ source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "07-acc-issues" "ACC Issues"
 
+# --- Pre-seed demo environment variables (override with real values) ---
+: "${PROJECT_ID:=b.demo-project-001}"
+: "${ISSUE_ID:=8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b}"
+: "${COMMENT_ID:=cmt-demo-001}"
+: "${ID:=8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b}"
+: "${A:=issue-a-demo-001}"
+: "${B:=issue-b-demo-002}"
+: "${C:=issue-c-demo-003}"
+
 # ── Issue atomics ────────────────────────────────────────────────
 
 # SR-130: List issues
