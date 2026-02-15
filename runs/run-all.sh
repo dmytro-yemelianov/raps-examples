@@ -5,6 +5,7 @@
 #   ./run-all.sh                    # Run all sections against real APS
 #   RAPS_TARGET=mock ./run-all.sh   # Run all sections against raps-mock
 #   ./run-all.sh 01-auth 03-storage # Run specific sections only
+#   ./run-all.sh --auto-login       # Auto-login 3-legged OAuth first (needs APS_USERNAME/APS_PASSWORD)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,6 +15,13 @@ export RAPS_TARGET="${RAPS_TARGET:-real}"
 
 LOG_DIR="$LOGS_ROOT/$RUN_TIMESTAMP"
 mkdir -p "$LOG_DIR"
+
+# --- Optional: headless 3-legged OAuth auto-login ---
+if [ "${1:-}" = "--auto-login" ]; then
+  shift
+  source "$SCRIPT_DIR/lib/oauth-login.sh"
+  oauth_auto_login
+fi
 
 echo "========================================"
 echo "RAPS CLI Sample Runs"

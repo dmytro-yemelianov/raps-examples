@@ -8,6 +8,9 @@
 
 set -euo pipefail
 
+# --- OAuth automation (optional) ---
+source "$(dirname "${BASH_SOURCE[0]}")/oauth-login.sh" 2>/dev/null || true
+
 # --- Directories ---
 RUNS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOGS_ROOT="${LOGS_ROOT:-$RUNS_DIR/../logs}"
@@ -40,12 +43,55 @@ fi
 
 # --- Helpers ---
 
+# Convert Git Bash /c/ paths to C:/ for python3 on Windows
+win_path() {
+  local p="$1"
+  if [[ "$p" =~ ^/([a-zA-Z])/ ]]; then
+    echo "${BASH_REMATCH[1]^}:/${p:3}"
+  else
+    echo "$p"
+  fi
+}
+
+# Per-command timeout (seconds); 0 = no timeout
+RAPS_CMD_TIMEOUT="${RAPS_CMD_TIMEOUT:-30}"
+
 raps_cmd() {
   local cmd="$1"
   if [ "$RAPS_TARGET" = "mock" ]; then
     echo "$cmd --base-url $MOCK_BASE_URL"
   else
     echo "$cmd"
+  fi
+}
+
+# Run a command with timeout; sets _CMD_EXIT to exit code
+# Uses eval (to preserve shell variables) in a subshell with a watchdog timer.
+run_with_timeout() {
+  local cmd="$1" logfile="$2"
+  local timeout_sec="${RAPS_CMD_TIMEOUT:-0}"
+
+  if [ "$timeout_sec" -gt 0 ] 2>/dev/null; then
+    # Run eval in a subshell in the background so we can enforce a timeout
+    ( eval "$cmd" ) >> "$logfile" 2>&1 &
+    local pid=$!
+    local waited=0
+    while kill -0 "$pid" 2>/dev/null; do
+      if [ "$waited" -ge "$timeout_sec" ]; then
+        kill "$pid" 2>/dev/null
+        wait "$pid" 2>/dev/null
+        echo "  TIMEOUT after ${timeout_sec}s" >> "$logfile"
+        _CMD_EXIT=124
+        return
+      fi
+      sleep 1
+      waited=$((waited + 1))
+    done
+    wait "$pid"
+    _CMD_EXIT=$?
+  else
+    eval "$cmd" >> "$logfile" 2>&1
+    _CMD_EXIT=$?
   fi
 }
 
@@ -69,18 +115,21 @@ EOF
 
 json_append_run() {
   local id="$1" slug="$2" command="$3" exit_code="$4" duration="$5"
-  python3 - <<PYEOF
-import json, sys
-path = "$CURRENT_SECTION_JSON"
+  local py_path
+  py_path="$(win_path "$CURRENT_SECTION_JSON")"
+  _JSON_CMD="$command" python3 - "$py_path" "$id" "$slug" "$exit_code" "$duration" "$RAPS_TARGET" <<'PYEOF'
+import json, sys, os
+path, rid, slug, exit_code, duration, target = sys.argv[1:7]
+command = os.environ.get('_JSON_CMD', '')
 with open(path, 'r') as f:
     data = json.load(f)
 data['runs'].append({
-    'id': '$id',
-    'slug': '$slug',
-    'command': $(python3 -c "import json; print(json.dumps('$command'))"),
-    'exit_code': int('$exit_code'),
-    'duration_seconds': float('$duration'),
-    'target': '$RAPS_TARGET'
+    'id': rid,
+    'slug': slug,
+    'command': command,
+    'exit_code': int(exit_code),
+    'duration_seconds': float(duration),
+    'target': target
 })
 with open(path, 'w') as f:
     json.dump(data, f, indent=2)
@@ -135,8 +184,8 @@ run_sample() {
   start_time=$(date +%s.%N 2>/dev/null || date +%s)
 
   set +e
-  eval "$actual_cmd" >> "$CURRENT_SECTION_LOG" 2>&1
-  exit_code=$?
+  run_with_timeout "$actual_cmd" "$CURRENT_SECTION_LOG"
+  exit_code=$_CMD_EXIT
   set -e
 
   local end_time
@@ -146,6 +195,9 @@ run_sample() {
   if [ "$exit_code" -eq 0 ]; then
     log_line "  ${GREEN}Exit: $exit_code (${duration}s)${RESET}"
     SECTION_OK_COUNT=$((SECTION_OK_COUNT + 1))
+  elif [ "$exit_code" -eq 124 ]; then
+    log_line "  ${RED}TIMEOUT (${RAPS_CMD_TIMEOUT}s)${RESET}"
+    SECTION_FAIL_COUNT=$((SECTION_FAIL_COUNT + 1))
   else
     log_line "  ${RED}Exit: $exit_code (${duration}s)${RESET}"
     SECTION_FAIL_COUNT=$((SECTION_FAIL_COUNT + 1))
@@ -175,12 +227,14 @@ lifecycle_step() {
   log_line "  Step $step_num: $actual_cmd"
 
   set +e
-  eval "$actual_cmd" >> "$CURRENT_SECTION_LOG" 2>&1
-  local exit_code=$?
+  run_with_timeout "$actual_cmd" "$CURRENT_SECTION_LOG"
+  local exit_code=$_CMD_EXIT
   set -e
 
   if [ "$exit_code" -eq 0 ]; then
     log_line "    ${GREEN}-> exit $exit_code${RESET}"
+  elif [ "$exit_code" -eq 124 ]; then
+    log_line "    ${RED}-> TIMEOUT${RESET}"
   else
     log_line "    ${RED}-> exit $exit_code${RESET}"
   fi
