@@ -40,31 +40,31 @@ Invoke-Sample -Id "SR-504" -Slug "bucket-list-plain" `
 
 # SR-505: issue list --output table
 Invoke-Sample -Id "SR-505" -Slug "issue-list-table" `
-  -Command "raps issue list --project $env:PROJECT_ID --output table" `
+  -Command "raps issue list $env:PROJECT_ID --output table" `
   -Expects "Expected: Table-formatted issue list" `
   -Review "Review: Aligned columns with headers"
 
 # SR-506: issue list --output json
 Invoke-Sample -Id "SR-506" -Slug "issue-list-json" `
-  -Command "raps issue list --project $env:PROJECT_ID --output json" `
+  -Command "raps issue list $env:PROJECT_ID --output json" `
   -Expects "Expected: JSON-formatted issue list" `
   -Review "Review: Valid JSON array"
 
 # SR-507: issue list --output yaml
 Invoke-Sample -Id "SR-507" -Slug "issue-list-yaml" `
-  -Command "raps issue list --project $env:PROJECT_ID --output yaml" `
+  -Command "raps issue list $env:PROJECT_ID --output yaml" `
   -Expects "Expected: YAML-formatted issue list" `
   -Review "Review: Valid YAML document"
 
 # SR-508: issue list --output csv
 Invoke-Sample -Id "SR-508" -Slug "issue-list-csv" `
-  -Command "raps issue list --project $env:PROJECT_ID --output csv" `
+  -Command "raps issue list $env:PROJECT_ID --output csv" `
   -Expects "Expected: CSV-formatted issue list" `
   -Review "Review: Header row followed by data rows"
 
 # SR-509: issue list --output plain
 Invoke-Sample -Id "SR-509" -Slug "issue-list-plain" `
-  -Command "raps issue list --project $env:PROJECT_ID --output plain" `
+  -Command "raps issue list $env:PROJECT_ID --output plain" `
   -Expects "Expected: Plain-text issue list" `
   -Review "Review: Simple text output"
 
@@ -72,31 +72,31 @@ Invoke-Sample -Id "SR-509" -Slug "issue-list-plain" `
 
 # SR-510: admin user list --output table
 Invoke-Sample -Id "SR-510" -Slug "admin-user-list-table" `
-  -Command "raps admin user list --account $env:ACCOUNT_ID --output table" `
+  -Command "raps admin user list -a $env:ACCOUNT_ID --output table" `
   -Expects "Expected: Table-formatted user list" `
   -Review "Review: Aligned columns with headers"
 
 # SR-511: admin user list --output json
 Invoke-Sample -Id "SR-511" -Slug "admin-user-list-json" `
-  -Command "raps admin user list --account $env:ACCOUNT_ID --output json" `
+  -Command "raps admin user list -a $env:ACCOUNT_ID --output json" `
   -Expects "Expected: JSON-formatted user list" `
   -Review "Review: Valid JSON array"
 
 # SR-512: admin user list --output yaml
 Invoke-Sample -Id "SR-512" -Slug "admin-user-list-yaml" `
-  -Command "raps admin user list --account $env:ACCOUNT_ID --output yaml" `
+  -Command "raps admin user list -a $env:ACCOUNT_ID --output yaml" `
   -Expects "Expected: YAML-formatted user list" `
   -Review "Review: Valid YAML document"
 
 # SR-513: admin user list --output csv
 Invoke-Sample -Id "SR-513" -Slug "admin-user-list-csv" `
-  -Command "raps admin user list --account $env:ACCOUNT_ID --output csv" `
+  -Command "raps admin user list -a $env:ACCOUNT_ID --output csv" `
   -Expects "Expected: CSV-formatted user list" `
   -Review "Review: Header row followed by data rows"
 
 # SR-514: admin user list --output plain
 Invoke-Sample -Id "SR-514" -Slug "admin-user-list-plain" `
-  -Command "raps admin user list --account $env:ACCOUNT_ID --output plain" `
+  -Command "raps admin user list -a $env:ACCOUNT_ID --output plain" `
   -Expects "Expected: Plain-text user list" `
   -Review "Review: Simple text output"
 
@@ -174,7 +174,7 @@ Invoke-Sample -Id "SR-530" -Slug "no-color-bucket-list" `
 
 # SR-531: No-color issue list
 Invoke-Sample -Id "SR-531" -Slug "no-color-issue-list" `
-  -Command "raps issue list --project $env:PROJECT_ID --no-color" `
+  -Command "raps issue list $env:PROJECT_ID --no-color" `
   -Expects "Expected: Issue list without ANSI colors" `
   -Review "Review: No escape sequences in output"
 

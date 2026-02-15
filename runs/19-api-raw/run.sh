@@ -17,19 +17,19 @@ run_sample "SR-280" "api-get" \
 
 # SR-281: POST request
 run_sample "SR-281" "api-post" \
-  "raps api post \"/oss/v2/buckets\" --body '{\"bucketKey\":\"api-test\",\"policyKey\":\"transient\"}'" \
+  "raps api post \"/oss/v2/buckets\" -d '{\"bucketKey\":\"api-test\",\"policyKey\":\"transient\"}'" \
   "Expected: Creates via POST" \
   "Review: HTTP 200; bucket created"
 
 # SR-282: PUT request
 run_sample "SR-282" "api-put" \
-  "raps api put \"/project/v1/hubs/\$HUB_ID/projects/\$PID\" --body '{\"name\":\"Updated\"}'" \
+  "raps api put \"/project/v1/hubs/\$HUB_ID/projects/\$PID\" -d '{\"name\":\"Updated\"}'" \
   "Expected: PUT request" \
   "Review: HTTP 200; resource updated"
 
 # SR-283: PATCH request
 run_sample "SR-283" "api-patch" \
-  "raps api patch \"/issues/v1/containers/\$CID/quality-issues/\$IID\" --body '{\"title\":\"Patched\"}'" \
+  "raps api patch \"/issues/v1/containers/\$CID/quality-issues/\$IID\" -d '{\"title\":\"Patched\"}'" \
   "Expected: PATCH request" \
   "Review: HTTP 200; field patched"
 

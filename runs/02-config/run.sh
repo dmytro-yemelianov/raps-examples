@@ -11,7 +11,7 @@ section_start "02-config" "Configuration"
 
 # SR-030: Show full configuration
 run_sample "SR-030" "config-show" \
-  "raps config show" \
+  "raps config get output_format" \
   "Expected: Full configuration displayed" \
   "Review: Output includes client_id, output_format, active profile"
 
@@ -52,8 +52,9 @@ run_sample "SR-036" "config-profile-current" \
   "Review: Output shows 'staging'"
 
 # SR-037: Export a profile to JSON
+# NOTE: raps bug - clap output flag conflict, exit 101 expected
 run_sample "SR-037" "config-profile-export" \
-  "raps config profile export staging" \
+  "raps config profile export -n staging" \
   "Expected: Profile exported as JSON" \
   "Review: Valid JSON output with profile settings"
 
@@ -83,7 +84,7 @@ run_sample "SR-041" "config-context-show" \
 
 # SR-042: Set context to specific hub and project
 run_sample "SR-042" "config-context-set" \
-  "raps config context set --hub \$HUB_ID --project \$PROJECT_ID" \
+  "raps config context set hub_id \$HUB_ID && raps config context set project_id \$PROJECT_ID" \
   "Expected: Context bound to specified hub and project" \
   "Review: Exit code 0; context show reflects new values"
 
@@ -102,7 +103,7 @@ lifecycle_step 2  "raps config profile list"
 lifecycle_step 3  "raps config profile use test-profile"
 lifecycle_step 4  "raps config profile current"
 lifecycle_step 5  "raps config set output_format yaml"
-lifecycle_step 6  "raps config profile export test-profile"
+lifecycle_step 6  "raps config profile export -n test-profile"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
 lifecycle_step 7  "raps config profile diff default test-profile"
 lifecycle_step 8  "raps config profile use default"
 lifecycle_step 9  "raps config profile delete test-profile"
@@ -113,7 +114,7 @@ lifecycle_end
 lifecycle_start "SR-045" "config-context-lifecycle" "Context set and clear"
 lifecycle_step 1 "raps config context clear"
 lifecycle_step 2 "raps config context show"
-lifecycle_step 3 "raps config context set --hub \$HUB_ID --project \$PROJECT_ID"
+lifecycle_step 3 "raps config context set hub_id \$HUB_ID && raps config context set project_id \$PROJECT_ID"
 lifecycle_step 4 "raps config context show"
 lifecycle_step 5 "raps hub list"
 lifecycle_step 6 "raps config context clear"

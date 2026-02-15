@@ -20,7 +20,7 @@ Invoke-Sample -Id "SR-011" -Slug "auth-login-3leg-browser" `
 
 # SR-012: Device code flow login
 Invoke-Sample -Id "SR-012" -Slug "auth-login-device-code" `
-  -Command "raps auth login --device" `
+  -Command "raps auth login --device-code" `
   -Expects "Expected: Device code displayed; user authorizes in browser" `
   -Review "Review: Exit code 0; token stored after device authorization"
 
@@ -94,7 +94,7 @@ End-Lifecycle
 
 # SR-023: Device code auth cycle
 Start-Lifecycle -Id "SR-023" -Slug "auth-lifecycle-device" -Description "Device code auth cycle"
-Invoke-LifecycleStep -StepNum 1 -Command "raps auth login --device"
+Invoke-LifecycleStep -StepNum 1 -Command "raps auth login --device-code"
 Invoke-LifecycleStep -StepNum 2 -Command "raps auth test"
 Invoke-LifecycleStep -StepNum 3 -Command "raps auth whoami"
 Invoke-LifecycleStep -StepNum 4 -Command "raps auth logout"

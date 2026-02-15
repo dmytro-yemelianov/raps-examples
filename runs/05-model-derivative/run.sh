@@ -11,31 +11,31 @@ section_start "05-model-derivative" "Model Derivative / Translation"
 
 # SR-090: Start a translation job
 run_sample "SR-090" "translate-start" \
-  "raps translate start --urn \$OBJECT_URN --format svf2" \
+  "raps translate start \$OBJECT_URN -f svf2" \
   "Expected: Starts a model translation job to SVF2 format" \
   "Review: Exit 0; output contains translation job URN and status"
 
 # SR-091: Check translation status
 run_sample "SR-091" "translate-status" \
-  "raps translate status --urn \$OBJECT_URN" \
+  "raps translate status \$OBJECT_URN" \
   "Expected: Reports current translation progress" \
   "Review: Contains progress percentage and status (pending/inprogress/success/failed)"
 
 # SR-092: Get translation manifest
 run_sample "SR-092" "translate-manifest" \
-  "raps translate manifest --urn \$OBJECT_URN" \
+  "raps translate manifest \$OBJECT_URN" \
   "Expected: Shows the translation manifest with derivative tree" \
   "Review: Contains derivative URN, output formats, and bubble structure"
 
 # SR-093: List available derivatives
 run_sample "SR-093" "translate-derivatives" \
-  "raps translate derivatives --urn \$OBJECT_URN" \
+  "raps translate derivatives \$OBJECT_URN" \
   "Expected: Lists all available derivative outputs for the model" \
   "Review: Contains derivative types (SVF, thumbnail, metadata) and roles"
 
 # SR-094: Download derivatives
 run_sample "SR-094" "translate-download" \
-  "raps translate download --urn \$OBJECT_URN --output ./derivatives/" \
+  "raps translate download \$OBJECT_URN -o ./derivatives/" \
   "Expected: Downloads derivative files to the specified directory" \
   "Review: Files exist at output path; directory contains derivative assets"
 
@@ -59,7 +59,7 @@ run_sample "SR-097" "translate-preset-show" \
 
 # SR-098: Use a preset for translation
 run_sample "SR-098" "translate-preset-use" \
-  "raps translate preset use --name \"svf2-default\" --urn \$OBJECT_URN" \
+  "raps translate preset use --name \"svf2-default\" \$OBJECT_URN" \
   "Expected: Starts a translation using the saved preset configuration" \
   "Review: Exit 0; translation job started with preset settings"
 
@@ -73,14 +73,14 @@ run_sample "SR-099" "translate-preset-delete" \
 
 # SR-100: Full translation pipeline (upload and translate a model)
 lifecycle_start "SR-100" "translate-full-pipeline" "Upload and translate a model"
-lifecycle_step 1 "raps bucket create --name translate-test --policy transient"
-lifecycle_step 2 "raps object upload --bucket translate-test --file ./test-data/sample.rvt"
-lifecycle_step 3 "raps translate start --urn \$URN --format svf2"
-lifecycle_step 4 "raps translate status --urn \$URN"
-lifecycle_step 5 "raps translate manifest --urn \$URN"
-lifecycle_step 6 "raps translate derivatives --urn \$URN"
-lifecycle_step 7 "raps translate download --urn \$URN --output ./output/"
-lifecycle_step 8 "raps bucket delete --name translate-test --yes"
+lifecycle_step 1 "raps bucket create"
+lifecycle_step 2 "raps object upload translate-test ./test-data/sample.rvt"
+lifecycle_step 3 "raps translate start \$URN -f svf2"
+lifecycle_step 4 "raps translate status \$URN"
+lifecycle_step 5 "raps translate manifest \$URN"
+lifecycle_step 6 "raps translate derivatives \$URN"
+lifecycle_step 7 "raps translate download \$URN -o ./output/"
+lifecycle_step 8 "raps bucket delete translate-test"
 lifecycle_end
 
 # SR-101: Preset CRUD + use lifecycle
@@ -88,7 +88,7 @@ lifecycle_start "SR-101" "translate-preset-lifecycle" "Preset CRUD + use"
 lifecycle_step 1 "raps translate preset create --name \"ifc-to-svf\" --format svf2"
 lifecycle_step 2 "raps translate preset list"
 lifecycle_step 3 "raps translate preset show --name \"ifc-to-svf\""
-lifecycle_step 4 "raps translate preset use --name \"ifc-to-svf\" --urn \$URN"
+lifecycle_step 4 "raps translate preset use --name \"ifc-to-svf\" \$URN"
 lifecycle_step 5 "raps translate preset delete --name \"ifc-to-svf\""
 lifecycle_end
 

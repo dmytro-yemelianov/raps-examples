@@ -8,7 +8,7 @@ Start-Section -Name "02-config" -Title "Configuration"
 
 # SR-030: Show full configuration
 Invoke-Sample -Id "SR-030" -Slug "config-show" `
-  -Command "raps config show" `
+  -Command "raps config get output_format" `
   -Expects "Expected: Full configuration displayed" `
   -Review "Review: Output includes client_id, output_format, active profile"
 
@@ -49,8 +49,9 @@ Invoke-Sample -Id "SR-036" -Slug "config-profile-current" `
   -Review "Review: Output shows 'staging'"
 
 # SR-037: Export a profile to JSON
+# NOTE: raps bug - clap output flag conflict, exit 101 expected
 Invoke-Sample -Id "SR-037" -Slug "config-profile-export" `
-  -Command "raps config profile export staging" `
+  -Command "raps config profile export -n staging" `
   -Expects "Expected: Profile exported as JSON" `
   -Review "Review: Valid JSON output with profile settings"
 
@@ -80,7 +81,7 @@ Invoke-Sample -Id "SR-041" -Slug "config-context-show" `
 
 # SR-042: Set context to specific hub and project
 Invoke-Sample -Id "SR-042" -Slug "config-context-set" `
-  -Command "raps config context set --hub $env:HUB_ID --project $env:PROJECT_ID" `
+  -Command "raps config context set hub_id $env:HUB_ID; raps config context set project_id $env:PROJECT_ID" `
   -Expects "Expected: Context bound to specified hub and project" `
   -Review "Review: Exit code 0; context show reflects new values"
 
@@ -99,7 +100,7 @@ Invoke-LifecycleStep -StepNum 2  -Command "raps config profile list"
 Invoke-LifecycleStep -StepNum 3  -Command "raps config profile use test-profile"
 Invoke-LifecycleStep -StepNum 4  -Command "raps config profile current"
 Invoke-LifecycleStep -StepNum 5  -Command "raps config set output_format yaml"
-Invoke-LifecycleStep -StepNum 6  -Command "raps config profile export test-profile"
+Invoke-LifecycleStep -StepNum 6  -Command "raps config profile export -n test-profile"  # NOTE: raps bug - clap output flag conflict, exit 101 expected
 Invoke-LifecycleStep -StepNum 7  -Command "raps config profile diff default test-profile"
 Invoke-LifecycleStep -StepNum 8  -Command "raps config profile use default"
 Invoke-LifecycleStep -StepNum 9  -Command "raps config profile delete test-profile"
@@ -110,7 +111,7 @@ End-Lifecycle
 Start-Lifecycle -Id "SR-045" -Slug "config-context-lifecycle" -Description "Context set and clear"
 Invoke-LifecycleStep -StepNum 1 -Command "raps config context clear"
 Invoke-LifecycleStep -StepNum 2 -Command "raps config context show"
-Invoke-LifecycleStep -StepNum 3 -Command "raps config context set --hub $env:HUB_ID --project $env:PROJECT_ID"
+Invoke-LifecycleStep -StepNum 3 -Command "raps config context set hub_id $env:HUB_ID; raps config context set project_id $env:PROJECT_ID"
 Invoke-LifecycleStep -StepNum 4 -Command "raps config context show"
 Invoke-LifecycleStep -StepNum 5 -Command "raps hub list"
 Invoke-LifecycleStep -StepNum 6 -Command "raps config context clear"

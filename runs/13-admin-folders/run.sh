@@ -11,25 +11,25 @@ section_start "13-admin-folders" "Admin: Folder Permissions & Operations"
 
 # SR-220: Grant folder rights dry-run
 run_sample "SR-220" "admin-folder-rights-dryrun" \
-  "raps admin folder rights user@company.com --account \$ACCT --level view-download-upload --folder \"Plans\" --filter \"Tower\" --dry-run" \
+  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Tower\" --dry-run" \
   "Expected: Shows which projects and folders would be affected" \
   "Review: Lists matched projects; no actual changes"
 
 # SR-221: Grant folder rights execute
 run_sample "SR-221" "admin-folder-rights-execute" \
-  "raps admin folder rights user@company.com --account \$ACCT --level view-download-upload --folder \"Plans\" --filter \"Tower\" --yes" \
+  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Tower\" -y" \
   "Expected: Grants folder permissions across matching projects" \
   "Review: Exit 0; permissions applied"
 
 # SR-222: Grant folder rights from project-ids file
 run_sample "SR-222" "admin-folder-rights-from-file" \
-  "raps admin folder rights user@company.com --account \$ACCT --level folder-control --project-ids ./projects.txt --yes" \
+  "raps admin folder rights user@company.com -a \$ACCT -l folder-control --project-ids ./projects.txt -y" \
   "Expected: Grants folder permissions to projects in file" \
   "Review: Exit 0; permissions applied to each project"
 
 # SR-223: List companies in account
 run_sample "SR-223" "admin-company-list" \
-  "raps admin company-list --account \$ACCOUNT_ID" \
+  "raps admin company-list -a \$ACCOUNT_ID" \
   "Expected: Lists all companies in the account" \
   "Review: Contains company names and IDs"
 
@@ -53,7 +53,7 @@ run_sample "SR-226" "admin-operation-resume" \
 
 # SR-227: Cancel an operation
 run_sample "SR-227" "admin-operation-cancel" \
-  "raps admin operation cancel \$OPERATION_ID --yes" \
+  "raps admin operation cancel \$OPERATION_ID -y" \
   "Expected: Cancels the operation" \
   "Review: Exit 0; operation status is cancelled"
 
@@ -61,11 +61,11 @@ run_sample "SR-227" "admin-operation-cancel" \
 
 # SR-228: Grant, verify, restrict folder access
 lifecycle_start "SR-228" "folder-permissions-lifecycle" "Grant, verify, restrict folder access"
-lifecycle_step 1 "raps admin folder rights user@co.com --account \$ACCT --level view-download-upload-edit --folder \"Plans\" --filter \"Active\" --dry-run"
-lifecycle_step 2 "raps admin folder rights user@co.com --account \$ACCT --level view-download-upload-edit --folder \"Plans\" --filter \"Active\" --yes"
+lifecycle_step 1 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"Active\" --dry-run"
+lifecycle_step 2 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"Active\" -y"
 lifecycle_step 3 "raps admin operation list --limit 1"
 lifecycle_step 4 "raps admin operation status \$OP_ID"
-lifecycle_step 5 "raps admin folder rights user@co.com --account \$ACCT --level view-only --folder \"Plans\" --filter \"Active\" --yes"
+lifecycle_step 5 "raps admin folder rights user@co.com -a \$ACCT -l view-only --folder \"Plans\" -f \"Active\" -y"
 lifecycle_step 6 "raps admin operation status \$OP2_ID"
 lifecycle_end
 

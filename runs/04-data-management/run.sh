@@ -41,31 +41,31 @@ run_sample "SR-074" "project-info" \
 
 # SR-075: List folder contents
 run_sample "SR-075" "folder-list" \
-  "raps folder list --project \$PROJECT_ID --folder \$FOLDER_ID" \
+  "raps folder list \$PROJECT_ID \$FOLDER_ID" \
   "Expected: Lists contents of a specific folder" \
   "Review: Contains subfolders and items with names and IDs"
 
 # SR-076: Create a new folder
 run_sample "SR-076" "folder-create" \
-  "raps folder create --project \$PROJECT_ID --parent \$FOLDER_ID --name \"Test Folder\"" \
+  "raps folder create \$PROJECT_ID \$FOLDER_ID -n \"Test Folder\"" \
   "Expected: Creates a new folder under the specified parent" \
   "Review: Exit 0; output contains new folder ID and name"
 
 # SR-077: Rename a folder
 run_sample "SR-077" "folder-rename" \
-  "raps folder rename --project \$PROJECT_ID --folder \$NEW_FOLDER_ID --name \"Renamed Folder\"" \
+  "raps folder rename \$PROJECT_ID \$NEW_FOLDER_ID --name \"Renamed Folder\"" \
   "Expected: Renames the specified folder" \
   "Review: Exit 0; folder name updated in subsequent list"
 
 # SR-078: Get folder permissions
 run_sample "SR-078" "folder-rights" \
-  "raps folder rights --project \$PROJECT_ID --folder \$FOLDER_ID" \
+  "raps folder rights \$PROJECT_ID \$FOLDER_ID" \
   "Expected: Shows permission and access rights for a folder" \
   "Review: Contains permission roles and user access details"
 
 # SR-079: Delete a folder
 run_sample "SR-079" "folder-delete" \
-  "raps folder delete --project \$PROJECT_ID --folder \$NEW_FOLDER_ID --yes" \
+  "raps folder delete \$PROJECT_ID \$NEW_FOLDER_ID" \
   "Expected: Deletes the specified folder" \
   "Review: Exit 0; folder no longer appears in parent listing"
 
@@ -83,7 +83,7 @@ run_sample "SR-081" "item-versions" \
 
 # SR-082: Create item from OSS object
 run_sample "SR-082" "item-create-from-oss" \
-  "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID --name \"Uploaded Model\" --object-id \$OBJECT_URN" \
+  "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID \$OBJECT_URN -n \"Uploaded Model\"" \
   "Expected: Creates a Data Management item linked to an OSS object" \
   "Review: Exit 0; output contains new item ID"
 
@@ -95,7 +95,7 @@ run_sample "SR-083" "item-rename" \
 
 # SR-084: Delete an item
 run_sample "SR-084" "item-delete" \
-  "raps item delete \$PROJECT_ID \$ITEM_ID --yes" \
+  "raps item delete \$PROJECT_ID \$ITEM_ID" \
   "Expected: Deletes the specified item" \
   "Review: Exit 0; item no longer appears in folder listing"
 
@@ -106,33 +106,33 @@ lifecycle_start "SR-085" "dm-navigation-lifecycle" "Developer explores project s
 lifecycle_step 1 "raps hub list"
 lifecycle_step 2 "raps project list \$HUB_ID"
 lifecycle_step 3 "raps project info \$HUB_ID \$PROJECT_ID"
-lifecycle_step 4 "raps folder list --project \$PROJECT_ID --folder \$ROOT_FOLDER"
-lifecycle_step 5 "raps folder list --project \$PROJECT_ID --folder \$SUBFOLDER"
+lifecycle_step 4 "raps folder list \$PROJECT_ID \$ROOT_FOLDER"
+lifecycle_step 5 "raps folder list \$PROJECT_ID \$SUBFOLDER"
 lifecycle_end
 
 # SR-086: Admin creates folder structure
 lifecycle_start "SR-086" "dm-folder-crud-lifecycle" "Admin creates folder structure"
-lifecycle_step 1 "raps folder create --project \$PROJECT_ID --parent \$ROOT --name \"Phase 1\""
-lifecycle_step 2 "raps folder create --project \$PROJECT_ID --parent \$PHASE1 --name \"Structural\""
-lifecycle_step 3 "raps folder create --project \$PROJECT_ID --parent \$PHASE1 --name \"MEP\""
-lifecycle_step 4 "raps folder list --project \$PROJECT_ID --folder \$PHASE1"
-lifecycle_step 5 "raps folder rename --project \$PROJECT_ID --folder \$MEP --name \"MEP Systems\""
-lifecycle_step 6 "raps folder rights --project \$PROJECT_ID --folder \$PHASE1"
-lifecycle_step 7 "raps folder delete --project \$PROJECT_ID --folder \$MEP --yes"
-lifecycle_step 8 "raps folder delete --project \$PROJECT_ID --folder \$STRUCTURAL --yes"
-lifecycle_step 9 "raps folder delete --project \$PROJECT_ID --folder \$PHASE1 --yes"
+lifecycle_step 1 "raps folder create \$PROJECT_ID \$ROOT -n \"Phase 1\""
+lifecycle_step 2 "raps folder create \$PROJECT_ID \$PHASE1 -n \"Structural\""
+lifecycle_step 3 "raps folder create \$PROJECT_ID \$PHASE1 -n \"MEP\""
+lifecycle_step 4 "raps folder list \$PROJECT_ID \$PHASE1"
+lifecycle_step 5 "raps folder rename \$PROJECT_ID \$MEP --name \"MEP Systems\""
+lifecycle_step 6 "raps folder rights \$PROJECT_ID \$PHASE1"
+lifecycle_step 7 "raps folder delete \$PROJECT_ID \$MEP"
+lifecycle_step 8 "raps folder delete \$PROJECT_ID \$STRUCTURAL"
+lifecycle_step 9 "raps folder delete \$PROJECT_ID \$PHASE1"
 lifecycle_end
 
 # SR-087: Developer uploads to BIM 360
 lifecycle_start "SR-087" "item-upload-and-manage" "Developer uploads to BIM 360"
-lifecycle_step 1 "raps bucket create --name dm-staging --policy transient"
-lifecycle_step 2 "raps object upload --bucket dm-staging --file ./test-data/sample.rvt"
-lifecycle_step 3 "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID --name \"Building.rvt\" --object-id \$URN"
+lifecycle_step 1 "raps bucket create"
+lifecycle_step 2 "raps object upload dm-staging ./test-data/sample.rvt"
+lifecycle_step 3 "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID \$URN -n \"Building.rvt\""
 lifecycle_step 4 "raps item info \$PROJECT_ID \$ITEM_ID"
 lifecycle_step 5 "raps item versions \$PROJECT_ID \$ITEM_ID"
 lifecycle_step 6 "raps item rename \$PROJECT_ID \$ITEM_ID --name \"Building-v2.rvt\""
-lifecycle_step 7 "raps item delete \$PROJECT_ID \$ITEM_ID --yes"
-lifecycle_step 8 "raps bucket delete --name dm-staging --yes"
+lifecycle_step 7 "raps item delete \$PROJECT_ID \$ITEM_ID"
+lifecycle_step 8 "raps bucket delete dm-staging"
 lifecycle_end
 
 section_end

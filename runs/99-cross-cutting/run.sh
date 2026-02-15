@@ -43,31 +43,31 @@ run_sample "SR-504" "bucket-list-plain" \
 
 # SR-505: issue list --output table
 run_sample "SR-505" "issue-list-table" \
-  "raps issue list --project \$PROJECT_ID --output table" \
+  "raps issue list \$PROJECT_ID --output table" \
   "Expected: Table-formatted issue list" \
   "Review: Aligned columns with headers"
 
 # SR-506: issue list --output json
 run_sample "SR-506" "issue-list-json" \
-  "raps issue list --project \$PROJECT_ID --output json" \
+  "raps issue list \$PROJECT_ID --output json" \
   "Expected: JSON-formatted issue list" \
   "Review: Valid JSON array"
 
 # SR-507: issue list --output yaml
 run_sample "SR-507" "issue-list-yaml" \
-  "raps issue list --project \$PROJECT_ID --output yaml" \
+  "raps issue list \$PROJECT_ID --output yaml" \
   "Expected: YAML-formatted issue list" \
   "Review: Valid YAML document"
 
 # SR-508: issue list --output csv
 run_sample "SR-508" "issue-list-csv" \
-  "raps issue list --project \$PROJECT_ID --output csv" \
+  "raps issue list \$PROJECT_ID --output csv" \
   "Expected: CSV-formatted issue list" \
   "Review: Header row followed by data rows"
 
 # SR-509: issue list --output plain
 run_sample "SR-509" "issue-list-plain" \
-  "raps issue list --project \$PROJECT_ID --output plain" \
+  "raps issue list \$PROJECT_ID --output plain" \
   "Expected: Plain-text issue list" \
   "Review: Simple text output"
 
@@ -75,31 +75,31 @@ run_sample "SR-509" "issue-list-plain" \
 
 # SR-510: admin user list --output table
 run_sample "SR-510" "admin-user-list-table" \
-  "raps admin user list --account \$ACCOUNT_ID --output table" \
+  "raps admin user list -a \$ACCOUNT_ID --output table" \
   "Expected: Table-formatted user list" \
   "Review: Aligned columns with headers"
 
 # SR-511: admin user list --output json
 run_sample "SR-511" "admin-user-list-json" \
-  "raps admin user list --account \$ACCOUNT_ID --output json" \
+  "raps admin user list -a \$ACCOUNT_ID --output json" \
   "Expected: JSON-formatted user list" \
   "Review: Valid JSON array"
 
 # SR-512: admin user list --output yaml
 run_sample "SR-512" "admin-user-list-yaml" \
-  "raps admin user list --account \$ACCOUNT_ID --output yaml" \
+  "raps admin user list -a \$ACCOUNT_ID --output yaml" \
   "Expected: YAML-formatted user list" \
   "Review: Valid YAML document"
 
 # SR-513: admin user list --output csv
 run_sample "SR-513" "admin-user-list-csv" \
-  "raps admin user list --account \$ACCOUNT_ID --output csv" \
+  "raps admin user list -a \$ACCOUNT_ID --output csv" \
   "Expected: CSV-formatted user list" \
   "Review: Header row followed by data rows"
 
 # SR-514: admin user list --output plain
 run_sample "SR-514" "admin-user-list-plain" \
-  "raps admin user list --account \$ACCOUNT_ID --output plain" \
+  "raps admin user list -a \$ACCOUNT_ID --output plain" \
   "Expected: Plain-text user list" \
   "Review: Simple text output"
 
@@ -177,7 +177,7 @@ run_sample "SR-530" "no-color-bucket-list" \
 
 # SR-531: No-color issue list
 run_sample "SR-531" "no-color-issue-list" \
-  "raps issue list --project \$PROJECT_ID --no-color" \
+  "raps issue list \$PROJECT_ID --no-color" \
   "Expected: Issue list without ANSI colors" \
   "Review: No escape sequences in output"
 

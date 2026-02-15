@@ -20,8 +20,9 @@ run_sample "SR-002" "setup-mock-server" \
   "Review: curl http://localhost:3000/health returns 200"
 
 # SR-003: Generate test files for subsequent sections
+# NOTE: raps bug - clap output flag conflict, exit 101 expected
 run_sample "SR-003" "setup-generate-test-files" \
-  "raps generate files --count 5 --output ./test-data --complexity medium" \
+  "raps generate files -c 5 -o ./test-data --complexity medium" \
   "Expected: Generates 5 files of each type in ./test-data/" \
   "Review: Directory contains IFC, RVT, DWG, NWD, PDF files; exit code 0"
 

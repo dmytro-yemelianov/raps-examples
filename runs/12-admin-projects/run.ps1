@@ -8,31 +8,31 @@ Start-Section -Name "12-admin-projects" -Title "Admin: Project Management"
 
 # SR-210: List all projects in account
 Invoke-Sample -Id "SR-210" -Slug "admin-project-list" `
-  -Command "raps admin project list --account $env:ACCOUNT_ID" `
+  -Command "raps admin project list -a $env:ACCOUNT_ID" `
   -Expects "Expected: Lists all projects in the account" `
   -Review "Review: Contains project names, IDs, and statuses"
 
 # SR-211: List projects with filters
 Invoke-Sample -Id "SR-211" -Slug "admin-project-list-filtered" `
-  -Command "raps admin project list --account $env:ACCOUNT_ID --filter `"Tower`" --status active --platform acc --limit 10" `
+  -Command "raps admin project list -a $env:ACCOUNT_ID -f `"Tower`" --status active --platform acc --limit 10" `
   -Expects "Expected: Filtered project list" `
   -Review "Review: All results match filter, status, and platform"
 
 # SR-212: Create a project
 Invoke-Sample -Id "SR-212" -Slug "admin-project-create" `
-  -Command "raps admin project create --account $env:ACCOUNT_ID --name `"Tower Phase 3`" --type `"Bridge`" --classification `"Sample`" --start-date `"2026-03-01`" --end-date `"2027-12-31`" --timezone `"America/New_York`"" `
+  -Command "raps admin project create -a $env:ACCOUNT_ID --name `"Tower Phase 3`" -t `"Bridge`" --classification `"Sample`" --start-date `"2026-03-01`" --end-date `"2027-12-31`" --timezone `"America/New_York`"" `
   -Expects "Expected: Creates a new project" `
   -Review "Review: Exit 0; output contains project ID and name"
 
 # SR-213: Update a project
 Invoke-Sample -Id "SR-213" -Slug "admin-project-update" `
-  -Command "raps admin project update --account $env:ACCOUNT_ID --project $env:PROJECT_ID --name `"Tower Phase 3 - Revised`" --status active" `
+  -Command "raps admin project update -a $env:ACCOUNT_ID -p $env:PROJECT_ID --name `"Tower Phase 3 - Revised`" --status active" `
   -Expects "Expected: Updates project name and status" `
   -Review "Review: Exit 0; project reflects new name"
 
 # SR-214: Archive a project
 Invoke-Sample -Id "SR-214" -Slug "admin-project-archive" `
-  -Command "raps admin project archive --account $env:ACCOUNT_ID --project $env:PROJECT_ID" `
+  -Command "raps admin project archive -a $env:ACCOUNT_ID -p $env:PROJECT_ID" `
   -Expects "Expected: Archives the project" `
   -Review "Review: Exit 0; project status is archived"
 
@@ -40,12 +40,12 @@ Invoke-Sample -Id "SR-214" -Slug "admin-project-archive" `
 
 # SR-215: Create and manage project
 Start-Lifecycle -Id "SR-215" -Slug "project-lifecycle-admin" -Description "Create and manage project"
-Invoke-LifecycleStep -StepNum 1 -Command "raps admin project create --account $env:ACCT --name `"Bridge Retrofit`" --type `"Bridge`""
-Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list --account $env:ACCT --filter `"Bridge`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@company.com --account $env:ACCT --role `"project_admin`" --filter `"Bridge Retrofit`" --yes"
-Invoke-LifecycleStep -StepNum 4 -Command "raps admin project update --account $env:ACCT --project $env:PID --start-date `"2026-04-01`""
-Invoke-LifecycleStep -StepNum 5 -Command "raps admin project archive --account $env:ACCT --project $env:PID"
-Invoke-LifecycleStep -StepNum 6 -Command "raps admin project list --account $env:ACCT --status active"
+Invoke-LifecycleStep -StepNum 1 -Command "raps admin project create -a $env:ACCT --name `"Bridge Retrofit`" -t `"Bridge`""
+Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT -f `"Bridge`""
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@company.com -a $env:ACCT -r `"project_admin`" -f `"Bridge Retrofit`" -y"
+Invoke-LifecycleStep -StepNum 4 -Command "raps admin project update -a $env:ACCT -p $env:PID --start-date `"2026-04-01`""
+Invoke-LifecycleStep -StepNum 5 -Command "raps admin project archive -a $env:ACCT -p $env:PID"
+Invoke-LifecycleStep -StepNum 6 -Command "raps admin project list -a $env:ACCT --status active"
 End-Lifecycle
 
 End-Section

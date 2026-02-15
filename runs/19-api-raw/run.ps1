@@ -14,19 +14,19 @@ Invoke-Sample -Id "SR-280" -Slug "api-get" `
 
 # SR-281: POST request
 Invoke-Sample -Id "SR-281" -Slug "api-post" `
-  -Command "raps api post `"/oss/v2/buckets`" --body '{`"bucketKey`":`"api-test`",`"policyKey`":`"transient`"}'" `
+  -Command "raps api post `"/oss/v2/buckets`" -d '{`"bucketKey`":`"api-test`",`"policyKey`":`"transient`"}'" `
   -Expects "Expected: Creates via POST" `
   -Review "Review: HTTP 200; bucket created"
 
 # SR-282: PUT request
 Invoke-Sample -Id "SR-282" -Slug "api-put" `
-  -Command "raps api put `"/project/v1/hubs/$env:HUB_ID/projects/$env:PID`" --body '{`"name`":`"Updated`"}'" `
+  -Command "raps api put `"/project/v1/hubs/$env:HUB_ID/projects/$env:PID`" -d '{`"name`":`"Updated`"}'" `
   -Expects "Expected: PUT request" `
   -Review "Review: HTTP 200; resource updated"
 
 # SR-283: PATCH request
 Invoke-Sample -Id "SR-283" -Slug "api-patch" `
-  -Command "raps api patch `"/issues/v1/containers/$env:CID/quality-issues/$env:IID`" --body '{`"title`":`"Patched`"}'" `
+  -Command "raps api patch `"/issues/v1/containers/$env:CID/quality-issues/$env:IID`" -d '{`"title`":`"Patched`"}'" `
   -Expects "Expected: PATCH request" `
   -Review "Review: HTTP 200; field patched"
 
