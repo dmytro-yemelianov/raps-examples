@@ -18,7 +18,7 @@ if (-not $env:WI_ID) { $env:WI_ID = "demo-workitem-001" }
 if (-not $env:JID) { $env:JID = "demo-reality-job-001" }
 if (-not $env:PROJECT_ID) { $env:PROJECT_ID = "b.demo-project-001" }
 if (-not $env:FOLDER_ID) { $env:FOLDER_ID = "urn:adsk.wipprod:fs.folder:co.demo-folder-001" }
-if (-not $env:OP_ID) { $env:OP_ID = "op-demo-001" }
+if (-not $env:OP_ID) { $env:OP_ID = "12345678-1234-1234-1234-123456789012" }
 if (-not $env:WH1) { $env:WH1 = "demo-webhook-001" }
 if (-not $env:WH2) { $env:WH2 = "demo-webhook-002" }
 if (-not $env:CLIENT_A_ID) { $env:CLIENT_A_ID = "demo-client-a-id" }
@@ -46,11 +46,11 @@ End-Lifecycle
 Start-Lifecycle -Id "SR-401" -Slug "workflow-project-setup" -Description "Admin creates project and staffs it"
 Invoke-LifecycleStep -StepNum 1 -Command "raps template list -a $env:ACCT"
 Invoke-LifecycleStep -StepNum 2 -Command "raps admin project create -a $env:ACCT -n `"Hospital Wing B`" -t `"Healthcare`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@co.com -a $env:ACCT -r `"project_admin`" -f `"Hospital Wing B`" -y"
-Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add struct@co.com -a $env:ACCT -r `"viewer`" -f `"Hospital Wing B`" -y"
-Invoke-LifecycleStep -StepNum 5 -Command "raps admin user add mep@co.com -a $env:ACCT -r `"viewer`" -f `"Hospital Wing B`" -y"
-Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights struct@co.com -a $env:ACCT -l view-download-upload --folder `"Structural`" -f `"Hospital Wing B`" -y"
-Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights mep@co.com -a $env:ACCT -l view-download-upload --folder `"MEP`" -f `"Hospital Wing B`" -y"
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@co.com -a $env:ACCT -r `"project_admin`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add struct@co.com -a $env:ACCT -r `"viewer`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 5 -Command "raps admin user add mep@co.com -a $env:ACCT -r `"viewer`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights struct@co.com -a $env:ACCT -l view-download-upload --folder `"Structural`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights mep@co.com -a $env:ACCT -l view-download-upload --folder `"MEP`" -f `"name:*Hospital Wing B*`" -y"
 Invoke-LifecycleStep -StepNum 8 -Command "raps admin user list -p $env:NEW_PID"
 Invoke-LifecycleStep -StepNum 9 -Command "raps webhook create -e `"dm.version.added`" -u `"https://hooks.co.com/hospital`""
 End-Lifecycle
@@ -104,7 +104,7 @@ Invoke-LifecycleStep -StepNum 4  -Command "raps reality status $env:JID"
 Invoke-LifecycleStep -StepNum 5  -Command "raps reality result $env:JID"
 Invoke-LifecycleStep -StepNum 6  -Command "raps bucket create -k survey-upload -p transient"
 Invoke-LifecycleStep -StepNum 7  -Command "raps object upload survey-upload ./survey-results/model.obj"
-Invoke-LifecycleStep -StepNum 8  -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID -n `"Foundation Survey 2026-02`" --object-id $env:URN"
+Invoke-LifecycleStep -StepNum 8  -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID --name `"Foundation Survey 2026-02`" --object-id $env:URN"
 Invoke-LifecycleStep -StepNum 9  -Command "raps reality delete $env:JID --yes"
 Invoke-LifecycleStep -StepNum 10 -Command "raps bucket delete survey-upload --yes"
 End-Lifecycle
@@ -113,9 +113,9 @@ End-Lifecycle
 Start-Lifecycle -Id "SR-406" -Slug "workflow-weekly-admin-operations" -Description "Admin weekly maintenance"
 Invoke-LifecycleStep -StepNum 1 -Command "raps admin user list -a $env:ACCT --status `"active`" --output json"
 Invoke-LifecycleStep -StepNum 2 -Command "raps admin user list -a $env:ACCT --role `"project_admin`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin project list -a $env:ACCT -f `"2024`" --status active"
-Invoke-LifecycleStep -StepNum 4 -Command "raps admin user update admin@old.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"2024`" --dry-run"
-Invoke-LifecycleStep -StepNum 5 -Command "raps admin user update admin@old.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"2024`" -y"
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin project list -a $env:ACCT -f `"name:*2024*`" --status active"
+Invoke-LifecycleStep -StepNum 4 -Command "raps admin user update admin@old.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"name:*2024*`" --dry-run"
+Invoke-LifecycleStep -StepNum 5 -Command "raps admin user update admin@old.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"name:*2024*`" -y"
 Invoke-LifecycleStep -StepNum 6 -Command "raps admin operation status $env:OP_ID"
 Invoke-LifecycleStep -StepNum 7 -Command "raps admin company-list -a $env:ACCT"
 Invoke-LifecycleStep -StepNum 8 -Command "raps report issues-summary -a $env:ACCT --status open"

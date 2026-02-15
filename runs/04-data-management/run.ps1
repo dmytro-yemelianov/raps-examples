@@ -95,7 +95,7 @@ Invoke-Sample -Id "SR-081" -Slug "item-versions" `
 
 # SR-082: Create item from OSS object
 Invoke-Sample -Id "SR-082" -Slug "item-create-from-oss" `
-  -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID $env:OBJECT_URN -n 'Uploaded Model'" `
+  -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID --name 'Uploaded Model' --object-id $env:OBJECT_URN" `
   -Expects "Expected: Creates a Data Management item linked to an OSS object" `
   -Review "Review: Exit 0; output contains new item ID"
 
@@ -139,7 +139,7 @@ End-Lifecycle
 Start-Lifecycle -Id "SR-087" -Slug "item-upload-and-manage" -Description "Developer uploads to BIM 360"
 Invoke-LifecycleStep -StepNum 1 -Command "raps bucket create"
 Invoke-LifecycleStep -StepNum 2 -Command "raps object upload dm-staging ./test-data/sample.rvt"
-Invoke-LifecycleStep -StepNum 3 -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID $env:URN -n 'Building.rvt'"
+Invoke-LifecycleStep -StepNum 3 -Command "raps item create-from-oss $env:PROJECT_ID $env:FOLDER_ID --name 'Building.rvt' --object-id $env:URN"
 Invoke-LifecycleStep -StepNum 4 -Command "raps item info $env:PROJECT_ID $env:ITEM_ID"
 Invoke-LifecycleStep -StepNum 5 -Command "raps item versions $env:PROJECT_ID $env:ITEM_ID"
 Invoke-LifecycleStep -StepNum 6 -Command "raps item rename $env:PROJECT_ID $env:ITEM_ID --name 'Building-v2.rvt'"

@@ -23,7 +23,7 @@ run_sample "SR-210" "admin-project-list" \
 
 # SR-211: List projects with filters
 run_sample "SR-211" "admin-project-list-filtered" \
-  "raps admin project list -a \$ACCOUNT_ID -f \"Tower\" --status active --platform acc --limit 10" \
+  "raps admin project list -a \$ACCOUNT_ID -f \"name:*Tower*\" --status active --platform acc --limit 10" \
   "Expected: Filtered project list" \
   "Review: All results match filter, status, and platform"
 
@@ -50,8 +50,8 @@ run_sample "SR-214" "admin-project-archive" \
 # SR-215: Create and manage project
 lifecycle_start "SR-215" "project-lifecycle-admin" "Create and manage project"
 lifecycle_step 1 "raps admin project create -a \$ACCT --name \"Bridge Retrofit\" -t \"Bridge\""
-lifecycle_step 2 "raps admin project list -a \$ACCT -f \"Bridge\""
-lifecycle_step 3 "raps admin user add pm@company.com -a \$ACCT -r \"project_admin\" -f \"Bridge Retrofit\" -y"
+lifecycle_step 2 "raps admin project list -a \$ACCT -f \"name:*Bridge*\""
+lifecycle_step 3 "raps admin user add pm@company.com -a \$ACCT -r \"project_admin\" -f \"name:*Bridge Retrofit*\" -y"
 lifecycle_step 4 "raps admin project update -a \$ACCT -p \$PID --start-date \"2026-04-01\""
 lifecycle_step 5 "raps admin project archive -a \$ACCT -p \$PID"
 lifecycle_step 6 "raps admin project list -a \$ACCT --status active"

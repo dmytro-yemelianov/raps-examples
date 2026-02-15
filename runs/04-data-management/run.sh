@@ -98,7 +98,7 @@ run_sample "SR-081" "item-versions" \
 
 # SR-082: Create item from OSS object
 run_sample "SR-082" "item-create-from-oss" \
-  "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID \$OBJECT_URN -n \"Uploaded Model\"" \
+  "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID --name \"Uploaded Model\" --object-id \$OBJECT_URN" \
   "Expected: Creates a Data Management item linked to an OSS object" \
   "Review: Exit 0; output contains new item ID"
 
@@ -142,7 +142,7 @@ lifecycle_end
 lifecycle_start "SR-087" "item-upload-and-manage" "Developer uploads to BIM 360"
 lifecycle_step 1 "raps bucket create"
 lifecycle_step 2 "raps object upload dm-staging ./test-data/sample.rvt"
-lifecycle_step 3 "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID \$URN -n \"Building.rvt\""
+lifecycle_step 3 "raps item create-from-oss \$PROJECT_ID \$FOLDER_ID --name \"Building.rvt\" --object-id \$URN"
 lifecycle_step 4 "raps item info \$PROJECT_ID \$ITEM_ID"
 lifecycle_step 5 "raps item versions \$PROJECT_ID \$ITEM_ID"
 lifecycle_step 6 "raps item rename \$PROJECT_ID \$ITEM_ID --name \"Building-v2.rvt\""

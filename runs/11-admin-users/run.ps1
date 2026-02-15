@@ -35,13 +35,13 @@ Invoke-Sample -Id "SR-192" -Slug "admin-user-list-filtered" `
 
 # SR-193: Bulk add user dry-run
 Invoke-Sample -Id "SR-193" -Slug "admin-user-add-bulk-dryrun" `
-  -Command "raps admin user add user@company.com -a $env:ACCOUNT_ID -r `"project_admin`" -f `"Tower`" --dry-run" `
+  -Command "raps admin user add user@company.com -a $env:ACCOUNT_ID -r `"project_admin`" -f `"name:*Tower*`" --dry-run" `
   -Expects "Expected: Shows which projects affected" `
   -Review "Review: Lists matched projects; no actual changes"
 
 # SR-194: Bulk add user execute
 Invoke-Sample -Id "SR-194" -Slug "admin-user-add-bulk-execute" `
-  -Command "raps admin user add user@company.com -a $env:ACCOUNT_ID -r `"project_admin`" -f `"Tower`" -y" `
+  -Command "raps admin user add user@company.com -a $env:ACCOUNT_ID -r `"project_admin`" -f `"name:*Tower*`" -y" `
   -Expects "Expected: Adds user to matching projects" `
   -Review "Review: Exit 0; summary shows projects added"
 
@@ -53,13 +53,13 @@ Invoke-Sample -Id "SR-195" -Slug "admin-user-add-from-file" `
 
 # SR-196: Bulk remove user dry-run
 Invoke-Sample -Id "SR-196" -Slug "admin-user-remove-bulk-dryrun" `
-  -Command "raps admin user remove user@company.com -a $env:ACCOUNT_ID -f `"Old Project`" --dry-run" `
+  -Command "raps admin user remove user@company.com -a $env:ACCOUNT_ID -f `"name:*Old Project*`" --dry-run" `
   -Expects "Expected: Shows projects user would be removed from" `
   -Review "Review: Lists matched projects"
 
 # SR-197: Bulk update user role dry-run
 Invoke-Sample -Id "SR-197" -Slug "admin-user-update-bulk-dryrun" `
-  -Command "raps admin user update user@company.com -a $env:ACCOUNT_ID -r `"viewer`" --from-role `"project_admin`" -f `"Archive`" --dry-run" `
+  -Command "raps admin user update user@company.com -a $env:ACCOUNT_ID -r `"viewer`" --from-role `"project_admin`" -f `"name:*Archive*`" --dry-run" `
   -Expects "Expected: Shows role change preview" `
   -Review "Review: Lists projects where role would change"
 
@@ -98,12 +98,12 @@ Invoke-Sample -Id "SR-202" -Slug "admin-user-import-csv" `
 # SR-203: Account admin onboards new team member
 Start-Lifecycle -Id "SR-203" -Slug "new-employee-onboarding" -Description "Account admin onboards new team member"
 Invoke-LifecycleStep -StepNum 1 -Command "raps admin user list -a $env:ACCT --search `"newuser@company.com`""
-Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT --status active -f `"Building`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"Building`" --dry-run"
-Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"Building`" -y"
+Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT --status active -f `"name:*Building*`""
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"name:*Building*`" --dry-run"
+Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"name:*Building*`" -y"
 Invoke-LifecycleStep -StepNum 5 -Command "raps admin user list -a $env:ACCT --search `"newuser@company.com`""
-Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"Building`" --dry-run"
-Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"Building`" -y"
+Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" --dry-run"
+Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" -y"
 End-Lifecycle
 
 # SR-204: Remove departing employee
@@ -116,10 +116,10 @@ End-Lifecycle
 
 # SR-205: Downgrade stale admins to viewers
 Start-Lifecycle -Id "SR-205" -Slug "role-migration" -Description "Downgrade stale admins to viewers"
-Invoke-LifecycleStep -StepNum 1 -Command "raps admin project list -a $env:ACCT --status active -f `"2024`""
+Invoke-LifecycleStep -StepNum 1 -Command "raps admin project list -a $env:ACCT --status active -f `"name:*2024*`""
 Invoke-LifecycleStep -StepNum 2 -Command "raps admin user list -a $env:ACCT --role `"project_admin`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin user update admin1@co.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"2024`" --dry-run"
-Invoke-LifecycleStep -StepNum 4 -Command "raps admin user update admin1@co.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"2024`" -y"
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin user update admin1@co.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"name:*2024*`" --dry-run"
+Invoke-LifecycleStep -StepNum 4 -Command "raps admin user update admin1@co.com -a $env:ACCT -r `"viewer`" --from-role `"project_admin`" -f `"name:*2024*`" -y"
 Invoke-LifecycleStep -StepNum 5 -Command "raps admin user list -a $env:ACCT -p $env:OLD_PROJECT --role `"project_admin`""
 End-Lifecycle
 

@@ -26,7 +26,7 @@ run_sample "SR-011" "auth-login-3leg-browser" \
 
 # SR-012: Device code flow login
 run_sample "SR-012" "auth-login-device-code" \
-  "raps auth login --device-code" \
+  "raps auth login --device" \
   "Expected: Device code displayed; user authorizes in browser" \
   "Review: Exit code 0; token stored after device authorization"
 
@@ -100,7 +100,7 @@ lifecycle_end
 
 # SR-023: Device code auth cycle
 lifecycle_start "SR-023" "auth-lifecycle-device" "Device code auth cycle"
-lifecycle_step 1 "raps auth login --device-code"
+lifecycle_step 1 "raps auth login --device"
 lifecycle_step 2 "raps auth test"
 lifecycle_step 3 "raps auth whoami"
 lifecycle_step 4 "raps auth logout"

@@ -6,22 +6,22 @@ Start-Section -Name "13-admin-folders" -Title "Admin: Folder Permissions & Opera
 
 # --- Pre-seed demo environment variables (override with real values) ---
 if (-not $env:ACCT) { $env:ACCT = "demo-account-001" }
-if (-not $env:OPERATION_ID) { $env:OPERATION_ID = "op-demo-001" }
-if (-not $env:OP_ID) { $env:OP_ID = "op-demo-001" }
-if (-not $env:OP2_ID) { $env:OP2_ID = "op-demo-002" }
+if (-not $env:OPERATION_ID) { $env:OPERATION_ID = "12345678-1234-1234-1234-123456789012" }
+if (-not $env:OP_ID) { $env:OP_ID = "12345678-1234-1234-1234-123456789012" }
+if (-not $env:OP2_ID) { $env:OP2_ID = "12345678-1234-1234-1234-123456789013" }
 if (-not $env:PID) { $env:PID = "b.demo-project-001" }
 
 # -- Atomic commands -------------------------------------------------------
 
 # SR-220: Grant folder rights dry-run
 Invoke-Sample -Id "SR-220" -Slug "admin-folder-rights-dryrun" `
-  -Command "raps admin folder rights user@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"Tower`" --dry-run" `
+  -Command "raps admin folder rights user@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Tower*`" --dry-run" `
   -Expects "Expected: Shows which projects and folders would be affected" `
   -Review "Review: Lists matched projects; no actual changes"
 
 # SR-221: Grant folder rights execute
 Invoke-Sample -Id "SR-221" -Slug "admin-folder-rights-execute" `
-  -Command "raps admin folder rights user@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"Tower`" -y" `
+  -Command "raps admin folder rights user@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Tower*`" -y" `
   -Expects "Expected: Grants folder permissions across matching projects" `
   -Review "Review: Exit 0; permissions applied"
 
@@ -65,11 +65,11 @@ Invoke-Sample -Id "SR-227" -Slug "admin-operation-cancel" `
 
 # SR-228: Grant, verify, restrict folder access
 Start-Lifecycle -Id "SR-228" -Slug "folder-permissions-lifecycle" -Description "Grant, verify, restrict folder access"
-Invoke-LifecycleStep -StepNum 1 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-download-upload-edit --folder `"Plans`" -f `"Active`" --dry-run"
-Invoke-LifecycleStep -StepNum 2 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-download-upload-edit --folder `"Plans`" -f `"Active`" -y"
+Invoke-LifecycleStep -StepNum 1 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-download-upload-edit --folder `"Plans`" -f `"name:*Active*`" --dry-run"
+Invoke-LifecycleStep -StepNum 2 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-download-upload-edit --folder `"Plans`" -f `"name:*Active*`" -y"
 Invoke-LifecycleStep -StepNum 3 -Command "raps admin operation list --limit 1"
 Invoke-LifecycleStep -StepNum 4 -Command "raps admin operation status $env:OP_ID"
-Invoke-LifecycleStep -StepNum 5 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-only --folder `"Plans`" -f `"Active`" -y"
+Invoke-LifecycleStep -StepNum 5 -Command "raps admin folder rights user@co.com -a $env:ACCT -l view-only --folder `"Plans`" -f `"name:*Active*`" -y"
 Invoke-LifecycleStep -StepNum 6 -Command "raps admin operation status $env:OP2_ID"
 End-Lifecycle
 

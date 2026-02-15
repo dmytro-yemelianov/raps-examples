@@ -20,7 +20,7 @@ Invoke-Sample -Id "SR-210" -Slug "admin-project-list" `
 
 # SR-211: List projects with filters
 Invoke-Sample -Id "SR-211" -Slug "admin-project-list-filtered" `
-  -Command "raps admin project list -a $env:ACCOUNT_ID -f `"Tower`" --status active --platform acc --limit 10" `
+  -Command "raps admin project list -a $env:ACCOUNT_ID -f `"name:*Tower*`" --status active --platform acc --limit 10" `
   -Expects "Expected: Filtered project list" `
   -Review "Review: All results match filter, status, and platform"
 
@@ -47,8 +47,8 @@ Invoke-Sample -Id "SR-214" -Slug "admin-project-archive" `
 # SR-215: Create and manage project
 Start-Lifecycle -Id "SR-215" -Slug "project-lifecycle-admin" -Description "Create and manage project"
 Invoke-LifecycleStep -StepNum 1 -Command "raps admin project create -a $env:ACCT --name `"Bridge Retrofit`" -t `"Bridge`""
-Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT -f `"Bridge`""
-Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@company.com -a $env:ACCT -r `"project_admin`" -f `"Bridge Retrofit`" -y"
+Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT -f `"name:*Bridge*`""
+Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@company.com -a $env:ACCT -r `"project_admin`" -f `"name:*Bridge Retrofit*`" -y"
 Invoke-LifecycleStep -StepNum 4 -Command "raps admin project update -a $env:ACCT -p $env:PID --start-date `"2026-04-01`""
 Invoke-LifecycleStep -StepNum 5 -Command "raps admin project archive -a $env:ACCT -p $env:PID"
 Invoke-LifecycleStep -StepNum 6 -Command "raps admin project list -a $env:ACCT --status active"

@@ -38,13 +38,13 @@ run_sample "SR-192" "admin-user-list-filtered" \
 
 # SR-193: Bulk add user dry-run
 run_sample "SR-193" "admin-user-add-bulk-dryrun" \
-  "raps admin user add user@company.com -a \$ACCOUNT_ID -r \"project_admin\" -f \"Tower\" --dry-run" \
+  "raps admin user add user@company.com -a \$ACCOUNT_ID -r \"project_admin\" -f \"name:*Tower*\" --dry-run" \
   "Expected: Shows which projects affected" \
   "Review: Lists matched projects; no actual changes"
 
 # SR-194: Bulk add user execute
 run_sample "SR-194" "admin-user-add-bulk-execute" \
-  "raps admin user add user@company.com -a \$ACCOUNT_ID -r \"project_admin\" -f \"Tower\" -y" \
+  "raps admin user add user@company.com -a \$ACCOUNT_ID -r \"project_admin\" -f \"name:*Tower*\" -y" \
   "Expected: Adds user to matching projects" \
   "Review: Exit 0; summary shows projects added"
 
@@ -56,13 +56,13 @@ run_sample "SR-195" "admin-user-add-from-file" \
 
 # SR-196: Bulk remove user dry-run
 run_sample "SR-196" "admin-user-remove-bulk-dryrun" \
-  "raps admin user remove user@company.com -a \$ACCOUNT_ID -f \"Old Project\" --dry-run" \
+  "raps admin user remove user@company.com -a \$ACCOUNT_ID -f \"name:*Old Project*\" --dry-run" \
   "Expected: Shows projects user would be removed from" \
   "Review: Lists matched projects"
 
 # SR-197: Bulk update user role dry-run
 run_sample "SR-197" "admin-user-update-bulk-dryrun" \
-  "raps admin user update user@company.com -a \$ACCOUNT_ID -r \"viewer\" --from-role \"project_admin\" -f \"Archive\" --dry-run" \
+  "raps admin user update user@company.com -a \$ACCOUNT_ID -r \"viewer\" --from-role \"project_admin\" -f \"name:*Archive*\" --dry-run" \
   "Expected: Shows role change preview" \
   "Review: Lists projects where role would change"
 
@@ -101,12 +101,12 @@ run_sample "SR-202" "admin-user-import-csv" \
 # SR-203: Account admin onboards new team member
 lifecycle_start "SR-203" "new-employee-onboarding" "Account admin onboards new team member"
 lifecycle_step 1 "raps admin user list -a \$ACCT --search \"newuser@company.com\""
-lifecycle_step 2 "raps admin project list -a \$ACCT --status active -f \"Building\""
-lifecycle_step 3 "raps admin user add newuser@company.com -a \$ACCT -r \"project_admin\" -f \"Building\" --dry-run"
-lifecycle_step 4 "raps admin user add newuser@company.com -a \$ACCT -r \"project_admin\" -f \"Building\" -y"
+lifecycle_step 2 "raps admin project list -a \$ACCT --status active -f \"name:*Building*\""
+lifecycle_step 3 "raps admin user add newuser@company.com -a \$ACCT -r \"project_admin\" -f \"name:*Building*\" --dry-run"
+lifecycle_step 4 "raps admin user add newuser@company.com -a \$ACCT -r \"project_admin\" -f \"name:*Building*\" -y"
 lifecycle_step 5 "raps admin user list -a \$ACCT --search \"newuser@company.com\""
-lifecycle_step 6 "raps admin folder rights newuser@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Building\" --dry-run"
-lifecycle_step 7 "raps admin folder rights newuser@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Building\" -y"
+lifecycle_step 6 "raps admin folder rights newuser@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" --dry-run"
+lifecycle_step 7 "raps admin folder rights newuser@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" -y"
 lifecycle_end
 
 # SR-204: Remove departing employee
@@ -119,10 +119,10 @@ lifecycle_end
 
 # SR-205: Downgrade stale admins to viewers
 lifecycle_start "SR-205" "role-migration" "Downgrade stale admins to viewers"
-lifecycle_step 1 "raps admin project list -a \$ACCT --status active -f \"2024\""
+lifecycle_step 1 "raps admin project list -a \$ACCT --status active -f \"name:*2024*\""
 lifecycle_step 2 "raps admin user list -a \$ACCT --role \"project_admin\""
-lifecycle_step 3 "raps admin user update admin1@co.com -a \$ACCT -r \"viewer\" --from-role \"project_admin\" -f \"2024\" --dry-run"
-lifecycle_step 4 "raps admin user update admin1@co.com -a \$ACCT -r \"viewer\" --from-role \"project_admin\" -f \"2024\" -y"
+lifecycle_step 3 "raps admin user update admin1@co.com -a \$ACCT -r \"viewer\" --from-role \"project_admin\" -f \"name:*2024*\" --dry-run"
+lifecycle_step 4 "raps admin user update admin1@co.com -a \$ACCT -r \"viewer\" --from-role \"project_admin\" -f \"name:*2024*\" -y"
 lifecycle_step 5 "raps admin user list -a \$ACCT -p \$OLD_PROJECT --role \"project_admin\""
 lifecycle_end
 

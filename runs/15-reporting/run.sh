@@ -14,13 +14,13 @@ section_start "15-reporting" "Portfolio Reports"
 
 # SR-240: RFI summary report
 run_sample "SR-240" "report-rfi-summary" \
-  "raps report rfi-summary -a \$ACCOUNT_ID -f \"Tower\" --status open --since \"2026-01-01\"" \
+  "raps report rfi-summary -a \$ACCOUNT_ID -f \"name:*Tower*\" --status open --since \"2026-01-01\"" \
   "Expected: Aggregated RFI summary" \
   "Review: Per-project RFI counts"
 
 # SR-241: Issues summary report
 run_sample "SR-241" "report-issues-summary" \
-  "raps report issues-summary -a \$ACCOUNT_ID -f \"Phase 2\" --status open" \
+  "raps report issues-summary -a \$ACCOUNT_ID -f \"name:*Phase 2*\" --status open" \
   "Expected: Aggregated issue summary" \
   "Review: Per-project issue counts"
 
@@ -38,7 +38,7 @@ run_sample "SR-243" "report-checklists-summary" \
 
 # SR-244: Assets summary report
 run_sample "SR-244" "report-assets-summary" \
-  "raps report assets-summary -a \$ACCOUNT_ID -f \"Hospital\"" \
+  "raps report assets-summary -a \$ACCOUNT_ID -f \"name:*Hospital*\"" \
   "Expected: Asset summary" \
   "Review: Per-project counts by category"
 

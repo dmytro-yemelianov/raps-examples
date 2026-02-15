@@ -9,22 +9,22 @@ section_start "13-admin-folders" "Admin: Folder Permissions & Operations"
 
 # --- Pre-seed demo environment variables (override with real values) ---
 : "${ACCT:=demo-account-001}"
-: "${OPERATION_ID:=op-demo-001}"
-: "${OP_ID:=op-demo-001}"
-: "${OP2_ID:=op-demo-002}"
+: "${OPERATION_ID:=12345678-1234-1234-1234-123456789012}"
+: "${OP_ID:=12345678-1234-1234-1234-123456789012}"
+: "${OP2_ID:=12345678-1234-1234-1234-123456789013}"
 : "${PID:=b.demo-project-001}"
 
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-220: Grant folder rights dry-run
 run_sample "SR-220" "admin-folder-rights-dryrun" \
-  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Tower\" --dry-run" \
+  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" --dry-run" \
   "Expected: Shows which projects and folders would be affected" \
   "Review: Lists matched projects; no actual changes"
 
 # SR-221: Grant folder rights execute
 run_sample "SR-221" "admin-folder-rights-execute" \
-  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"Tower\" -y" \
+  "raps admin folder rights user@company.com -a \$ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" -y" \
   "Expected: Grants folder permissions across matching projects" \
   "Review: Exit 0; permissions applied"
 
@@ -68,11 +68,11 @@ run_sample "SR-227" "admin-operation-cancel" \
 
 # SR-228: Grant, verify, restrict folder access
 lifecycle_start "SR-228" "folder-permissions-lifecycle" "Grant, verify, restrict folder access"
-lifecycle_step 1 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"Active\" --dry-run"
-lifecycle_step 2 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"Active\" -y"
+lifecycle_step 1 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" --dry-run"
+lifecycle_step 2 "raps admin folder rights user@co.com -a \$ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" -y"
 lifecycle_step 3 "raps admin operation list --limit 1"
 lifecycle_step 4 "raps admin operation status \$OP_ID"
-lifecycle_step 5 "raps admin folder rights user@co.com -a \$ACCT -l view-only --folder \"Plans\" -f \"Active\" -y"
+lifecycle_step 5 "raps admin folder rights user@co.com -a \$ACCT -l view-only --folder \"Plans\" -f \"name:*Active*\" -y"
 lifecycle_step 6 "raps admin operation status \$OP2_ID"
 lifecycle_end
 

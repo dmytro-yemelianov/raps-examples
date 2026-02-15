@@ -11,13 +11,13 @@ if (-not $env:ACCOUNT_ID) { $env:ACCOUNT_ID = "demo-account-001" }
 
 # SR-240: RFI summary report
 Invoke-Sample -Id "SR-240" -Slug "report-rfi-summary" `
-  -Command "raps report rfi-summary -a $env:ACCOUNT_ID -f `"Tower`" --status open --since `"2026-01-01`"" `
+  -Command "raps report rfi-summary -a $env:ACCOUNT_ID -f `"name:*Tower*`" --status open --since `"2026-01-01`"" `
   -Expects "Expected: Aggregated RFI summary" `
   -Review "Review: Per-project RFI counts"
 
 # SR-241: Issues summary report
 Invoke-Sample -Id "SR-241" -Slug "report-issues-summary" `
-  -Command "raps report issues-summary -a $env:ACCOUNT_ID -f `"Phase 2`" --status open" `
+  -Command "raps report issues-summary -a $env:ACCOUNT_ID -f `"name:*Phase 2*`" --status open" `
   -Expects "Expected: Aggregated issue summary" `
   -Review "Review: Per-project issue counts"
 
@@ -35,7 +35,7 @@ Invoke-Sample -Id "SR-243" -Slug "report-checklists-summary" `
 
 # SR-244: Assets summary report
 Invoke-Sample -Id "SR-244" -Slug "report-assets-summary" `
-  -Command "raps report assets-summary -a $env:ACCOUNT_ID -f `"Hospital`"" `
+  -Command "raps report assets-summary -a $env:ACCOUNT_ID -f `"name:*Hospital*`"" `
   -Expects "Expected: Asset summary" `
   -Review "Review: Per-project counts by category"
 
