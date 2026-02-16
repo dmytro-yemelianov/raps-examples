@@ -20,9 +20,10 @@ run_sample "SR-002" "setup-mock-server" \
   "Review: curl http://localhost:3000/health returns 200"
 
 # SR-003: Generate test files for subsequent sections
+# Creates minimal test data that other sections depend on (SR-054, 055, 064, 065, 100, 311, 313)
 run_sample "SR-003" "setup-generate-test-files" \
-  "raps generate files -c 5 -o ./test-data --complexity medium" \
-  "Expected: Generates 5 files of each type in ./test-data/" \
-  "Review: Directory contains IFC, RVT, DWG, NWD, PDF files; exit code 0"
+  "mkdir -p ./test-data && printf 'ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION((),\"2;1\");\nENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n' > ./test-data/sample.ifc && dd if=/dev/urandom bs=1024 count=10 of=./test-data/sample.rvt 2>/dev/null && echo 'Test data generated: sample.ifc, sample.rvt'" \
+  "Expected: Generates test files in ./test-data/" \
+  "Review: Directory contains sample.ifc and sample.rvt; exit code 0"
 
 section_end

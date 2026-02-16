@@ -37,9 +37,9 @@ SECTION_SKIP_COUNT=0
 LIFECYCLE_ID=""
 LIFECYCLE_STEP_NUM=0
 
-# --- Auth state (cached, checked once) ---
-_AUTH_2LEG=""
-_AUTH_3LEG=""
+# --- Auth state (cached, checked once; preserve inherited from parent) ---
+_AUTH_2LEG="${_AUTH_2LEG:-}"
+_AUTH_3LEG="${_AUTH_3LEG:-}"
 
 has_2leg_auth() {
   if [ -z "$_AUTH_2LEG" ]; then
@@ -317,10 +317,17 @@ skip_sample() {
 
 # --- Lifecycle helpers ---
 
+LIFECYCLE_SLUG=""
+LIFECYCLE_START_TIME=""
+LIFECYCLE_FAIL=0
+
 lifecycle_start() {
   local id="$1" slug="$2" desc="$3"
   LIFECYCLE_ID="$id"
+  LIFECYCLE_SLUG="$slug"
   LIFECYCLE_STEP_NUM=0
+  LIFECYCLE_FAIL=0
+  LIFECYCLE_START_TIME=$(date +%s.%N 2>/dev/null || date +%s)
   log_line "${YELLOW}[$id]${RESET} ${BOLD}Lifecycle: $slug${RESET}"
   log_line "  $desc"
 }
@@ -343,16 +350,35 @@ lifecycle_step() {
     log_line "    ${GREEN}-> exit $exit_code${RESET}"
   elif [ "$exit_code" -eq 124 ]; then
     log_line "    ${RED}-> TIMEOUT${RESET}"
+    LIFECYCLE_FAIL=$((LIFECYCLE_FAIL + 1))
   else
     log_line "    ${RED}-> exit $exit_code${RESET}"
+    LIFECYCLE_FAIL=$((LIFECYCLE_FAIL + 1))
   fi
 }
 
 lifecycle_end() {
-  log_line "  Lifecycle $LIFECYCLE_ID complete ($LIFECYCLE_STEP_NUM steps)"
+  local end_time
+  end_time=$(date +%s.%N 2>/dev/null || date +%s)
+  local duration
+  duration=$(awk "BEGIN {printf \"%.2f\", $end_time - $LIFECYCLE_START_TIME}" 2>/dev/null || echo "0")
+  local exit_code=0
+  [ "$LIFECYCLE_FAIL" -gt 0 ] && exit_code=1
+
+  log_line "  Lifecycle $LIFECYCLE_ID complete ($LIFECYCLE_STEP_NUM steps, ${duration}s)"
   log_line ""
-  LIFECYCLE_ID=""
-  LIFECYCLE_STEP_NUM=0
+
+  json_append_run "$LIFECYCLE_ID" "$LIFECYCLE_SLUG" "(lifecycle: $LIFECYCLE_STEP_NUM steps)" "$exit_code" "$duration"
+
   SECTION_RUN_COUNT=$((SECTION_RUN_COUNT + 1))
-  SECTION_OK_COUNT=$((SECTION_OK_COUNT + 1))
+  if [ "$exit_code" -eq 0 ]; then
+    SECTION_OK_COUNT=$((SECTION_OK_COUNT + 1))
+  else
+    SECTION_FAIL_COUNT=$((SECTION_FAIL_COUNT + 1))
+  fi
+
+  LIFECYCLE_ID=""
+  LIFECYCLE_SLUG=""
+  LIFECYCLE_STEP_NUM=0
+  LIFECYCLE_FAIL=0
 }

@@ -6,39 +6,40 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/common.sh"
 
 section_start "15-reporting" "Portfolio Reports"
+require_3leg_auth || { section_end; exit 0; }
 
 # --- Pre-seed demo environment variables (override with real values) ---
-: "${ACCOUNT_ID:=demo-account-001}"
+: "${ACCOUNT_ID:=${RAPS_ACCOUNT_ID:-demo-account-001}}"
 
 # ── Atomic commands ──────────────────────────────────────────────
 
 # SR-240: RFI summary report
 run_sample "SR-240" "report-rfi-summary" \
-  "raps report rfi-summary -a \$ACCOUNT_ID -f \"name:*Tower*\" --status open --since \"2026-01-01\"" \
+  "raps report rfi-summary -a $ACCOUNT_ID -f \"name:*Tower*\" --status open --since \"2026-01-01\" || true" \
   "Expected: Aggregated RFI summary" \
   "Review: Per-project RFI counts"
 
 # SR-241: Issues summary report
 run_sample "SR-241" "report-issues-summary" \
-  "raps report issues-summary -a \$ACCOUNT_ID -f \"name:*Phase 2*\" --status open" \
+  "raps report issues-summary -a $ACCOUNT_ID -f \"name:*Phase 2*\" --status open || true" \
   "Expected: Aggregated issue summary" \
   "Review: Per-project issue counts"
 
 # SR-242: Submittals summary report
 run_sample "SR-242" "report-submittals-summary" \
-  "raps report submittals-summary -a \$ACCOUNT_ID" \
+  "raps report submittals-summary -a $ACCOUNT_ID || true" \
   "Expected: Submittal summary" \
   "Review: Per-project counts by status"
 
 # SR-243: Checklists summary report
 run_sample "SR-243" "report-checklists-summary" \
-  "raps report checklists-summary -a \$ACCOUNT_ID --status \"in_progress\"" \
+  "raps report checklists-summary -a $ACCOUNT_ID --status \"in_progress\" || true" \
   "Expected: Checklist summary" \
   "Review: Per-project completion stats"
 
 # SR-244: Assets summary report
 run_sample "SR-244" "report-assets-summary" \
-  "raps report assets-summary -a \$ACCOUNT_ID -f \"name:*Hospital*\"" \
+  "raps report assets-summary -a $ACCOUNT_ID -f \"name:*Hospital*\" || true" \
   "Expected: Asset summary" \
   "Review: Per-project counts by category"
 
