@@ -11,6 +11,9 @@ set -euo pipefail
 # --- OAuth automation (optional) ---
 source "$(dirname "${BASH_SOURCE[0]}")/oauth-login.sh" 2>/dev/null || true
 
+# --- Auto-discover real IDs (hubs, projects, accounts) ---
+source "$(dirname "${BASH_SOURCE[0]}")/discover-ids.sh" 2>/dev/null || true
+
 # --- Directories ---
 RUNS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOGS_ROOT="${LOGS_ROOT:-$RUNS_DIR/../logs}"
@@ -30,8 +33,91 @@ CURRENT_SECTION_JSON=""
 SECTION_RUN_COUNT=0
 SECTION_OK_COUNT=0
 SECTION_FAIL_COUNT=0
+SECTION_SKIP_COUNT=0
 LIFECYCLE_ID=""
 LIFECYCLE_STEP_NUM=0
+
+# --- Auth state (cached, checked once) ---
+_AUTH_2LEG=""
+_AUTH_3LEG=""
+
+has_2leg_auth() {
+  if [ -z "$_AUTH_2LEG" ]; then
+    if [ "$RAPS_TARGET" = "mock" ]; then
+      _AUTH_2LEG=yes
+    elif raps auth test --quiet 2>/dev/null; then
+      _AUTH_2LEG=yes
+    else
+      _AUTH_2LEG=no
+    fi
+  fi
+  [ "$_AUTH_2LEG" = "yes" ]
+}
+
+has_3leg_auth() {
+  if [ -z "$_AUTH_3LEG" ]; then
+    if [ "$RAPS_TARGET" = "mock" ]; then
+      _AUTH_3LEG=yes
+    elif raps auth status --quiet 2>/dev/null | grep -q '"logged_in": true\|logged_in.*true'; then
+      _AUTH_3LEG=yes
+    else
+      _AUTH_3LEG=no
+    fi
+  fi
+  [ "$_AUTH_3LEG" = "yes" ]
+}
+
+# Guard: call at top of section. If auth missing, logs skip and returns 1.
+require_2leg_auth() {
+  if ! has_2leg_auth; then
+    log_line "  ${YELLOW}SKIPPED: 2-legged auth not available${RESET}"
+    return 1
+  fi
+}
+
+require_3leg_auth() {
+  if ! has_3leg_auth; then
+    log_line "  ${YELLOW}SKIPPED: 3-legged auth not available (run: raps auth login --default)${RESET}"
+    return 1
+  fi
+}
+
+# Save 3-legged token so it can be restored after destructive auth operations.
+# Reads raw token from Windows Credential Manager via PowerShell (Rust keyring stores UTF-16).
+# Exported so child processes (bash sub-scripts) also see it.
+save_auth() {
+  export _RAPS_SAVED_3LEG_TOKEN
+  local script_dir
+  script_dir="$(dirname "${BASH_SOURCE[0]}")"
+  _RAPS_SAVED_3LEG_TOKEN=$(powershell -ExecutionPolicy Bypass -File "$(win_path "$script_dir/read-token.ps1")" 2>/dev/null || echo "")
+}
+
+# Restore auth after destructive operations (logout).
+# Re-verifies 2-leg (always available with env vars) and restores saved 3-leg token.
+restore_auth() {
+  _AUTH_2LEG=""
+  _AUTH_3LEG=""
+  # 2-leg always works if env vars are set
+  has_2leg_auth || true
+  # Restore saved 3-leg token if available
+  if [ -n "${_RAPS_SAVED_3LEG_TOKEN:-}" ]; then
+    raps auth login --token "$_RAPS_SAVED_3LEG_TOKEN" &>/dev/null || true
+    _AUTH_3LEG=""
+    has_3leg_auth || true
+    return
+  fi
+  # Fallback: try oauth_auto_login
+  if type oauth_auto_login &>/dev/null; then
+    oauth_auto_login 2>/dev/null || true
+    _AUTH_3LEG=""
+    has_3leg_auth || true
+  fi
+}
+
+# Clear cached 3-leg auth state so it gets re-checked on next use.
+recheck_3leg_auth() {
+  _AUTH_3LEG=""
+}
 
 # --- Colors (disabled if NO_COLOR set) ---
 if [ -z "${NO_COLOR:-}" ]; then
@@ -100,40 +186,44 @@ log_line() {
   echo -e "$msg" | tee -a "$CURRENT_SECTION_LOG"
 }
 
+_JSON_SECTION_NAME=""
+_JSON_SECTION_TITLE=""
+_JSON_TIMESTAMP=""
+_JSON_RUNS=()
+
 json_init() {
   local name="$1" title="$2"
-  cat > "$CURRENT_SECTION_JSON" << EOF
-{
-  "section": "$name",
-  "title": "$title",
-  "target": "$RAPS_TARGET",
-  "timestamp": "$(date -Iseconds)",
-  "runs": []
-}
-EOF
+  _JSON_SECTION_NAME="$name"
+  _JSON_SECTION_TITLE="$title"
+  _JSON_TIMESTAMP="$(date -Iseconds)"
+  _JSON_RUNS=()
 }
 
 json_append_run() {
   local id="$1" slug="$2" command="$3" exit_code="$4" duration="$5"
-  local py_path
-  py_path="$(win_path "$CURRENT_SECTION_JSON")"
-  _JSON_CMD="$command" python3 - "$py_path" "$id" "$slug" "$exit_code" "$duration" "$RAPS_TARGET" <<'PYEOF'
-import json, sys, os
-path, rid, slug, exit_code, duration, target = sys.argv[1:7]
-command = os.environ.get('_JSON_CMD', '')
-with open(path, 'r') as f:
-    data = json.load(f)
-data['runs'].append({
-    'id': rid,
-    'slug': slug,
-    'command': command,
-    'exit_code': int(exit_code),
-    'duration_seconds': float(duration),
-    'target': target
-})
-with open(path, 'w') as f:
-    json.dump(data, f, indent=2)
-PYEOF
+  # Escape backslashes, double quotes, and control characters for JSON
+  local escaped_cmd
+  escaped_cmd=$(printf '%s' "$command" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g')
+  local escaped_slug
+  escaped_slug=$(printf '%s' "$slug" | sed 's/\\/\\\\/g; s/"/\\"/g')
+  _JSON_RUNS+=("$(printf '    {\n      "id": "%s",\n      "slug": "%s",\n      "command": "%s",\n      "exit_code": %s,\n      "duration_seconds": %s,\n      "target": "%s"\n    }' \
+    "$id" "$escaped_slug" "$escaped_cmd" "$exit_code" "$duration" "$RAPS_TARGET")")
+}
+
+# Write accumulated JSON runs to disk. Called at start of section_end().
+json_finalize() {
+  {
+    printf '{\n  "section": "%s",\n  "title": "%s",\n  "target": "%s",\n  "timestamp": "%s",\n  "runs": [\n' \
+      "$_JSON_SECTION_NAME" "$_JSON_SECTION_TITLE" "$RAPS_TARGET" "$_JSON_TIMESTAMP"
+    local i
+    for (( i=0; i<${#_JSON_RUNS[@]}; i++ )); do
+      if (( i > 0 )); then
+        printf ',\n'
+      fi
+      printf '%s' "${_JSON_RUNS[$i]}"
+    done
+    printf '\n  ]\n}\n'
+  } > "$CURRENT_SECTION_JSON"
 }
 
 # --- Section ---
@@ -146,6 +236,7 @@ section_start() {
   SECTION_RUN_COUNT=0
   SECTION_OK_COUNT=0
   SECTION_FAIL_COUNT=0
+  SECTION_SKIP_COUNT=0
 
   json_init "$name" "$title"
 
@@ -158,9 +249,15 @@ section_start() {
 }
 
 section_end() {
+  json_finalize
   log_line ""
   log_line "----------------------------------------"
-  log_line "Section $CURRENT_SECTION: $SECTION_RUN_COUNT runs ($SECTION_OK_COUNT ok, $SECTION_FAIL_COUNT fail)"
+  local summary="$SECTION_RUN_COUNT runs ($SECTION_OK_COUNT ok, $SECTION_FAIL_COUNT fail"
+  if [ "$SECTION_SKIP_COUNT" -gt 0 ]; then
+    summary="$summary, $SECTION_SKIP_COUNT skip"
+  fi
+  summary="$summary)"
+  log_line "Section $CURRENT_SECTION: $summary"
   log_line "Log:  $CURRENT_SECTION_LOG"
   log_line "JSON: $CURRENT_SECTION_JSON"
   log_line ""
@@ -190,7 +287,7 @@ run_sample() {
 
   local end_time
   end_time=$(date +%s.%N 2>/dev/null || date +%s)
-  duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "0")
+  duration=$(awk "BEGIN {printf \"%.2f\", $end_time - $start_time}" 2>/dev/null || echo "0")
 
   if [ "$exit_code" -eq 0 ]; then
     log_line "  ${GREEN}Exit: $exit_code (${duration}s)${RESET}"
@@ -205,6 +302,17 @@ run_sample() {
   log_line ""
 
   json_append_run "$id" "$slug" "$actual_cmd" "$exit_code" "$duration"
+}
+
+# Skip a sample (counted as skip, not fail)
+skip_sample() {
+  local id="$1" slug="$2" reason="${3:-skipped}"
+  SECTION_RUN_COUNT=$((SECTION_RUN_COUNT + 1))
+  SECTION_SKIP_COUNT=$((SECTION_SKIP_COUNT + 1))
+  log_line "${CYAN}[$id]${RESET} $slug"
+  log_line "  ${YELLOW}SKIP: $reason${RESET}"
+  log_line ""
+  json_append_run "$id" "$slug" "(skipped: $reason)" "0" "0"
 }
 
 # --- Lifecycle helpers ---

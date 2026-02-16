@@ -9,6 +9,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/common.sh"
 export RUN_TIMESTAMP="${RUN_TIMESTAMP:-$(date +%Y-%m-%d-%H-%M)}"
 export LOGS_ROOT="${LOGS_ROOT:-$SCRIPT_DIR/../logs}"
 export RAPS_TARGET="${RAPS_TARGET:-real}"
@@ -71,7 +72,18 @@ PASSED=0
 FAILED=0
 SKIPPED=0
 
-for section in "${SECTIONS[@]}"; do
+# Save current 3-leg token so we can restore it after auth section destroys it
+save_auth
+
+# --- Phase 1: Sequential sections (ordering dependencies) ---
+SEQUENTIAL_SECTIONS=(00-setup 01-auth)
+
+for section in "${SEQUENTIAL_SECTIONS[@]}"; do
+  # Skip if not in requested sections
+  found=false
+  for s in "${SECTIONS[@]}"; do [[ "$s" == "$section" ]] && found=true && break; done
+  $found || continue
+
   SECTION_SCRIPT="$SCRIPT_DIR/$section/run.sh"
 
   if [ -f "$SECTION_SCRIPT" ]; then
@@ -84,11 +96,74 @@ for section in "${SECTIONS[@]}"; do
       FAILED=$((FAILED + 1))
     fi
     TOTAL=$((TOTAL + 1))
+
+    # After 01-auth (which may logout), restore the saved 3-leg token
+    if [ "$section" = "01-auth" ]; then
+      echo "  Re-authenticating after auth section..."
+      restore_auth
+      recheck_3leg_auth
+    fi
   else
     echo "  SKIP: $section (no run.sh)"
     SKIPPED=$((SKIPPED + 1))
   fi
 done
+
+# --- Phase 2: Parallel sections (no ordering dependencies) ---
+RAPS_PARALLEL="${RAPS_PARALLEL:-6}"
+
+# Collect remaining sections (everything not in SEQUENTIAL_SECTIONS)
+PARALLEL_QUEUE=()
+for section in "${SECTIONS[@]}"; do
+  skip=false
+  for seq in "${SEQUENTIAL_SECTIONS[@]}"; do
+    [[ "$section" == "$seq" ]] && skip=true && break
+  done
+  $skip && continue
+  PARALLEL_QUEUE+=("$section")
+done
+
+if [ ${#PARALLEL_QUEUE[@]} -gt 0 ]; then
+  echo ""
+  echo "--- Parallel phase (batch size: $RAPS_PARALLEL) ---"
+  echo ""
+
+  i=0
+  while [ $i -lt ${#PARALLEL_QUEUE[@]} ]; do
+    # Launch a batch
+    declare -A BATCH_PIDS=()
+    BATCH_SECTIONS=()
+    for (( j=0; j<RAPS_PARALLEL && i<${#PARALLEL_QUEUE[@]}; j++, i++ )); do
+      section="${PARALLEL_QUEUE[$i]}"
+      SECTION_SCRIPT="$SCRIPT_DIR/$section/run.sh"
+
+      if [ -f "$SECTION_SCRIPT" ]; then
+        echo "  Starting: $section"
+        bash "$SECTION_SCRIPT" > "$LOG_DIR/${section}.stdout" 2>&1 &
+        BATCH_PIDS[$section]=$!
+        BATCH_SECTIONS+=("$section")
+        TOTAL=$((TOTAL + 1))
+      else
+        echo "  SKIP: $section (no run.sh)"
+        SKIPPED=$((SKIPPED + 1))
+      fi
+    done
+
+    # Wait for batch to finish and collect results
+    for section in "${BATCH_SECTIONS[@]}"; do
+      pid=${BATCH_PIDS[$section]}
+      if wait "$pid"; then
+        echo "  OK: $section"
+        PASSED=$((PASSED + 1))
+      else
+        echo "  FAIL: $section"
+        FAILED=$((FAILED + 1))
+      fi
+    done
+
+    unset BATCH_PIDS
+  done
+fi
 
 echo ""
 echo "========================================"
