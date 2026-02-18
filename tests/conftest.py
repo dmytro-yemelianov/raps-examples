@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -111,6 +112,52 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Auth status notification
+# ---------------------------------------------------------------------------
+
+
+def _notify_auth_status(mgr: AuthManager, target: str) -> None:
+    """Warn the user early when authentication is missing."""
+    if target == "mock":
+        return
+
+    has_2leg = mgr.has_2leg()
+    has_3leg = mgr.has_3leg()
+
+    if has_2leg and has_3leg:
+        return
+
+    lines = [
+        "",
+        "=" * 60,
+        " RAPS Authentication Status",
+        "=" * 60,
+        f"  2-legged (client credentials): {'OK' if has_2leg else 'MISSING'}",
+        f"  3-legged (user login):         {'OK' if has_3leg else 'MISSING'}",
+        "-" * 60,
+    ]
+    if not has_2leg:
+        lines.append("  Set APS_CLIENT_ID and APS_CLIENT_SECRET env vars")
+    if not has_3leg:
+        lines.append("  Run: raps auth login --preset all")
+    lines += [
+        "",
+        "  Tests requiring missing auth will be skipped.",
+        "=" * 60,
+        "",
+    ]
+    sys.stderr.write("\n".join(lines) + "\n")
+
+    if sys.stdin.isatty():
+        try:
+            answer = input("Continue? [Y/n] ").strip().lower()
+        except EOFError:
+            answer = ""
+        if answer == "n":
+            pytest.exit("Aborted by user — fix auth and re-run.", returncode=1)
+
+
+# ---------------------------------------------------------------------------
 # Session-scoped fixtures
 # ---------------------------------------------------------------------------
 
@@ -151,6 +198,7 @@ def auth_manager(
     # Save token before any destructive tests
     if _target != "mock":
         mgr.save_token()
+    _notify_auth_status(mgr, _target)
     # Stash on session for marker-based skip logic
     request.session._auth_manager = mgr  # type: ignore[attr-defined]
     return mgr
