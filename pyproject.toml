@@ -1,0 +1,37 @@
+[project]
+name = "raps-examples"
+version = "0.1.0"
+description = "RAPS CLI sample runs and validation suite"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tests*"]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-xdist>=3.5",
+    "pytest-html>=4.0",
+    "python-dotenv>=1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "xdist_group(name): Group for pytest-xdist parallel runs (e.g. 00-setup)",
+    "sr(id): Sample Run ID (e.g. SR-051)",
+    "lifecycle: Test exercises a multi-step lifecycle",
+    "require_2leg: Requires 2-legged (client credentials) auth",
+    "require_3leg: Requires 3-legged (user login) auth",
+    "require_acc: Requires ACC account (account_id discovered)",
+]
+# Group tests by xdist_group marker for parallel safety
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "-q",
+]
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]

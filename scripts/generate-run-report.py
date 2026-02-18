@@ -77,14 +77,18 @@ def compute_summary(sections):
 
     for sec in sections:
         runs = sec.get("runs", [])
+        # Prefer cli_exit_code (actual CLI result) over exit_code (pytest outcome)
+        def _effective_exit(r):
+            return r.get("cli_exit_code", r.get("exit_code", 0))
+
         ok = sum(
             1
             for r in runs
-            if r.get("exit_code") == 0
+            if _effective_exit(r) == 0
             and not r.get("command", "").startswith("(skipped")
         )
         skip = sum(1 for r in runs if r.get("command", "").startswith("(skipped"))
-        timeout = sum(1 for r in runs if r.get("exit_code") == 124)
+        timeout = sum(1 for r in runs if _effective_exit(r) == 124)
         fail = len(runs) - ok - skip
         sec_duration = sum(r.get("duration_seconds", 0) for r in runs)
         total_runs += len(runs)
@@ -579,7 +583,12 @@ function renderLog() {{
   if (activeSection === null) return;
   const sec = DATA[activeSection];
   const viewer = document.getElementById('logViewer');
-  const log = sec.log || '';
+  let log = sec.log || '';
+  /* If no section-level log, build from individual run logs */
+  if (!log.trim()) {{
+    const parts = sec.runs.map(r => r.log || '').filter(l => l.trim());
+    log = parts.join('\\n');
+  }}
   if (!log.trim()) {{
     viewer.innerHTML = '<div class="log-empty">No log output available for this section.</div>';
     return;
@@ -613,7 +622,9 @@ function extractRunLog(log, runId) {{
 
 function openDrawer(runId, slug) {{
   const sec = DATA[activeSection];
-  const log = extractRunLog(sec.log || '', runId);
+  const run = sec.runs.find(r => r.id === runId);
+  /* Prefer embedded per-run log, fall back to section log extraction */
+  let log = (run && run.log) ? run.log : extractRunLog(sec.log || '', runId);
   selectedRunId = runId;
   document.getElementById('drawerRunId').textContent = runId;
   document.getElementById('drawerRunSlug').textContent = ' — ' + slug;
@@ -646,10 +657,11 @@ function renderRuns() {{
   const filtered = sec.runs.filter(r => {{
     const isSkip = r.command && r.command.startsWith('(skipped');
     const isLifecycle = r.command && r.command.startsWith('(lifecycle');
-    if (activeFilter === 'ok' && (r.exit_code !== 0 || isSkip)) return false;
-    if (activeFilter === 'fail' && (r.exit_code === 0 || isSkip)) return false;
+    const code = r.cli_exit_code ?? r.exit_code ?? 0;
+    if (activeFilter === 'ok' && (code !== 0 || isSkip)) return false;
+    if (activeFilter === 'fail' && (code === 0 || isSkip)) return false;
     if (activeFilter === 'skip' && !isSkip) return false;
-    if (activeFilter === 'timeout' && r.exit_code !== 124) return false;
+    if (activeFilter === 'timeout' && code !== 124) return false;
     if (q) {{
       const hay = `${{r.id}} ${{r.slug}} ${{r.command}}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -657,15 +669,17 @@ function renderRuns() {{
     return true;
   }});
 
+  const effExit = (r) => r.cli_exit_code ?? r.exit_code ?? 0;
   tbody.innerHTML = filtered.map(r => {{
     const isSkip = r.command && r.command.startsWith('(skipped');
     const isLifecycle = r.command && r.command.startsWith('(lifecycle');
+    const code = effExit(r);
     let cls, label;
     if (isSkip) {{ cls = 'skip'; label = 'SKIP'; }}
-    else if (isLifecycle) {{ cls = r.exit_code === 0 ? 'lifecycle' : 'err'; label = isLifecycle ? 'LC' : r.exit_code; }}
-    else if (r.exit_code === 0) {{ cls = 'e0'; label = '0'; }}
-    else if (r.exit_code === 124) {{ cls = 'e124'; label = 'TIMEOUT'; }}
-    else {{ cls = 'err'; label = r.exit_code; }}
+    else if (isLifecycle) {{ cls = code === 0 ? 'lifecycle' : 'err'; label = isLifecycle ? 'LC' : code; }}
+    else if (code === 0) {{ cls = 'e0'; label = '0'; }}
+    else if (code === 124) {{ cls = 'e124'; label = 'TIMEOUT'; }}
+    else {{ cls = 'err'; label = code; }}
     const dur = typeof r.duration_seconds === 'number' && !isSkip ? r.duration_seconds.toFixed(1) + 's' : '-';
     const sel = r.id === selectedRunId ? ' selected' : '';
     return `
