@@ -31,6 +31,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "-q",
+    "--dist=loadgroup",
 ]
 filterwarnings = [
     "ignore::pytest.PytestCollectionWarning",

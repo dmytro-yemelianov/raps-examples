@@ -176,22 +176,22 @@ def test_sr407_workflow_webhook_driven_automation(raps):
 def test_sr408_workflow_multi_profile_operations(raps):
     lc = raps.lifecycle("SR-408", "workflow-multi-profile-operations",
                         "Consultant switches profiles")
-    lc.step("raps config profile create client-a")
-    lc.step("raps config profile use client-a")
+    lc.step("raps config profile create wf-client-a")
+    lc.step("raps config profile use wf-client-a")
     lc.step(f"raps config set client_id {CLIENT_A_ID}")
     lc.step(f"raps config set client_secret {CLIENT_A_SECRET}")
-    lc.step("raps config profile create client-b")
-    lc.step("raps config profile use client-b")
+    lc.step("raps config profile create wf-client-b")
+    lc.step("raps config profile use wf-client-b")
     lc.step(f"raps config set client_id {CLIENT_B_ID}")
     lc.step(f"raps config set client_secret {CLIENT_B_SECRET}")
-    lc.step("raps config profile use client-a")
+    lc.step("raps config profile use wf-client-a")
     lc.step("raps auth test", may_fail=True)
     lc.step("raps bucket list", may_fail=True)
-    lc.step("raps config profile use client-b")
+    lc.step("raps config profile use wf-client-b")
     lc.step("raps auth test", may_fail=True)
     lc.step("raps bucket list", may_fail=True)
-    lc.step("raps config profile delete client-a")
-    lc.step("raps config profile delete client-b")
+    lc.step("raps config profile delete wf-client-a")
+    lc.step("raps config profile delete wf-client-b")
     lc.assert_all_passed()
 
 
@@ -200,9 +200,9 @@ def test_sr408_workflow_multi_profile_operations(raps):
 def test_sr409_workflow_pipeline_yaml_automation(raps):
     lc = raps.lifecycle("SR-409", "workflow-pipeline-yaml-automation",
                         "Create, validate, run pipeline")
-    lc.step("raps pipeline sample -o ./my-pipeline.yaml", may_fail=True)
-    lc.step("raps pipeline validate ./my-pipeline.yaml", may_fail=True)
+    lc.step("raps pipeline sample -o ./wf-pipeline.yaml", may_fail=True)
+    lc.step("raps pipeline validate ./wf-pipeline.yaml", may_fail=True)
     lc.step("raps generate files -c 3 -o ./pipeline-input/ --complexity medium", may_fail=True)
-    lc.step("raps pipeline run ./my-pipeline.yaml", may_fail=True)
+    lc.step("raps pipeline run ./wf-pipeline.yaml", may_fail=True)
     lc.step("raps admin operation list --limit 1", may_fail=True)
     lc.assert_all_passed()
