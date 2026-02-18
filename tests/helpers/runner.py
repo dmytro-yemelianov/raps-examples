@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import functools
 import os
+import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -45,6 +48,7 @@ def clear_captured_logs() -> None:
         _captured_logs.clear()
 
 
+@functools.cache
 def _find_bash() -> str | None:
     """Return path to bash if on Windows, else None (Unix shell is fine)."""
     if sys.platform != "win32":
@@ -57,6 +61,10 @@ def _find_bash() -> str | None:
     if os.path.isfile(git_bash):
         return git_bash
     return None
+
+
+# Shell metacharacters that require bash -c wrapping
+_NEEDS_SHELL_RE = re.compile(r'[|&;<>`$]|2>&1|/dev/')
 
 
 def _raps_bin_dir(cwd: str | None) -> str | None:
@@ -253,20 +261,35 @@ class RapsRunner:
     ) -> RunResult:
         """Run a command and return the result."""
         effective_timeout = timeout or self.timeout
-
-        # On Windows, shell=True uses cmd.exe which can't handle Unix
-        # syntax (mkdir -p, /dev/urandom, etc.).  Run through bash instead.
         bash = _find_bash()
 
-        # Use workspace-built raps binary when available (path format for WSL vs Git Bash)
-        command = _resolve_raps_command(command, self._raps_bin, bash)
+        # Determine execution strategy: direct (fast) vs bash -c (shell features)
+        needs_shell = bool(_NEEDS_SHELL_RE.search(command))
+
+        if needs_shell:
+            # Shell features needed — route through bash
+            resolved = _resolve_raps_command(command, self._raps_bin, bash)
+            cmd_args = [bash, "-c", resolved] if bash else resolved
+            use_shell = not bash
+        elif self._raps_bin and command.strip().startswith("raps "):
+            # Simple raps command — run binary directly (skip bash overhead)
+            argv = command.strip().split(None, 1)
+            raps_args = argv[1] if len(argv) > 1 else ""
+            cmd_args = [self._raps_bin] + shlex.split(raps_args)
+            use_shell = False
+            command = _resolve_raps_command(command, self._raps_bin, bash)
+        else:
+            # Non-raps simple command
+            resolved = _resolve_raps_command(command, self._raps_bin, bash)
+            cmd_args = [bash, "-c", resolved] if bash else resolved
+            use_shell = not bash
 
         start = time.monotonic()
         timed_out = False
         try:
             proc = subprocess.run(
-                [bash, "-c", command] if bash else command,
-                shell=not bash,
+                cmd_args,
+                shell=use_shell,
                 capture_output=True,
                 text=True,
                 timeout=effective_timeout,
