@@ -159,7 +159,7 @@ def build_raps_env(
         except (OSError, ImportError):
             pass
     if target == "mock":
-        env["APS_BASE_URL"] = mock_base_url
+        env.setdefault("APS_BASE_URL", mock_base_url)
         env.setdefault("APS_CLIENT_ID", "mock-client-id")
         env.setdefault("APS_CLIENT_SECRET", "mock-client-secret")
     raps_dir = _raps_bin_dir(cwd)

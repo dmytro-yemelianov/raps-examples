@@ -17,16 +17,21 @@ _WEBHOOK_CREATE_RE = re.compile(r"raps webhooks create")
 
 
 def _find_yr_binary(cwd: str | None) -> str | None:
-    """Return full path to yr binary built from yr repo, or None."""
-    if not cwd:
-        return None
-    examples_root = Path(cwd).resolve()
-    workspace = examples_root.parent
-    yr_root = workspace / "yr"
-    for profile in ("release", "debug"):
-        exe = yr_root / "target" / profile / ("yr.exe" if sys.platform == "win32" else "yr")
-        if exe.is_file():
-            return str(exe)
+    """Return full path to yr binary built from yr repo, or fall back to PATH."""
+    import shutil
+
+    if cwd:
+        examples_root = Path(cwd).resolve()
+        workspace = examples_root.parent
+        yr_root = workspace / "yr"
+        for profile in ("release", "debug"):
+            exe = yr_root / "target" / profile / ("yr.exe" if sys.platform == "win32" else "yr")
+            if exe.is_file():
+                return str(exe)
+    # Fall back to yr on PATH (e.g. Docker container)
+    found = shutil.which("yr")
+    if found:
+        return found
     return None
 
 
