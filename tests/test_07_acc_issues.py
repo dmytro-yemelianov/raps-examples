@@ -25,7 +25,6 @@ def test_sr130_issue_list(raps, ids):
         f"raps issue list {project_id}",
         sr_id="SR-130",
         slug="issue-list",
-        may_fail=True,
     )
 
 
@@ -36,7 +35,6 @@ def test_sr131_issue_types(raps, ids):
         f"raps issue types {project_id}",
         sr_id="SR-131",
         slug="issue-types",
-        may_fail=True,
     )
 
 
@@ -48,7 +46,6 @@ def test_sr132_issue_create(raps, ids):
         f' --description "Visible crack near column C4"',
         sr_id="SR-132",
         slug="issue-create",
-        may_fail=True,
     )
 
 
@@ -59,7 +56,6 @@ def test_sr133_issue_update(raps, ids):
         f'raps issue update {project_id} {ISSUE_ID} --title "Cracked concrete on Level 2 - URGENT"',
         sr_id="SR-133",
         slug="issue-update",
-        may_fail=True,
     )
 
 
@@ -70,7 +66,6 @@ def test_sr134_issue_transition(raps, ids):
         f'raps issue transition {project_id} {ISSUE_ID} --to "in_review"',
         sr_id="SR-134",
         slug="issue-transition",
-        may_fail=True,
     )
 
 
@@ -81,7 +76,6 @@ def test_sr135_issue_comment_add(raps, ids):
         f'raps issue comment add {project_id} {ISSUE_ID} --body "Structural engineer notified"',
         sr_id="SR-135",
         slug="issue-comment-add",
-        may_fail=True,
     )
 
 
@@ -92,7 +86,6 @@ def test_sr136_issue_comment_list(raps, ids):
         f"raps issue comment list {project_id} {ISSUE_ID}",
         sr_id="SR-136",
         slug="issue-comment-list",
-        may_fail=True,
     )
 
 
@@ -103,7 +96,6 @@ def test_sr137_issue_comment_delete(raps, ids):
         f"raps issue comment delete {project_id} {ISSUE_ID} {COMMENT_ID} --yes",
         sr_id="SR-137",
         slug="issue-comment-delete",
-        may_fail=True,
     )
 
 
@@ -114,7 +106,6 @@ def test_sr138_issue_attachments(raps, ids):
         f"raps issue attachments {project_id} {ISSUE_ID}",
         sr_id="SR-138",
         slug="issue-attachments",
-        may_fail=True,
     )
 
 
@@ -125,7 +116,6 @@ def test_sr139_issue_delete(raps, ids):
         f"raps issue delete {project_id} {ISSUE_ID} --yes",
         sr_id="SR-139",
         slug="issue-delete",
-        may_fail=True,
     )
 
 
@@ -137,15 +127,15 @@ def test_sr139_issue_delete(raps, ids):
 def test_sr140_issue_full_lifecycle(raps, ids):
     project_id = ids.project_id or "demo-project-001"
     lc = raps.lifecycle("SR-140", "issue-full-lifecycle", "Field engineer reports and tracks a defect")
-    lc.step(f"raps issue types {project_id}", may_fail=True)
-    lc.step(f'raps issue create {project_id} --title "Water damage in corridor B"', may_fail=True)
-    lc.step(f"raps issue list {project_id}", may_fail=True)
-    lc.step(f'raps issue comment add {project_id} {ID} --body "Photo attached via mobile"', may_fail=True)
-    lc.step(f"raps issue comment list {project_id} {ID}", may_fail=True)
-    lc.step(f'raps issue update {project_id} {ID} --title "Water damage in corridor B - assigned"', may_fail=True)
-    lc.step(f'raps issue transition {project_id} {ID} --to "in_review"', may_fail=True)
-    lc.step(f'raps issue transition {project_id} {ID} --to "closed"', may_fail=True)
-    lc.step(f"raps issue delete {project_id} {ID} --yes", may_fail=True)
+    lc.step(f"raps issue types {project_id}")
+    lc.step(f'raps issue create {project_id} --title "Water damage in corridor B"')
+    lc.step(f"raps issue list {project_id}")
+    lc.step(f'raps issue comment add {project_id} {ID} --body "Photo attached via mobile"')
+    lc.step(f"raps issue comment list {project_id} {ID}")
+    lc.step(f'raps issue update {project_id} {ID} --title "Water damage in corridor B - assigned"')
+    lc.step(f'raps issue transition {project_id} {ID} --to "in_review"')
+    lc.step(f'raps issue transition {project_id} {ID} --to "closed"')
+    lc.step(f"raps issue delete {project_id} {ID} --yes")
     lc.assert_all_passed()
 
 
@@ -154,12 +144,12 @@ def test_sr140_issue_full_lifecycle(raps, ids):
 def test_sr141_issue_triage_workflow(raps, ids):
     project_id = ids.project_id or "demo-project-001"
     lc = raps.lifecycle("SR-141", "issue-triage-workflow", "QA lead triages multiple issues")
-    lc.step(f'raps issue create {project_id} --title "Issue A"', may_fail=True)
-    lc.step(f'raps issue create {project_id} --title "Issue B"', may_fail=True)
-    lc.step(f'raps issue create {project_id} --title "Issue C"', may_fail=True)
-    lc.step(f"raps issue list {project_id} --output json", may_fail=True)
-    lc.step(f'raps issue update {project_id} {A} --title "Issue A - assigned"', may_fail=True)
-    lc.step(f'raps issue update {project_id} {B} --title "Issue B - assigned"', may_fail=True)
-    lc.step(f'raps issue transition {project_id} {C} --to "void"', may_fail=True)
-    lc.step(f"raps issue list {project_id}", may_fail=True)
+    lc.step(f'raps issue create {project_id} --title "Issue A"')
+    lc.step(f'raps issue create {project_id} --title "Issue B"')
+    lc.step(f'raps issue create {project_id} --title "Issue C"')
+    lc.step(f"raps issue list {project_id} --output json")
+    lc.step(f'raps issue update {project_id} {A} --title "Issue A - assigned"')
+    lc.step(f'raps issue update {project_id} {B} --title "Issue B - assigned"')
+    lc.step(f'raps issue transition {project_id} {C} --to "void"')
+    lc.step(f"raps issue list {project_id}")
     lc.assert_all_passed()

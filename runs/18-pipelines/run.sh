@@ -33,7 +33,7 @@ RAPS_CMD_TIMEOUT=120 run_sample "SR-272" "pipeline-run" \
 lifecycle_start "SR-273" "pipeline-author-and-run" "DevOps creates and runs pipeline"
 lifecycle_step 1 "raps pipeline sample -o ./my-pipeline.yaml"
 lifecycle_step 2 "raps pipeline validate ./my-pipeline.yaml"
-lifecycle_step 3 "RAPS_CMD_TIMEOUT=120 raps pipeline run ./my-pipeline.yaml || true"
+lifecycle_step 3 "RAPS_CMD_TIMEOUT=120 raps pipeline run ./my-pipeline.yaml"
 lifecycle_end
 
 section_end

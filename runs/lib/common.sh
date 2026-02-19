@@ -14,6 +14,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/oauth-login.sh" 2>/dev/null || true
 # --- Auto-discover real IDs (hubs, projects, accounts) ---
 source "$(dirname "${BASH_SOURCE[0]}")/discover-ids.sh" 2>/dev/null || true
 
+# --- Test user emails (configurable per-environment) ---
+source "$(dirname "${BASH_SOURCE[0]}")/test-users.sh" 2>/dev/null || true
+
 # --- Directories ---
 RUNS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOGS_ROOT="${LOGS_ROOT:-$RUNS_DIR/../logs}"
@@ -345,6 +348,46 @@ lifecycle_step() {
   run_with_timeout "$actual_cmd" "$CURRENT_SECTION_LOG"
   local exit_code=$_CMD_EXIT
   set -e
+
+  if [ "$exit_code" -eq 0 ]; then
+    log_line "    ${GREEN}-> exit $exit_code${RESET}"
+  elif [ "$exit_code" -eq 124 ]; then
+    log_line "    ${RED}-> TIMEOUT${RESET}"
+    LIFECYCLE_FAIL=$((LIFECYCLE_FAIL + 1))
+  else
+    log_line "    ${RED}-> exit $exit_code${RESET}"
+    LIFECYCLE_FAIL=$((LIFECYCLE_FAIL + 1))
+  fi
+}
+
+# Like lifecycle_step but captures stdout into LC_CAPTURED_OUTPUT.
+# Used for creation steps where we need to extract IDs for subsequent steps.
+# Usage: lifecycle_step_capture step_num "command"
+#        ID=$(echo "$LC_CAPTURED_OUTPUT" | grep -oP '"id"\s*:\s*"\K[^"]+')
+LC_CAPTURED_OUTPUT=""
+
+lifecycle_step_capture() {
+  local step_num="$1" command="$2"
+  LC_CAPTURED_OUTPUT=""
+  LIFECYCLE_STEP_NUM=$((LIFECYCLE_STEP_NUM + 1))
+
+  local actual_cmd
+  actual_cmd="$(raps_cmd "$command")"
+
+  log_line "  Step $step_num: $actual_cmd"
+
+  local capture_file
+  capture_file=$(mktemp)
+
+  set +e
+  eval "$actual_cmd" > "$capture_file" 2>> "$CURRENT_SECTION_LOG"
+  local exit_code=$?
+  set -e
+
+  # Append captured output to section log for visibility
+  cat "$capture_file" >> "$CURRENT_SECTION_LOG"
+  LC_CAPTURED_OUTPUT=$(cat "$capture_file")
+  rm -f "$capture_file"
 
   if [ "$exit_code" -eq 0 ]; then
     log_line "    ${GREEN}-> exit $exit_code${RESET}"

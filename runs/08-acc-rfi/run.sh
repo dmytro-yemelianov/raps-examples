@@ -51,13 +51,13 @@ run_sample "SR-154" "rfi-delete" \
 
 # SR-155: Architect raises and resolves an RFI
 lifecycle_start "SR-155" "rfi-full-lifecycle" "Architect raises and resolves an RFI"
-lifecycle_step 1 "raps rfi create $PROJECT_ID --title \"Beam depth at grid D-7\" || true"
-lifecycle_step 2 "raps rfi list $PROJECT_ID || true"
-lifecycle_step 3 "raps rfi get $PROJECT_ID $ID || true"
-lifecycle_step 4 "raps rfi update $PROJECT_ID $ID --assigned-to $STRUCT_ENG --priority \"high\" || true"
-lifecycle_step 5 "raps rfi update $PROJECT_ID $ID --status \"answered\" --answer \"Use W14x30, see SK-204\" || true"
-lifecycle_step 6 "raps rfi get $PROJECT_ID $ID || true"
-lifecycle_step 7 "raps rfi delete $PROJECT_ID $ID --yes || true"
+lifecycle_step 1 "raps rfi create $PROJECT_ID --title \"Beam depth at grid D-7\""
+lifecycle_step 2 "raps rfi list $PROJECT_ID"
+lifecycle_step 3 "raps rfi get $PROJECT_ID $ID"
+lifecycle_step 4 "raps rfi update $PROJECT_ID $ID --assigned-to $STRUCT_ENG --priority \"high\""
+lifecycle_step 5 "raps rfi update $PROJECT_ID $ID --status \"answered\" --answer \"Use W14x30, see SK-204\""
+lifecycle_step 6 "raps rfi get $PROJECT_ID $ID"
+lifecycle_step 7 "raps rfi delete $PROJECT_ID $ID --yes"
 lifecycle_end
 
 section_end

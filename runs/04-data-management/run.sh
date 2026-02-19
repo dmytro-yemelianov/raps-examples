@@ -119,36 +119,36 @@ run_sample "SR-084" "item-delete" \
 
 # SR-085: Developer explores project structure
 lifecycle_start "SR-085" "dm-navigation-lifecycle" "Developer explores project structure"
-lifecycle_step 1 "raps hub list || true"
-lifecycle_step 2 "raps project list $HUB_ID || true"
-lifecycle_step 3 "raps project info $HUB_ID $PROJECT_ID || true"
-lifecycle_step 4 "raps folder list $PROJECT_ID $ROOT_FOLDER || true"
-lifecycle_step 5 "raps folder list $PROJECT_ID $SUBFOLDER || true"
+lifecycle_step 1 "raps hub list"
+lifecycle_step 2 "raps project list $HUB_ID"
+lifecycle_step 3 "raps project info $HUB_ID $PROJECT_ID"
+lifecycle_step 4 "raps folder list $PROJECT_ID $ROOT_FOLDER"
+lifecycle_step 5 "raps folder list $PROJECT_ID $SUBFOLDER"
 lifecycle_end
 
 # SR-086: Admin creates folder structure
 lifecycle_start "SR-086" "dm-folder-crud-lifecycle" "Admin creates folder structure"
-lifecycle_step 1 "raps folder create $PROJECT_ID $ROOT -n \"Phase 1\" || true"
-lifecycle_step 2 "raps folder create $PROJECT_ID $PHASE1 -n \"Structural\" || true"
-lifecycle_step 3 "raps folder create $PROJECT_ID $PHASE1 -n \"MEP\" || true"
-lifecycle_step 4 "raps folder list $PROJECT_ID $PHASE1 || true"
-lifecycle_step 5 "raps folder rename $PROJECT_ID $MEP --name \"MEP Systems\" || true"
-lifecycle_step 6 "raps folder rights $PROJECT_ID $PHASE1 || true"
-lifecycle_step 7 "raps folder delete $PROJECT_ID $MEP || true"
-lifecycle_step 8 "raps folder delete $PROJECT_ID $STRUCTURAL || true"
-lifecycle_step 9 "raps folder delete $PROJECT_ID $PHASE1 || true"
+lifecycle_step 1 "raps folder create $PROJECT_ID $ROOT -n \"Phase 1\""
+lifecycle_step 2 "raps folder create $PROJECT_ID $PHASE1 -n \"Structural\""
+lifecycle_step 3 "raps folder create $PROJECT_ID $PHASE1 -n \"MEP\""
+lifecycle_step 4 "raps folder list $PROJECT_ID $PHASE1"
+lifecycle_step 5 "raps folder rename $PROJECT_ID $MEP --name \"MEP Systems\""
+lifecycle_step 6 "raps folder rights $PROJECT_ID $PHASE1"
+lifecycle_step 7 "raps folder delete $PROJECT_ID $MEP"
+lifecycle_step 8 "raps folder delete $PROJECT_ID $STRUCTURAL"
+lifecycle_step 9 "raps folder delete $PROJECT_ID $PHASE1"
 lifecycle_end
 
 # SR-087: Developer uploads to BIM 360
 lifecycle_start "SR-087" "item-upload-and-manage" "Developer uploads to BIM 360"
-lifecycle_step 1 "raps bucket create || true"
-lifecycle_step 2 "raps object upload dm-staging ./test-data/sample.rvt || true"
-lifecycle_step 3 "raps item create-from-oss $PROJECT_ID $FOLDER_ID --name \"Building.rvt\" --object-id $URN || true"
-lifecycle_step 4 "raps item info $PROJECT_ID $ITEM_ID || true"
-lifecycle_step 5 "raps item versions $PROJECT_ID $ITEM_ID || true"
-lifecycle_step 6 "raps item rename $PROJECT_ID $ITEM_ID --name \"Building-v2.rvt\" || true"
-lifecycle_step 7 "raps item delete $PROJECT_ID $ITEM_ID || true"
-lifecycle_step 8 "raps bucket delete dm-staging || true"
+lifecycle_step 1 "raps bucket create"
+lifecycle_step 2 "raps object upload dm-staging ./test-data/sample.rvt"
+lifecycle_step 3 "raps item create-from-oss $PROJECT_ID $FOLDER_ID --name \"Building.rvt\" --object-id $URN"
+lifecycle_step 4 "raps item info $PROJECT_ID $ITEM_ID"
+lifecycle_step 5 "raps item versions $PROJECT_ID $ITEM_ID"
+lifecycle_step 6 "raps item rename $PROJECT_ID $ITEM_ID --name \"Building-v2.rvt\""
+lifecycle_step 7 "raps item delete $PROJECT_ID $ITEM_ID"
+lifecycle_step 8 "raps bucket delete dm-staging"
 lifecycle_end
 
 section_end

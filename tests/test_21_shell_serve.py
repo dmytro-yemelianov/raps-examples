@@ -10,20 +10,18 @@ pytestmark = [
 @pytest.mark.sr("SR-300")
 def test_sr300_shell_interactive(raps):
     raps.run(
-        'timeout 3 raps shell <<< "exit"',
+        'echo "exit" | raps shell',
         sr_id="SR-300",
         slug="shell-interactive",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-301")
 def test_sr301_serve_mcp(raps):
     raps.run(
-        "timeout 3 raps serve",
+        "Start-Job { raps serve } | Out-Null; Start-Sleep 3; Get-Job | Stop-Job -PassThru | Remove-Job",
         sr_id="SR-301",
         slug="serve-mcp",
-        may_fail=True,
     )
 
 
@@ -47,3 +45,8 @@ def test_sr304_completions_zsh(raps):
 @pytest.mark.sr("SR-305")
 def test_sr305_completions_fish(raps):
     raps.run_ok("raps completions fish", sr_id="SR-305", slug="completions-fish")
+
+
+@pytest.mark.sr("SR-306")
+def test_sr306_completions_elvish(raps):
+    raps.run_ok("raps completions elvish", sr_id="SR-306", slug="completions-elvish")

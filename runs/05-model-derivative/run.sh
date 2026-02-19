@@ -87,11 +87,11 @@ run_sample "SR-099" "translate-preset-delete" \
 # SR-100: Full translation pipeline
 if [ -f ./test-data/sample.rvt ]; then
   lifecycle_start "SR-100" "translate-full-pipeline" "Upload → translate → poll → download"
-  lifecycle_step 1 "raps object upload $BUCKET_NAME ./test-data/sample.rvt || true"
+  lifecycle_step 1 "raps object upload $BUCKET_NAME ./test-data/sample.rvt"
   RVT_URN=$(python3 -c "import base64; print(base64.urlsafe_b64encode(b'urn:adsk.objects:os.object:$BUCKET_NAME/sample.rvt').decode().rstrip('='))" 2>/dev/null || echo "$URN")
-  lifecycle_step 2 "raps translate start $RVT_URN --format svf2 || true"
-  lifecycle_step 3 "raps translate status $RVT_URN || true"
-  lifecycle_step 4 "raps translate manifest $RVT_URN || true"
+  lifecycle_step 2 "raps translate start $RVT_URN --format svf2"
+  lifecycle_step 3 "raps translate status $RVT_URN"
+  lifecycle_step 4 "raps translate manifest $RVT_URN"
   lifecycle_end
 else
   skip_sample "SR-100" "translate-full-pipeline" "missing ./test-data/sample.rvt"

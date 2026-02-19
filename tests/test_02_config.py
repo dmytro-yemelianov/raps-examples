@@ -81,13 +81,12 @@ def test_sr037_config_profile_export(raps):
 @pytest.mark.sr("SR-038")
 def test_sr038_config_profile_import(raps):
     raps.run(
-        "mkdir -p ./tmp"
-        " && raps config profile export -o ./tmp/raps-staging-export.json -n staging"
-        " && raps config profile import ./tmp/raps-staging-export.json --overwrite"
-        " && rm -f ./tmp/raps-staging-export.json",
+        "New-Item -ItemType Directory -Force -Path ./tmp | Out-Null"
+        "; raps config profile export -o ./tmp/raps-staging-export.json -n staging"
+        "; raps config profile import ./tmp/raps-staging-export.json --overwrite"
+        "; Remove-Item -Force ./tmp/raps-staging-export.json",
         sr_id="SR-038",
         slug="config-profile-import",
-        may_fail=True,
     )
 
 
@@ -114,7 +113,7 @@ def test_sr042_config_context_set(raps, ids):
     hub_id = ids.hub_id or "b.demo-hub-001"
     project_full_id = ids.project_full_id or "b.demo-project-001"
     raps.run_ok(
-        f"raps config context set hub_id {hub_id} && raps config context set project_id {project_full_id}",
+        f"raps config context set hub_id {hub_id}; raps config context set project_id {project_full_id}",
         sr_id="SR-042",
         slug="config-context-set",
     )
@@ -135,7 +134,6 @@ def test_cleanup_staging_copy(raps):
         "raps config profile delete staging-copy",
         sr_id="",
         slug="cleanup-staging-copy",
-        may_fail=True,
     )
 
 
@@ -154,7 +152,6 @@ def test_cleanup_switch_to_default(raps):
         "raps config profile use default",
         sr_id="",
         slug="cleanup-switch-default",
-        may_fail=True,
     )
 
 
@@ -188,7 +185,7 @@ def test_sr045_config_context_lifecycle(raps, ids):
     lc.step("raps config profile use ctx-test")
     lc.step(
         f"raps config context set hub_id {hub_id}"
-        f" && raps config context set project_id {project_full_id}",
+        f"; raps config context set project_id {project_full_id}",
     )
     lc.step("raps config context show")
     lc.step("raps config context clear")

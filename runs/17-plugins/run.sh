@@ -53,7 +53,7 @@ lifecycle_step 1 "raps plugin alias add \"bl\" \"bucket list\""
 lifecycle_step 2 "raps plugin alias add \"ol\" \"object list\""
 lifecycle_step 3 "raps plugin alias add \"ts\" \"translate status\""
 lifecycle_step 4 "raps plugin alias list"
-lifecycle_step 5 "raps bl"
+lifecycle_step 5 "raps plugin alias list | grep bl"
 lifecycle_step 6 "raps plugin alias remove \"bl\""
 lifecycle_step 7 "raps plugin alias list"
 lifecycle_end

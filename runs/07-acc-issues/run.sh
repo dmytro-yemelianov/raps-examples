@@ -83,27 +83,27 @@ run_sample "SR-139" "issue-delete" \
 
 # SR-140: Field engineer reports and tracks a defect
 lifecycle_start "SR-140" "issue-full-lifecycle" "Field engineer reports and tracks a defect"
-lifecycle_step 1 "raps issue types $PROJECT_ID || true"
-lifecycle_step 2 "raps issue create $PROJECT_ID --title \"Water damage in corridor B\" || true"
-lifecycle_step 3 "raps issue list $PROJECT_ID || true"
-lifecycle_step 4 "raps issue comment add $PROJECT_ID $ID --body \"Photo attached via mobile\" || true"
-lifecycle_step 5 "raps issue comment list $PROJECT_ID $ID || true"
-lifecycle_step 6 "raps issue update $PROJECT_ID $ID --title \"Water damage in corridor B - assigned\" || true"
-lifecycle_step 7 "raps issue transition $PROJECT_ID $ID --to \"in_review\" || true"
-lifecycle_step 8 "raps issue transition $PROJECT_ID $ID --to \"closed\" || true"
-lifecycle_step 9 "raps issue delete $PROJECT_ID $ID --yes || true"
+lifecycle_step 1 "raps issue types $PROJECT_ID"
+lifecycle_step 2 "raps issue create $PROJECT_ID --title \"Water damage in corridor B\""
+lifecycle_step 3 "raps issue list $PROJECT_ID"
+lifecycle_step 4 "raps issue comment add $PROJECT_ID $ID --body \"Photo attached via mobile\""
+lifecycle_step 5 "raps issue comment list $PROJECT_ID $ID"
+lifecycle_step 6 "raps issue update $PROJECT_ID $ID --title \"Water damage in corridor B - assigned\""
+lifecycle_step 7 "raps issue transition $PROJECT_ID $ID --to \"in_review\""
+lifecycle_step 8 "raps issue transition $PROJECT_ID $ID --to \"closed\""
+lifecycle_step 9 "raps issue delete $PROJECT_ID $ID --yes"
 lifecycle_end
 
 # SR-141: QA lead triages multiple issues
 lifecycle_start "SR-141" "issue-triage-workflow" "QA lead triages multiple issues"
-lifecycle_step 1 "raps issue create $PROJECT_ID --title \"Issue A\" || true"
-lifecycle_step 2 "raps issue create $PROJECT_ID --title \"Issue B\" || true"
-lifecycle_step 3 "raps issue create $PROJECT_ID --title \"Issue C\" || true"
-lifecycle_step 4 "raps issue list $PROJECT_ID --output json || true"
-lifecycle_step 5 "raps issue update $PROJECT_ID $A --title \"Issue A - assigned\" || true"
-lifecycle_step 6 "raps issue update $PROJECT_ID $B --title \"Issue B - assigned\" || true"
-lifecycle_step 7 "raps issue transition $PROJECT_ID $C --to \"void\" || true"
-lifecycle_step 8 "raps issue list $PROJECT_ID || true"
+lifecycle_step 1 "raps issue create $PROJECT_ID --title \"Issue A\""
+lifecycle_step 2 "raps issue create $PROJECT_ID --title \"Issue B\""
+lifecycle_step 3 "raps issue create $PROJECT_ID --title \"Issue C\""
+lifecycle_step 4 "raps issue list $PROJECT_ID --output json"
+lifecycle_step 5 "raps issue update $PROJECT_ID $A --title \"Issue A - assigned\""
+lifecycle_step 6 "raps issue update $PROJECT_ID $B --title \"Issue B - assigned\""
+lifecycle_step 7 "raps issue transition $PROJECT_ID $C --to \"void\""
+lifecycle_step 8 "raps issue list $PROJECT_ID"
 lifecycle_end
 
 section_end

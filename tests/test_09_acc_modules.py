@@ -32,7 +32,6 @@ def test_sr160_acc_asset_list(raps, ids):
         f"raps acc asset list {project_id}",
         sr_id="SR-160",
         slug="acc-asset-list",
-        may_fail=True,
     )
 
 
@@ -43,7 +42,6 @@ def test_sr161_acc_asset_create(raps, ids):
         f'raps acc asset create {project_id} --category-id {CATEGORY_ID} --description "HVAC Unit AHU-01"',
         sr_id="SR-161",
         slug="acc-asset-create",
-        may_fail=True,
     )
 
 
@@ -54,7 +52,6 @@ def test_sr162_acc_asset_get(raps, ids):
         f"raps acc asset get {project_id} {ASSET_ID}",
         sr_id="SR-162",
         slug="acc-asset-get",
-        may_fail=True,
     )
 
 
@@ -65,7 +62,6 @@ def test_sr163_acc_asset_update(raps, ids):
         f"raps acc asset update {project_id} {ASSET_ID} --status-id {STATUS_ID}",
         sr_id="SR-163",
         slug="acc-asset-update",
-        may_fail=True,
     )
 
 
@@ -76,7 +72,6 @@ def test_sr164_acc_asset_delete(raps, ids):
         f"raps acc asset delete {project_id} {ASSET_ID} --yes",
         sr_id="SR-164",
         slug="acc-asset-delete",
-        may_fail=True,
     )
 
 
@@ -90,7 +85,6 @@ def test_sr165_acc_submittal_list(raps, ids):
         f"raps acc submittal list {project_id}",
         sr_id="SR-165",
         slug="acc-submittal-list",
-        may_fail=True,
     )
 
 
@@ -102,7 +96,6 @@ def test_sr166_acc_submittal_create(raps, ids):
         f' --spec-section "03 30 00"',
         sr_id="SR-166",
         slug="acc-submittal-create",
-        may_fail=True,
     )
 
 
@@ -113,7 +106,6 @@ def test_sr167_acc_submittal_get(raps, ids):
         f"raps acc submittal get {project_id} {SUBMITTAL_ID}",
         sr_id="SR-167",
         slug="acc-submittal-get",
-        may_fail=True,
     )
 
 
@@ -124,7 +116,6 @@ def test_sr168_acc_submittal_update(raps, ids):
         f'raps acc submittal update {project_id} {SUBMITTAL_ID} --status "approved"',
         sr_id="SR-168",
         slug="acc-submittal-update",
-        may_fail=True,
     )
 
 
@@ -135,7 +126,6 @@ def test_sr169_acc_submittal_delete(raps, ids):
         f"raps acc submittal delete {project_id} {SUBMITTAL_ID} --yes",
         sr_id="SR-169",
         slug="acc-submittal-delete",
-        may_fail=True,
     )
 
 
@@ -149,7 +139,6 @@ def test_sr170_acc_checklist_list(raps, ids):
         f"raps acc checklist list {project_id}",
         sr_id="SR-170",
         slug="acc-checklist-list",
-        may_fail=True,
     )
 
 
@@ -161,7 +150,6 @@ def test_sr171_acc_checklist_create(raps, ids):
         f" --template-id {TEMPLATE_ID}",
         sr_id="SR-171",
         slug="acc-checklist-create",
-        may_fail=True,
     )
 
 
@@ -172,7 +160,6 @@ def test_sr172_acc_checklist_get(raps, ids):
         f"raps acc checklist get {project_id} {CHECKLIST_ID}",
         sr_id="SR-172",
         slug="acc-checklist-get",
-        may_fail=True,
     )
 
 
@@ -183,7 +170,6 @@ def test_sr173_acc_checklist_update(raps, ids):
         f'raps acc checklist update {project_id} {CHECKLIST_ID} --status "completed"',
         sr_id="SR-173",
         slug="acc-checklist-update",
-        may_fail=True,
     )
 
 
@@ -194,7 +180,6 @@ def test_sr174_acc_checklist_templates(raps, ids):
         f"raps acc checklist templates {project_id}",
         sr_id="SR-174",
         slug="acc-checklist-templates",
-        may_fail=True,
     )
 
 
@@ -206,13 +191,13 @@ def test_sr174_acc_checklist_templates(raps, ids):
 def test_sr175_asset_tracking_lifecycle(raps, ids):
     pid = ids.project_id or "demo-project-001"
     lc = raps.lifecycle("SR-175", "asset-tracking-lifecycle", "Facilities manager tracks equipment")
-    lc.step(f'raps acc asset create {pid} --category-id {MECH_CAT} --description "Chiller CH-01"', may_fail=True)
-    lc.step(f'raps acc asset create {pid} --category-id {MECH_CAT} --description "Chiller CH-02"', may_fail=True)
-    lc.step(f"raps acc asset list {pid}", may_fail=True)
-    lc.step(f"raps acc asset update {pid} {CH01} --status-id {DELIVERED_STATUS}", may_fail=True)
-    lc.step(f"raps acc asset update {pid} {CH01} --status-id {INSTALLED_STATUS}", may_fail=True)
-    lc.step(f"raps acc asset get {pid} {CH01}", may_fail=True)
-    lc.step(f"raps acc asset delete {pid} {CH02} --yes", may_fail=True)
+    lc.step(f'raps acc asset create {pid} --category-id {MECH_CAT} --description "Chiller CH-01"')
+    lc.step(f'raps acc asset create {pid} --category-id {MECH_CAT} --description "Chiller CH-02"')
+    lc.step(f"raps acc asset list {pid}")
+    lc.step(f"raps acc asset update {pid} {CH01} --status-id {DELIVERED_STATUS}")
+    lc.step(f"raps acc asset update {pid} {CH01} --status-id {INSTALLED_STATUS}")
+    lc.step(f"raps acc asset get {pid} {CH01}")
+    lc.step(f"raps acc asset delete {pid} {CH02} --yes")
     lc.assert_all_passed()
 
 
@@ -224,13 +209,12 @@ def test_sr176_submittal_review_lifecycle(raps, ids):
     lc.step(
         f'raps acc submittal create {pid} --title "Structural steel shop drawings"'
         f' --spec-section "05 12 00"',
-        may_fail=True,
     )
-    lc.step(f"raps acc submittal get {pid} {SUBMITTAL_ID}", may_fail=True)
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "in_review"', may_fail=True)
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "revise_resubmit"', may_fail=True)
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "approved"', may_fail=True)
-    lc.step(f"raps acc submittal delete {pid} {SUBMITTAL_ID} --yes", may_fail=True)
+    lc.step(f"raps acc submittal get {pid} {SUBMITTAL_ID}")
+    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "in_review"')
+    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "revise_resubmit"')
+    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "approved"')
+    lc.step(f"raps acc submittal delete {pid} {SUBMITTAL_ID} --yes")
     lc.assert_all_passed()
 
 
@@ -241,13 +225,12 @@ def test_sr177_checklist_inspection_lifecycle(raps, ids):
     lc = raps.lifecycle(
         "SR-177", "checklist-inspection-lifecycle", "Inspector completes inspection"
     )
-    lc.step(f"raps acc checklist templates {pid}", may_fail=True)
+    lc.step(f"raps acc checklist templates {pid}")
     lc.step(
         f'raps acc checklist create {pid} --title "Fire stopping inspection B3" --template-id {TPL}',
-        may_fail=True,
     )
-    lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}", may_fail=True)
-    lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "in_progress"', may_fail=True)
-    lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "completed"', may_fail=True)
-    lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}", may_fail=True)
+    lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}")
+    lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "in_progress"')
+    lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "completed"')
+    lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}")
     lc.assert_all_passed()

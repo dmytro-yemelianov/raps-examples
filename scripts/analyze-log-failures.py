@@ -2,10 +2,8 @@
 """
 analyze-log-failures.py — Parse report logs to find actual CLI failures.
 
-The pytest JSON reporter stores exit_code=0 when a test passes (e.g. due to may_fail=True),
-but the actual CLI exit codes are in the log text as "-> exit N (Xs)".
-
-This script parses .log files and reports which commands actually failed.
+Parses .log files produced by the JSON reporter and reports which commands
+actually failed based on CLI exit codes in the log text ("-> exit N (Xs)").
 
 Usage:
     python scripts/analyze-log-failures.py reports/2026-02-17-23-35
@@ -101,11 +99,6 @@ def main():
 
     if total_failures == 0:
         print("\nNo actual CLI failures found in logs.")
-    else:
-        print("\n" + "=" * 80)
-        print("NOTE: Tests may still PASS because many use may_fail=True, which suppresses")
-        print("assertions on CLI failures. Check test files for may_fail usage.")
-        print("=" * 80)
 
 
 if __name__ == "__main__":

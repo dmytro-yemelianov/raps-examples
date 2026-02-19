@@ -1,70 +1,28 @@
-# RAPS Examples
+# RAPS CLI Sample Runs
 
-This repository contains code that validates claims and statements from the [RAPS blog articles](https://rapscli.xyz/blog). Each benchmark and test is designed to run in Docker and produce metric reports as GitHub Actions artifacts.
+**263 tests** across **25 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
 
-## Blog Articles Validated
+Each test runs a real `raps` command (or lifecycle sequence) and records exit code, stdout, stderr, and duration. Results feed into JSON/HTML reports for validation.
 
-| Article | Validation Suite |
-|---------|------------------|
-| [The Manual Tax: What AEC Loses Without CI/CD](https://rapscli.xyz/blog/the-manual-tax) | `benchmarks/automation-timing/` |
-| [CI/CD 101 for AEC Professionals](https://rapscli.xyz/blog/cicd-101-for-aec) | `benchmarks/pipeline-timing/` |
-| [Authentication Chaos Across CAD Platforms](https://rapscli.xyz/blog/authentication-chaos) | `benchmarks/auth-flows/` |
-| [File Translation Disasters](https://rapscli.xyz/blog/file-translation-disasters) | `benchmarks/translation-performance/` |
-| [Why We Rewrote the Toolchain: Rust vs. Node.js](https://rapscli.xyz/blog/rust-vs-nodejs-5gb-files) | `benchmarks/rust-vs-nodejs/` |
-| [SDK Version Hell](https://rapscli.xyz/blog/sdk-version-hell) | `benchmarks/version-compatibility/` |
-| [Zero-Click Releases](https://rapscli.xyz/blog/zero-click-releases) | `benchmarks/design-automation/` |
+## Prerequisites
 
-## Key Claims Being Validated
+- Python 3.10+
+- RAPS CLI binary (built from `../raps/` or on PATH)
+- `.env` file with APS credentials (for API tests; see below)
 
-### Performance Claims (from "Rust vs Node.js for 5GB Files")
-
-| Claim | Test |
-|-------|------|
-| RAPS processes 3.4GB JSON in ~14 seconds | `rust-vs-nodejs/parse-large-json.sh` |
-| RAPS uses ~100MB RAM (constant) | `rust-vs-nodejs/memory-profile.sh` |
-| Node.js crashes on 3.4GB+ files | `rust-vs-nodejs/nodejs-baseline.js` |
-| Batch processing: 5x 800MB in 42s | `rust-vs-nodejs/batch-process.sh` |
-
-### Automation Claims (from "The Manual Tax" and "CI/CD 101")
-
-| Claim | Test |
-|-------|------|
-| Automated pipeline vs manual timing | `automation-timing/compare.sh` |
-| Upload + translate + notify pipeline | `pipeline-timing/full-pipeline.sh` |
-| 13.45 hours/week savings calculation | `automation-timing/calculate-roi.py` |
-
-### Feature Claims
-
-| Claim | Test |
-|-------|------|
-| 15+ APS APIs supported | `feature-validation/count-apis.sh` |
-| 100+ CLI commands | `feature-validation/count-commands.sh` |
-| Multiple auth flows work | `auth-flows/test-all-flows.sh` |
-| Cross-platform compatibility | GitHub Actions matrix build |
-
-## Running Locally
-
-### Prerequisites
-
-- Docker and Docker Compose
-- RAPS CLI installed (or use Docker image)
-- APS credentials (for API tests)
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/raps-examples.git
 cd raps-examples
 
-# Run all benchmarks (Docker)
-docker compose up --build
+# Install test dependencies
+pip install -e ".[test]"
 
-# Run specific benchmark
-docker compose run --rm benchmarks ./benchmarks/rust-vs-nodejs/run.sh
+# Run all tests (sequential)
+pytest
 
-# Generate reports
-docker compose run --rm reporter python scripts/generate-report.py
+# Run all tests (parallel, 4 workers)
+pytest -n 4 --dist loadgroup
 ```
 
 ### Environment Variables
@@ -77,58 +35,142 @@ APS_CLIENT_SECRET=your_client_secret
 APS_CALLBACK_URL=http://localhost:8080/callback
 ```
 
-## GitHub Actions
+Without `.env`, auth-dependent tests will be skipped.
 
-The workflows in `.github/workflows/` run automatically:
+## Execution Modes
 
-- **`benchmarks.yml`**: Runs all performance benchmarks on push/PR
-- **`nightly.yml`**: Full validation suite nightly
-- **`release-validation.yml`**: Validates claims against each RAPS release
+| Mode | Command | Notes |
+|------|---------|-------|
+| All tests (sequential) | `pytest` | Safest, no concurrency issues |
+| Parallel (4 workers) | `pytest -n 4 --dist loadgroup` | Tests grouped by section |
+| Against mock server | `pytest --mock` | Uses raps-mock on port 3000 |
+| Single section | `pytest tests/test_03_storage.py` | Run one test file |
+| Single SR ID | `pytest -k "sr063"` | Filter by sample run ID |
+| Rerun failed | `pytest --lf` | Re-run last failed tests |
+| HTML report | `pytest --html=report.html` | pytest-html output |
+| JSON report | `pytest --json-report-dir=logs/run` | Per-section JSON files |
 
-### Artifacts Produced
+### JSON + HTML Report Pipeline
 
-Each workflow run produces:
+```bash
+# Generate JSON reports
+pytest --json-report-dir=logs/latest
 
-- `benchmark-results.json` - Raw benchmark data
-- `metrics-report.html` - Visual report with charts
-- `metrics-report.md` - Markdown summary
-- `memory-profiles/` - Memory usage graphs
-- `comparison-tables/` - Performance comparison CSVs
+# Convert to visual HTML report
+python scripts/generate-run-report.py logs/latest -o logs/latest/report.html
+```
 
-## Directory Structure
+## Test Organization
+
+### SR-IDs
+
+Every test has a unique Sample Run ID (e.g., `SR-051`). Use it to find or filter tests:
+
+```bash
+pytest -k "sr051"                    # Run single SR
+pytest -k "sr050 or sr051 or sr052"  # Run multiple
+```
+
+### Sections (25 test files)
+
+| # | Section | Tests | Auth | File |
+|---|---------|-------|------|------|
+| 00 | Setup | 3 | None | `test_00_setup.py` |
+| 01 | Auth | 15 | 2-leg | `test_01_auth.py` |
+| 02 | Config | 18 | None | `test_02_config.py` |
+| 03 | Storage | 16 | 2-leg | `test_03_storage.py` |
+| 04 | Data Management | 18 | 3-leg | `test_04_data_management.py` |
+| 05 | Model Derivative | 12 | 2-leg | `test_05_model_derivative.py` |
+| 06 | Design Automation | 12 | 2-leg | `test_06_design_automation.py` |
+| 07 | ACC Issues | 12 | 3-leg | `test_07_acc_issues.py` |
+| 08 | ACC RFI | 6 | 3-leg | `test_08_acc_rfi.py` |
+| 09 | ACC Modules | 18 | 3-leg | `test_09_acc_modules.py` |
+| 10 | Webhooks | 9 | 2-leg | `test_10_webhooks.py` |
+| 11 | Admin Users | 17 | 3-leg | `test_11_admin_users.py` |
+| 12 | Admin Projects | 6 | 3-leg | `test_12_admin_projects.py` |
+| 13 | Admin Folders | 9 | 3-leg | `test_13_admin_folders.py` |
+| 14 | Reality Capture | 9 | 3-leg | `test_14_reality_capture.py` |
+| 15 | Reporting | 5 | 3-leg | `test_15_reporting.py` |
+| 16 | Templates | 6 | 3-leg | `test_16_templates.py` |
+| 17 | Plugins | 7 | 2-leg | `test_17_plugins.py` |
+| 18 | Pipelines | 4 | 2-leg | `test_18_pipelines.py` |
+| 19 | API Raw | 5 | 2-leg | `test_19_api_raw.py` |
+| 20 | Generation | 2 | None | `test_20_generation.py` |
+| 21 | Shell & Serve | 6 | None | `test_21_shell_serve.py` |
+| 22 | Demo | 4 | None | `test_22_demo.py` |
+| 30 | Workflows | 10 | 3-leg | `test_30_workflows.py` |
+| 99 | Cross-Cutting | 32 | None | `test_99_cross_cutting.py` |
+
+### Markers
+
+- `require_2leg` — Requires 2-legged (client credentials) auth
+- `require_3leg` — Requires 3-legged (user login) auth
+- `require_acc` — Requires ACC account
+- `lifecycle` — Multi-step lifecycle test
+- `sr(id)` — Sample Run identifier
+
+### xdist Groups
+
+Parallel execution uses `--dist loadgroup`. Each test file is its own xdist group (e.g., `03-storage`), ensuring tests within a section run sequentially while different sections run in parallel.
+
+## Project Structure
 
 ```
 raps-examples/
-├── benchmarks/
-│   ├── rust-vs-nodejs/        # Performance comparison tests
-│   ├── automation-timing/     # Manual vs automated workflow timing
-│   ├── pipeline-timing/       # CI/CD pipeline benchmarks
-│   ├── auth-flows/            # Authentication flow validation
-│   ├── translation-performance/ # Model translation benchmarks
-│   ├── version-compatibility/ # Cross-version compatibility tests
-│   ├── design-automation/     # DA workflow validation
-│   └── feature-validation/    # Feature claim validation
+├── tests/
+│   ├── conftest.py              # Fixtures, CLI options, marker logic
+│   ├── helpers/
+│   │   ├── runner.py            # RapsRunner (subprocess wrapper)
+│   │   ├── auth.py              # AuthManager (2-leg, 3-leg)
+│   │   ├── discovery.py         # ID discovery (hub, project, account)
+│   │   ├── test_users.py        # Test user emails from .env
+│   │   └── json_report.py       # JSON report plugin
+│   └── test_*.py                # 25 test files (one per section)
 ├── scripts/
-│   ├── generate-report.py     # Report generator
-│   ├── generate-test-data.py  # Test data generator
-│   └── utils/                 # Shared utilities
-├── data/
-│   ├── samples/               # Sample test files
-│   └── generated/             # Generated test data (gitignored)
-├── reports/                   # Generated reports (gitignored)
-├── .github/workflows/         # GitHub Actions
-├── docker-compose.yml
-├── Dockerfile
-└── README.md
+│   ├── audit_secrets.py         # Secrets & PII audit script
+│   ├── generate-run-report.py   # JSON → HTML report generator
+│   ├── generate-test-data.py    # Synthetic test data generator
+│   ├── analyze-log-failures.py  # CLI exit code analysis
+│   └── oauth-automate.py        # OAuth browser automation helper
+├── docs/
+│   ├── SECRETS-AUDIT.md         # Latest secrets audit report
+│   └── CLI-COVERAGE-MATRIX.md   # CLI subcommand coverage map
+├── benchmarks/                  # Blog article validation suites
+├── data/samples/                # Static sample files
+├── pyproject.toml               # Project config, pytest settings
+├── Dockerfile                   # Docker build (for benchmarks)
+└── docker-compose.yml           # Docker orchestration
+```
+
+## Benchmarks
+
+The `benchmarks/` directory contains Docker-based validation suites for [RAPS blog articles](https://rapscli.xyz/blog):
+
+| Article | Suite |
+|---------|-------|
+| The Manual Tax | `benchmarks/automation-timing/` |
+| CI/CD 101 for AEC | `benchmarks/pipeline-timing/` |
+| Authentication Chaos | `benchmarks/auth-flows/` |
+| File Translation Disasters | `benchmarks/translation-performance/` |
+| Rust vs. Node.js 5GB Files | `benchmarks/rust-vs-nodejs/` |
+| SDK Version Hell | `benchmarks/version-compatibility/` |
+| Zero-Click Releases | `benchmarks/design-automation/` |
+
+Run benchmarks via Docker:
+
+```bash
+docker compose up --build
+docker compose run --rm benchmarks ./benchmarks/rust-vs-nodejs/run.sh
 ```
 
 ## Contributing
 
-1. Add new benchmark in `benchmarks/<category>/`
-2. Create `run.sh` entry point
-3. Output results to stdout in JSON format
-4. Update this README with the new validation
+1. Add new tests in the appropriate `test_XX_*.py` file
+2. Use the next available SR-ID for your section
+3. Follow existing patterns: `raps.run_ok()` for expected-success, `raps.run()` for commands where you need the result
+4. Group tests with `@pytest.mark.xdist_group("XX-section-name")`
+5. Run `pytest --collect-only` to verify test count
 
 ## License
 
-Apache 2.0 - Same as RAPS
+Apache 2.0 — Same as RAPS

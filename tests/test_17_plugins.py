@@ -56,7 +56,7 @@ def test_sr266_alias_power_user_lifecycle(raps):
     lc.step('raps plugin alias add "ol" "object list"')
     lc.step('raps plugin alias add "ts" "translate status"')
     lc.step("raps plugin alias list")
-    lc.step("raps plugin alias list | grep bl", may_fail=True)
+    lc.step("raps plugin alias list | findstr bl")
     lc.step('raps plugin alias remove "bl"')
     lc.step("raps plugin alias list")
     lc.assert_all_passed()

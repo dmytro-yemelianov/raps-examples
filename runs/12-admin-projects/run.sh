@@ -49,13 +49,19 @@ run_sample "SR-214" "admin-project-archive" \
 # ── Lifecycles ───────────────────────────────────────────────────
 
 # SR-215: Create and manage project
-lifecycle_start "SR-215" "project-lifecycle-admin" "Create and manage project"
-lifecycle_step 1 "raps admin project create -a $ACCT --name \"Bridge Retrofit\" -t \"Bridge\"" || true
-lifecycle_step 2 "raps admin project list -a $ACCT -f \"name:*Bridge*\"" || true
-lifecycle_step 3 "raps admin user add pm@company.com -a $ACCT -r \"project_admin\" -f \"name:*Bridge Retrofit*\" -y" || true
-lifecycle_step 4 "raps admin project update -a $ACCT -p $PID --start-date \"2026-04-01\"" || true
-lifecycle_step 5 "raps admin project archive -a $ACCT -p $PID" || true
-lifecycle_step 6 "raps admin project list -a $ACCT --status active" || true
-lifecycle_end
+if [ -n "${RAPS_ACCOUNT_ID:-}" ]; then
+  _LC_PROJECT_NAME="Bridge Retrofit $(date +%s)"
+  lifecycle_start "SR-215" "project-lifecycle-admin" "Create and manage project"
+  lifecycle_step_capture 1 "raps admin project create -a $ACCT --name \"$_LC_PROJECT_NAME\" -t \"Bridge\" --output json"
+  PID=$(echo "$LC_CAPTURED_OUTPUT" | grep -oP '"id"\s*:\s*"\K[^"]+' 2>/dev/null || echo "${PID:-}")
+  lifecycle_step 2 "raps admin project list -a $ACCT -f \"name:*Bridge*\""
+  lifecycle_step 3 "raps admin user add $TEST_USER_PM -a $ACCT -r \"project_admin\" -f \"name:*Bridge Retrofit*\" -y"
+  lifecycle_step 4 "raps admin project update -a $ACCT -p $PID --start-date \"2026-04-01\""
+  lifecycle_step 5 "raps admin project archive -a $ACCT -p $PID"
+  lifecycle_step 6 "raps admin project list -a $ACCT --status active"
+  lifecycle_end
+else
+  skip_sample "SR-215" "project-lifecycle-admin" "No ACC account (requires b. hub)"
+fi
 
 section_end

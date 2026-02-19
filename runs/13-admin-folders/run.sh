@@ -19,19 +19,19 @@ require_3leg_auth || { section_end; exit 0; }
 
 # SR-220: Grant folder rights dry-run
 run_sample "SR-220" "admin-folder-rights-dryrun" \
-  "raps admin folder rights user@company.com -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" --dry-run || true" \
+  "raps admin folder rights $TEST_USER -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" --dry-run || true" \
   "Expected: Shows which projects and folders would be affected" \
   "Review: Lists matched projects; no actual changes"
 
 # SR-221: Grant folder rights execute
 run_sample "SR-221" "admin-folder-rights-execute" \
-  "raps admin folder rights user@company.com -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" -y || true" \
+  "raps admin folder rights $TEST_USER -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Tower*\" -y || true" \
   "Expected: Grants folder permissions across matching projects" \
   "Review: Exit 0; permissions applied"
 
 # SR-222: Grant folder rights from project-ids file
 run_sample "SR-222" "admin-folder-rights-from-file" \
-  "raps admin folder rights user@company.com -a $ACCT -l folder-control --project-ids ./projects.txt -y || true" \
+  "raps admin folder rights $TEST_USER -a $ACCT -l folder-control --project-ids ./projects.txt -y || true" \
   "Expected: Grants folder permissions to projects in file" \
   "Review: Exit 0; permissions applied to each project"
 
@@ -69,12 +69,12 @@ run_sample "SR-227" "admin-operation-cancel" \
 
 # SR-228: Grant, verify, restrict folder access
 lifecycle_start "SR-228" "folder-permissions-lifecycle" "Grant, verify, restrict folder access"
-lifecycle_step 1 "raps admin folder rights user@co.com -a $ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" --dry-run" || true
-lifecycle_step 2 "raps admin folder rights user@co.com -a $ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" -y" || true
-lifecycle_step 3 "raps admin operation list --limit 1" || true
-lifecycle_step 4 "raps admin operation status $OP_ID" || true
-lifecycle_step 5 "raps admin folder rights user@co.com -a $ACCT -l view-only --folder \"Plans\" -f \"name:*Active*\" -y" || true
-lifecycle_step 6 "raps admin operation status $OP2_ID" || true
+lifecycle_step 1 "raps admin folder rights $TEST_USER_FOLDER -a $ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" --dry-run"
+lifecycle_step 2 "raps admin folder rights $TEST_USER_FOLDER -a $ACCT -l view-download-upload-edit --folder \"Plans\" -f \"name:*Active*\" -y"
+lifecycle_step 3 "raps admin operation list --limit 1"
+lifecycle_step 4 "raps admin operation status $OP_ID"
+lifecycle_step 5 "raps admin folder rights $TEST_USER_FOLDER -a $ACCT -l view-only --folder \"Plans\" -f \"name:*Active*\" -y"
+lifecycle_step 6 "raps admin operation status $OP2_ID"
 lifecycle_end
 
 section_end

@@ -23,7 +23,6 @@ def test_sr220_admin_folder_rights_dryrun(raps, ids, users):
         f' -l view-download-upload --folder "Plans" -f "name:*Tower*" --dry-run',
         sr_id="SR-220",
         slug="admin-folder-rights-dryrun",
-        may_fail=True,
     )
 
 
@@ -35,7 +34,6 @@ def test_sr221_admin_folder_rights_execute(raps, ids, users):
         f' -l view-download-upload --folder "Plans" -f "name:*Tower*" -y',
         sr_id="SR-221",
         slug="admin-folder-rights-execute",
-        may_fail=True,
     )
 
 
@@ -47,7 +45,6 @@ def test_sr222_admin_folder_rights_from_file(raps, ids, users):
         f" -l folder-control --project-ids ./projects.txt -y",
         sr_id="SR-222",
         slug="admin-folder-rights-from-file",
-        may_fail=True,
     )
 
 
@@ -58,7 +55,6 @@ def test_sr223_admin_company_list(raps, ids):
         f"raps admin company-list -a {account_id}",
         sr_id="SR-223",
         slug="admin-company-list",
-        may_fail=True,
     )
 
 
@@ -68,7 +64,6 @@ def test_sr224_admin_operation_list(raps):
         "raps admin operation list --status completed --limit 5",
         sr_id="SR-224",
         slug="admin-operation-list",
-        may_fail=True,
     )
 
 
@@ -78,7 +73,6 @@ def test_sr225_admin_operation_status(raps):
         f"raps admin operation status {OPERATION_ID}",
         sr_id="SR-225",
         slug="admin-operation-status",
-        may_fail=True,
     )
 
 
@@ -88,7 +82,6 @@ def test_sr226_admin_operation_resume(raps):
         f"raps admin operation resume {OPERATION_ID} --concurrency 3",
         sr_id="SR-226",
         slug="admin-operation-resume",
-        may_fail=True,
     )
 
 
@@ -98,7 +91,6 @@ def test_sr227_admin_operation_cancel(raps):
         f"raps admin operation cancel {OPERATION_ID} -y",
         sr_id="SR-227",
         slug="admin-operation-cancel",
-        may_fail=True,
     )
 
 
@@ -115,19 +107,16 @@ def test_sr228_folder_permissions_lifecycle(raps, ids, users):
     lc.step(
         f"raps admin folder rights {users.user_folder} -a {account_id}"
         f' -l view-download-upload-edit --folder "Plans" -f "name:*Active*" --dry-run',
-        may_fail=True,
     )
     lc.step(
         f"raps admin folder rights {users.user_folder} -a {account_id}"
         f' -l view-download-upload-edit --folder "Plans" -f "name:*Active*" -y',
-        may_fail=True,
     )
-    lc.step("raps admin operation list --limit 1", may_fail=True)
-    lc.step(f"raps admin operation status {OP_ID}", may_fail=True)
+    lc.step("raps admin operation list --limit 1")
+    lc.step(f"raps admin operation status {OP_ID}")
     lc.step(
         f"raps admin folder rights {users.user_folder} -a {account_id}"
         f' -l view-only --folder "Plans" -f "name:*Active*" -y',
-        may_fail=True,
     )
-    lc.step(f"raps admin operation status {OP2_ID}", may_fail=True)
+    lc.step(f"raps admin operation status {OP2_ID}")
     lc.assert_all_passed()

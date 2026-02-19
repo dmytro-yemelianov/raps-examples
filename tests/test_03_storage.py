@@ -1,5 +1,6 @@
 """Storage: Buckets + Objects"""
 
+import time
 from pathlib import Path
 
 import pytest
@@ -9,8 +10,9 @@ pytestmark = [
     pytest.mark.xdist_group("03-storage"),
 ]
 
-BUCKET_NAME = "sr-test-bucket-raps"
-DEST_BUCKET = "sr-backup-bucket-raps"
+_TS = str(int(time.time()))
+BUCKET_NAME = f"sr-test-{_TS}"
+DEST_BUCKET = f"sr-backup-{_TS}"
 
 
 # ── Bucket atomics ───────────────────────────────────────────────
@@ -22,13 +24,12 @@ def test_sr050_bucket_create(raps):
         f"raps bucket create -k {BUCKET_NAME} -p transient -r US",
         sr_id="SR-050",
         slug="bucket-create",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-051")
 def test_sr051_bucket_list(raps):
-    raps.run("raps bucket list", sr_id="SR-051", slug="bucket-list", may_fail=True)
+    raps.run("raps bucket list", sr_id="SR-051", slug="bucket-list")
 
 
 @pytest.mark.sr("SR-052")
@@ -37,7 +38,6 @@ def test_sr052_bucket_info(raps):
         f"raps bucket info {BUCKET_NAME}",
         sr_id="SR-052",
         slug="bucket-info",
-        may_fail=True,
     )
 
 
@@ -57,7 +57,6 @@ def test_sr054_object_upload(raps):
         f"raps object upload {BUCKET_NAME} ./test-data/sample.ifc",
         sr_id="SR-054",
         slug="object-upload",
-        may_fail=True,
     )
 
 
@@ -69,7 +68,17 @@ def test_sr055_object_upload_batch(raps):
         f"raps object upload {BUCKET_NAME} ./test-data/",
         sr_id="SR-055",
         slug="object-upload-batch",
-        may_fail=True,
+    )
+
+
+@pytest.mark.sr("SR-066")
+def test_sr066_object_upload_batch(raps):
+    if not Path("./test-data").is_dir():
+        pytest.skip("missing ./test-data/")
+    raps.run(
+        f"raps object upload-batch {BUCKET_NAME} ./test-data/",
+        sr_id="SR-066",
+        slug="object-upload-batch",
     )
 
 
@@ -79,7 +88,6 @@ def test_sr056_object_list(raps):
         f"raps object list {BUCKET_NAME}",
         sr_id="SR-056",
         slug="object-list",
-        may_fail=True,
     )
 
 
@@ -89,7 +97,6 @@ def test_sr057_object_info(raps):
         f"raps object info {BUCKET_NAME} sample.ifc",
         sr_id="SR-057",
         slug="object-info",
-        may_fail=True,
     )
 
 
@@ -99,7 +106,6 @@ def test_sr058_object_download(raps):
         f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc -o ./tmp/raps-download-test.ifc",
         sr_id="SR-058",
         slug="object-download",
-        may_fail=True,
     )
 
 
@@ -109,7 +115,6 @@ def test_sr059_object_signed_url(raps):
         f"raps object signed-url {BUCKET_NAME} sample.ifc",
         sr_id="SR-059",
         slug="object-signed-url",
-        may_fail=True,
     )
 
 
@@ -120,13 +125,11 @@ def test_sr060_object_copy(raps):
         f"raps bucket create -k {DEST_BUCKET} -p transient -r US",
         sr_id="SR-060",
         slug="object-copy-setup",
-        may_fail=True,
     )
     raps.run(
         f"raps object copy --source-bucket {BUCKET_NAME} --source-object sample.ifc --dest-bucket {DEST_BUCKET}",
         sr_id="SR-060",
         slug="object-copy",
-        may_fail=True,
     )
 
 
@@ -136,7 +139,6 @@ def test_sr061_object_rename(raps):
         f"raps object rename {DEST_BUCKET} sample.ifc --new-key sample-renamed.ifc",
         sr_id="SR-061",
         slug="object-rename",
-        may_fail=True,
     )
 
 
@@ -146,7 +148,6 @@ def test_sr062_object_delete(raps):
         f"raps object delete {DEST_BUCKET} sample-renamed.ifc -y",
         sr_id="SR-062",
         slug="object-delete",
-        may_fail=True,
     )
 
 
@@ -156,11 +157,12 @@ def test_sr062_object_delete(raps):
 @pytest.mark.sr("SR-063")
 @pytest.mark.lifecycle
 def test_sr063_bucket_full_lifecycle(raps):
+    bkt = f"sr-lifecycle-{_TS}"
     lc = raps.lifecycle("SR-063", "bucket-full-lifecycle", "Create -> list -> info -> delete")
-    lc.step("raps bucket create -k sr-lifecycle-bucket -p transient -r US", may_fail=True)
-    lc.step("raps bucket list", may_fail=True)
-    lc.step("raps bucket info sr-lifecycle-bucket", may_fail=True)
-    lc.step("raps bucket delete sr-lifecycle-bucket -y", may_fail=True)
+    lc.step(f"raps bucket create -k {bkt} -p transient -r US")
+    lc.step("raps bucket list")
+    lc.step(f"raps bucket info {bkt}")
+    lc.step(f"raps bucket delete {bkt} -y")
     lc.assert_all_passed()
 
 
@@ -172,14 +174,13 @@ def test_sr064_object_full_lifecycle(raps):
     lc = raps.lifecycle(
         "SR-064", "object-full-lifecycle", "Upload -> list -> info -> download -> delete"
     )
-    lc.step(f"raps object upload {BUCKET_NAME} ./test-data/sample.ifc", may_fail=True)
-    lc.step(f"raps object list {BUCKET_NAME}", may_fail=True)
-    lc.step(f"raps object info {BUCKET_NAME} sample.ifc", may_fail=True)
+    lc.step(f"raps object upload {BUCKET_NAME} ./test-data/sample.ifc")
+    lc.step(f"raps object list {BUCKET_NAME}")
+    lc.step(f"raps object info {BUCKET_NAME} sample.ifc")
     lc.step(
         f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc -o ./tmp/raps-lifecycle-test.ifc",
-        may_fail=True,
     )
-    lc.step(f"raps object delete {BUCKET_NAME} sample.ifc -y", may_fail=True)
+    lc.step(f"raps object delete {BUCKET_NAME} sample.ifc -y")
     lc.assert_all_passed()
 
 
@@ -188,9 +189,19 @@ def test_sr064_object_full_lifecycle(raps):
 def test_sr065_batch_upload_lifecycle(raps):
     if not Path("./test-data").is_dir():
         pytest.skip("missing ./test-data/")
+    bkt = f"sr-batch-{_TS}"
+    # List a few files explicitly because `object upload <dir>` has Windows path issues
+    files = [
+        str(f).replace("\\", "/")
+        for f in sorted(Path("./test-data").glob("*"))
+        if f.is_file()
+    ][:5]  # Limit to 5 files to avoid pagination issues
+    if not files:
+        pytest.skip("no files in ./test-data/")
+    test_files = " ".join(files)
     lc = raps.lifecycle("SR-065", "batch-upload-lifecycle", "Batch upload -> list -> cleanup")
-    lc.step("raps bucket create -k sr-batch-bucket -p transient -r US", may_fail=True)
-    lc.step("raps object upload sr-batch-bucket ./test-data/", may_fail=True)
-    lc.step("raps object list sr-batch-bucket", may_fail=True)
-    lc.step("raps bucket delete sr-batch-bucket -y", may_fail=True)
+    lc.step(f"raps bucket create -k {bkt} -p transient -r US")
+    lc.step(f"raps object upload-batch {bkt} {test_files}")
+    lc.step(f"raps object list {bkt}")
+    lc.step(f"raps bucket delete {bkt} -y")
     lc.assert_all_passed()

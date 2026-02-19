@@ -32,7 +32,6 @@ def test_sr272_pipeline_run(raps):
         "raps pipeline run ./sample-pipeline.yaml",
         sr_id="SR-272",
         slug="pipeline-run",
-        may_fail=True,
         timeout=120,
     )
 
@@ -45,5 +44,5 @@ def test_sr273_pipeline_author_and_run(raps):
     )
     lc.step("raps pipeline sample -o ./my-pipeline.yaml")
     lc.step("raps pipeline validate ./my-pipeline.yaml")
-    lc.step("raps pipeline run ./my-pipeline.yaml", may_fail=True)
+    lc.step("raps pipeline run ./my-pipeline.yaml")
     lc.assert_all_passed()

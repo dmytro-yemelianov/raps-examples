@@ -105,20 +105,20 @@ run_sample "SR-062" "object-delete" \
 
 # SR-063: Bucket full CRUD lifecycle
 lifecycle_start "SR-063" "bucket-full-lifecycle" "Bucket create → list → info → delete"
-lifecycle_step 1 "raps bucket create sr-lifecycle-bucket --policy transient --region US || true"
-lifecycle_step 2 "raps bucket list || true"
-lifecycle_step 3 "raps bucket info sr-lifecycle-bucket || true"
-lifecycle_step 4 "raps bucket delete sr-lifecycle-bucket || true"
+lifecycle_step 1 "raps bucket create sr-lifecycle-bucket --policy transient --region US"
+lifecycle_step 2 "raps bucket list"
+lifecycle_step 3 "raps bucket info sr-lifecycle-bucket"
+lifecycle_step 4 "raps bucket delete sr-lifecycle-bucket"
 lifecycle_end
 
 # SR-064: Object full lifecycle
 if [ -f ./test-data/sample.ifc ]; then
   lifecycle_start "SR-064" "object-full-lifecycle" "Upload → list → info → download → delete"
-  lifecycle_step 1 "raps object upload $BUCKET_NAME ./test-data/sample.ifc || true"
-  lifecycle_step 2 "raps object list $BUCKET_NAME || true"
-  lifecycle_step 3 "raps object info $BUCKET_NAME sample.ifc || true"
-  lifecycle_step 4 "mkdir -p ./tmp && raps object download $BUCKET_NAME sample.ifc -o ./tmp/raps-lifecycle-test.ifc || true"
-  lifecycle_step 5 "raps object delete $BUCKET_NAME sample.ifc || true"
+  lifecycle_step 1 "raps object upload $BUCKET_NAME ./test-data/sample.ifc"
+  lifecycle_step 2 "raps object list $BUCKET_NAME"
+  lifecycle_step 3 "raps object info $BUCKET_NAME sample.ifc"
+  lifecycle_step 4 "mkdir -p ./tmp && raps object download $BUCKET_NAME sample.ifc -o ./tmp/raps-lifecycle-test.ifc"
+  lifecycle_step 5 "raps object delete $BUCKET_NAME sample.ifc"
   lifecycle_end
 else
   skip_sample "SR-064" "object-full-lifecycle" "missing ./test-data/sample.ifc"
@@ -127,10 +127,10 @@ fi
 # SR-065: Batch upload lifecycle
 if [ -d ./test-data ]; then
   lifecycle_start "SR-065" "batch-upload-lifecycle" "Batch upload → list → cleanup"
-  lifecycle_step 1 "raps bucket create sr-batch-bucket --policy transient --region US || true"
-  lifecycle_step 2 "raps object upload sr-batch-bucket ./test-data/ || true"
-  lifecycle_step 3 "raps object list sr-batch-bucket || true"
-  lifecycle_step 4 "raps bucket delete sr-batch-bucket || true"
+  lifecycle_step 1 "raps bucket create sr-batch-bucket --policy transient --region US"
+  lifecycle_step 2 "raps object upload sr-batch-bucket ./test-data/"
+  lifecycle_step 3 "raps object list sr-batch-bucket"
+  lifecycle_step 4 "raps bucket delete sr-batch-bucket"
   lifecycle_end
 else
   skip_sample "SR-065" "batch-upload-lifecycle" "missing ./test-data/"

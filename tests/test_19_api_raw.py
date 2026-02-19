@@ -11,54 +11,49 @@ pytestmark = [
 @pytest.mark.sr("SR-280")
 def test_sr280_api_get(raps):
     raps.run(
-        "MSYS_NO_PATHCONV=1 raps api get /oss/v2/buckets",
+        "raps api get /oss/v2/buckets",
         sr_id="SR-280",
         slug="api-get",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-281")
 def test_sr281_api_post(raps):
     raps.run(
-        "MSYS_NO_PATHCONV=1 raps api post \"/oss/v2/buckets\""
+        "raps api post \"/oss/v2/buckets\""
         " -d '{\"bucketKey\":\"api-raw-test-raps\",\"policyKey\":\"transient\"}'",
         sr_id="SR-281",
         slug="api-post",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-282")
 def test_sr282_api_put(raps):
     raps.run(
-        "MSYS_NO_PATHCONV=1 raps api put"
+        "raps api put"
         " \"/webhooks/v1/systems/data/events/dm.version.added/hooks/dummy-hook-id\""
         " -d '{\"status\":\"inactive\"}'",
         sr_id="SR-282",
         slug="api-put",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-283")
 def test_sr283_api_patch(raps):
     raps.run(
-        "MSYS_NO_PATHCONV=1 raps api patch"
+        "raps api patch"
         " \"/construction/issues/v1/projects/dummy-project/issues/dummy-issue\""
         " -d '{\"title\":\"updated\"}'",
         sr_id="SR-283",
         slug="api-patch",
-        may_fail=True,
     )
 
 
 @pytest.mark.sr("SR-284")
 def test_sr284_api_delete(raps):
     raps.run(
-        "MSYS_NO_PATHCONV=1 raps api delete"
+        "raps api delete"
         " \"/oss/v2/buckets/api-raw-nonexistent-bucket\"",
         sr_id="SR-284",
         slug="api-delete",
-        may_fail=True,
     )

@@ -26,7 +26,6 @@ def test_bucket_list_output_format(raps, fmt, sr_id):
         f"raps bucket list --output {fmt}",
         sr_id=sr_id,
         slug=f"bucket-list-{fmt}",
-        may_fail=True,
     )
 
 
@@ -49,7 +48,6 @@ def test_issue_list_output_format(raps, ids, fmt, sr_id):
         f"raps issue list {ids.project_id} --output {fmt}",
         sr_id=sr_id,
         slug=f"issue-list-{fmt}",
-        may_fail=True,
     )
 
 
@@ -72,7 +70,6 @@ def test_admin_user_list_output_format(raps, ids, fmt, sr_id):
         f"raps admin user list -a {ids.account_id} --output {fmt}",
         sr_id=sr_id,
         slug=f"admin-user-list-{fmt}",
-        may_fail=True,
     )
 
 
@@ -95,7 +92,6 @@ def test_hub_list_output_format(raps, fmt, sr_id):
         f"raps hub list --output {fmt}",
         sr_id=sr_id,
         slug=f"hub-list-{fmt}",
-        may_fail=True,
     )
 
 
@@ -117,7 +113,6 @@ def test_da_engines_output_format(raps, fmt, sr_id):
         f"raps da engines --output {fmt}",
         sr_id=sr_id,
         slug=f"da-engines-{fmt}",
-        may_fail=True,
     )
 
 
@@ -130,7 +125,6 @@ def test_sr530_no_color_bucket_list(raps):
         "raps bucket list --no-color",
         sr_id="SR-530",
         slug="no-color-bucket-list",
-        may_fail=True,
     )
 
 
@@ -141,7 +135,6 @@ def test_sr531_no_color_issue_list(raps, ids):
         f"raps issue list {ids.project_id} --no-color",
         sr_id="SR-531",
         slug="no-color-issue-list",
-        may_fail=True,
     )
 
 

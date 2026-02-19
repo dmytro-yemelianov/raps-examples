@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -11,8 +12,9 @@ import pytest
 from .helpers.auth import AuthManager
 from .helpers.discovery import DiscoveredIds, discover_ids
 from .helpers.json_report import SectionJsonReporter
-from .helpers.runner import RapsRunner, build_raps_env
+from .helpers.runner import CommandRecord, RapsRunner, build_raps_env, get_command_records, clear_command_records
 from .helpers.test_users import TestUsers
+from .helpers.yr_generator import YrScriptGenerator, _find_yr_binary
 
 # Prevent pytest from collecting helper modules as tests
 collect_ignore = [str(Path(__file__).parent / "helpers")]
@@ -48,6 +50,30 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="Directory for per-section JSON report files",
     )
+    parser.addoption(
+        "--generate-yr",
+        action="store_true",
+        default=False,
+        help="Generate .yr scenario files from test commands",
+    )
+    parser.addoption(
+        "--render-yr",
+        action="store_true",
+        default=False,
+        help="Also render .yr files to GIF (implies --generate-yr)",
+    )
+    parser.addoption(
+        "--yr-output-dir",
+        type=str,
+        default="recordings",
+        help="Output directory for .yr and .gif files (default: recordings)",
+    )
+    parser.addoption(
+        "--yr-workers",
+        type=int,
+        default=4,
+        help="Parallel workers for yr rendering (default: 4)",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -69,13 +95,125 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
-    """Register JSON report plugin after CLI options are parsed."""
+    """Register plugins after CLI options are parsed."""
     report_dir = session.config.getoption("--json-report-dir", default=None)
     if report_dir:
         session.config.pluginmanager.register(
             SectionJsonReporter(Path(report_dir)),
             "section_json_reporter",
         )
+
+    generate_yr = session.config.getoption("--generate-yr", default=False)
+    render_yr = session.config.getoption("--render-yr", default=False)
+    if generate_yr or render_yr:
+        output_dir = Path(session.config.getoption("--yr-output-dir"))
+        workers = session.config.getoption("--yr-workers")
+        cwd = str(Path(__file__).parent.parent)
+        session.config.pluginmanager.register(
+            YrRecorderPlugin(
+                output_dir=output_dir,
+                render=render_yr,
+                workers=workers,
+                cwd=cwd,
+            ),
+            "yr_recorder",
+        )
+
+
+# ---------------------------------------------------------------------------
+# .yr recording plugin
+# ---------------------------------------------------------------------------
+
+
+class YrRecorderPlugin:
+    """Pytest plugin that generates .yr scripts and optionally renders GIFs."""
+
+    def __init__(
+        self,
+        output_dir: Path,
+        render: bool,
+        workers: int,
+        cwd: str,
+    ) -> None:
+        self.output_dir = output_dir
+        self.render = render
+        self.workers = workers
+        self.cwd = cwd
+        # section_name -> (section_title, list of CommandRecord)
+        self._sections: dict[str, tuple[str, list[CommandRecord]]] = {}
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_makereport(self, item: pytest.Item, call):
+        outcome = yield
+        report = outcome.get_result()
+
+        if report.when != "call":
+            return
+
+        # Derive section name from module (same logic as json_report.py)
+        module_name = item.module.__name__.rsplit(".", 1)[-1]
+        m = re.match(r"test_(\d+)_(.+)", module_name)
+        if not m:
+            return
+        section_num = m.group(1)
+        section_slug = m.group(2).replace("_", "-")
+        section_name = f"{section_num}-{section_slug}"
+
+        # Get section title from module docstring
+        if section_name not in self._sections:
+            title = ""
+            if item.module.__doc__:
+                title = item.module.__doc__.strip().split("\n")[0]
+            if not title:
+                title = section_name
+            self._sections[section_name] = (title, [])
+
+        # Extract SR ID from markers
+        sr_id = ""
+        for marker in item.iter_markers("sr"):
+            sr_id = marker.args[0] if marker.args else ""
+            break
+
+        if not sr_id:
+            return
+
+        # Find matching command records for this test's sr_id
+        base_id = sr_id.split("/")[0]
+        for rec in get_command_records():
+            rec_base = rec.sr_id.split("/")[0]
+            if rec_base == base_id:
+                # Avoid duplicates (lifecycle steps share base ID)
+                existing = self._sections[section_name][1]
+                if not any(r.sr_id == rec.sr_id and r.command == rec.command for r in existing):
+                    existing.append(rec)
+
+    def pytest_sessionfinish(self, session: pytest.Session) -> None:
+        """Generate .yr files and optionally render GIFs."""
+        if not self._sections:
+            return
+
+        generator = YrScriptGenerator()
+        yr_files = generator.generate_all(self.output_dir, self._sections)
+
+        n_generated = len(yr_files)
+        sys.stderr.write(f"\nyr: Generated {n_generated} .yr files in {self.output_dir}/\n")
+
+        if self.render and yr_files:
+            yr_bin = _find_yr_binary(self.cwd)
+            if not yr_bin:
+                sys.stderr.write("yr: WARNING — yr binary not found, skipping render\n")
+                return
+
+            sys.stderr.write(f"yr: Rendering {n_generated} GIFs with {self.workers} workers...\n")
+            results = YrScriptGenerator.render_all(yr_files, yr_bin, self.workers)
+            ok = sum(1 for v in results.values() if v)
+            fail = sum(1 for v in results.values() if not v)
+            sys.stderr.write(f"yr: Rendered {ok} GIFs")
+            if fail:
+                sys.stderr.write(f" ({fail} failed)")
+            sys.stderr.write(f" in {self.output_dir}/\n")
+
+        clear_command_records()
 
 
 # ---------------------------------------------------------------------------
@@ -257,9 +395,9 @@ def ensure_default_profile(raps: RapsRunner, _target: str) -> None:
     if _target == "mock":
         return
     # Create default if missing (create returns ok if already exists)
-    raps.run("raps config profile create default", sr_id="", slug="ensure-default", may_fail=True)
+    raps.run("raps config profile create default", sr_id="", slug="ensure-default")
     # Ensure default is active (use returns ok if already active)
-    raps.run("raps config profile use default", sr_id="", slug="ensure-default-active", may_fail=True)
+    raps.run("raps config profile use default", sr_id="", slug="ensure-default-active")
 
 
 @pytest.fixture(scope="session")

@@ -49,13 +49,19 @@ run_sample "SR-254" "template-archive" \
 # ── Lifecycles ───────────────────────────────────────────────────
 
 # SR-255: Admin manages templates
-lifecycle_start "SR-255" "template-management-lifecycle" "Admin manages templates"
-lifecycle_step 1 "raps template create -a $ACCT --name \"Healthcare Template\"" || true
-lifecycle_step 2 "raps template list -a $ACCT" || true
-lifecycle_step 3 "raps template info $TPL_ID -a $ACCT" || true
-lifecycle_step 4 "raps template update $TPL_ID -a $ACCT --name \"Healthcare Template 2026\"" || true
-lifecycle_step 5 "raps template archive $TPL_ID -a $ACCT" || true
-lifecycle_step 6 "raps template list -a $ACCT" || true
-lifecycle_end
+if [ -n "${RAPS_ACCOUNT_ID:-}" ]; then
+  _LC_TPL_NAME="Healthcare Template $(date +%s)"
+  lifecycle_start "SR-255" "template-management-lifecycle" "Admin manages templates"
+  lifecycle_step_capture 1 "raps template create -a $ACCT --name \"$_LC_TPL_NAME\" --output json"
+  TPL_ID=$(echo "$LC_CAPTURED_OUTPUT" | grep -oP '"id"\s*:\s*"\K[^"]+' 2>/dev/null || echo "${TPL_ID:-}")
+  lifecycle_step 2 "raps template list -a $ACCT"
+  lifecycle_step 3 "raps template info $TPL_ID -a $ACCT"
+  lifecycle_step 4 "raps template update $TPL_ID -a $ACCT --name \"Healthcare Template 2026\""
+  lifecycle_step 5 "raps template archive $TPL_ID -a $ACCT"
+  lifecycle_step 6 "raps template list -a $ACCT"
+  lifecycle_end
+else
+  skip_sample "SR-255" "template-management-lifecycle" "No ACC account (requires b. hub)"
+fi
 
 section_end

@@ -62,10 +62,10 @@ run_sample "SR-187" "webhook-delete" \
 
 # SR-188: DevOps sets up file change notifications
 lifecycle_start "SR-188" "webhook-subscription-lifecycle" "Create → list → update → delete"
-lifecycle_step 1 "raps webhook create -e \"dm.version.added\" -u \"https://example.com/raps-lifecycle-hook\" || true"
+lifecycle_step 1 "raps webhook create -e \"dm.version.added\" -u \"https://example.com/raps-lifecycle-hook\""
 lifecycle_step 2 "raps webhook list"
-lifecycle_step 3 "HOOK_ID=\$(raps webhook list --output json 2>/dev/null | python3 -c \"import sys,json; hooks=json.load(sys.stdin); print(hooks[0]['hookId'] if hooks else '')\" 2>/dev/null || echo '') && [ -n \"\$HOOK_ID\" ] && raps webhook update \"\$HOOK_ID\" --status inactive || true"
-lifecycle_step 4 "HOOK_ID=\$(raps webhook list --output json 2>/dev/null | python3 -c \"import sys,json; hooks=json.load(sys.stdin); print(hooks[0]['hookId'] if hooks else '')\" 2>/dev/null || echo '') && [ -n \"\$HOOK_ID\" ] && raps webhook delete \"\$HOOK_ID\" || true"
+lifecycle_step 3 "HOOK_ID=\$(raps webhook list --output json 2>/dev/null | python3 -c \"import sys,json; hooks=json.load(sys.stdin); print(hooks[0]['hookId'] if hooks else '')\" 2>/dev/null || echo '') && [ -n \"\$HOOK_ID\" ] && raps webhook update \"\$HOOK_ID\" --status inactive"
+lifecycle_step 4 "HOOK_ID=\$(raps webhook list --output json 2>/dev/null | python3 -c \"import sys,json; hooks=json.load(sys.stdin); print(hooks[0]['hookId'] if hooks else '')\" 2>/dev/null || echo '') && [ -n \"\$HOOK_ID\" ] && raps webhook delete \"\$HOOK_ID\""
 lifecycle_end
 
 section_end

@@ -21,7 +21,6 @@ def test_sr250_template_list(raps, ids):
         f"raps template list -a {account_id}",
         sr_id="SR-250",
         slug="template-list",
-        may_fail=True,
     )
 
 
@@ -32,7 +31,6 @@ def test_sr251_template_create(raps, ids):
         f'raps template create -a {account_id} --name "Standard Building Template"',
         sr_id="SR-251",
         slug="template-create",
-        may_fail=True,
     )
 
 
@@ -43,7 +41,6 @@ def test_sr252_template_info(raps, ids):
         f"raps template info {TEMPLATE_ID} -a {account_id}",
         sr_id="SR-252",
         slug="template-info",
-        may_fail=True,
     )
 
 
@@ -54,7 +51,6 @@ def test_sr253_template_update(raps, ids):
         f'raps template update {TEMPLATE_ID} -a {account_id} --name "Standard Building Template v2"',
         sr_id="SR-253",
         slug="template-update",
-        may_fail=True,
     )
 
 
@@ -65,7 +61,6 @@ def test_sr254_template_archive(raps, ids):
         f"raps template archive {TEMPLATE_ID} -a {account_id}",
         sr_id="SR-254",
         slug="template-archive",
-        may_fail=True,
     )
 
 
@@ -84,7 +79,6 @@ def test_sr255_template_management_lifecycle(raps, ids):
     lc = raps.lifecycle("SR-255", "template-management-lifecycle", "Admin manages templates")
     result = lc.step(
         f'raps template create -a {account_id} --name "{name}" --output json',
-        may_fail=True,
     )
     tpl_id = "tpl-demo-001"
     if result.ok:
@@ -92,9 +86,9 @@ def test_sr255_template_management_lifecycle(raps, ids):
             tpl_id = json.loads(result.stdout).get("id", tpl_id)
         except (json.JSONDecodeError, KeyError):
             pass
-    lc.step(f"raps template list -a {account_id}", may_fail=True)
-    lc.step(f"raps template info {tpl_id} -a {account_id}", may_fail=True)
-    lc.step(f'raps template update {tpl_id} -a {account_id} --name "Healthcare Template 2026"', may_fail=True)
-    lc.step(f"raps template archive {tpl_id} -a {account_id}", may_fail=True)
-    lc.step(f"raps template list -a {account_id}", may_fail=True)
+    lc.step(f"raps template list -a {account_id}")
+    lc.step(f"raps template info {tpl_id} -a {account_id}")
+    lc.step(f'raps template update {tpl_id} -a {account_id} --name "Healthcare Template 2026"')
+    lc.step(f"raps template archive {tpl_id} -a {account_id}")
+    lc.step(f"raps template list -a {account_id}")
     lc.assert_all_passed()

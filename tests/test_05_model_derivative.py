@@ -1,6 +1,7 @@
 """Model Derivative / Translation"""
 
 import base64
+import time
 from pathlib import Path
 
 import pytest
@@ -10,7 +11,8 @@ pytestmark = [
     pytest.mark.xdist_group("05-model-derivative"),
 ]
 
-BUCKET_NAME = "sr-test-bucket-raps"
+_TS = str(int(time.time()))
+BUCKET_NAME = f"sr-deriv-{_TS}"
 OBJECT_KEY = "sample.ifc"
 URN = base64.urlsafe_b64encode(
     f"urn:adsk.objects:os.object:{BUCKET_NAME}/{OBJECT_KEY}".encode()
@@ -26,7 +28,6 @@ def test_sr090_translate_start(raps):
         f"raps translate start {URN} --format svf2",
         sr_id="SR-090",
         slug="translate-start",
-        may_fail=True,
     )
 
 
@@ -36,7 +37,6 @@ def test_sr091_translate_status(raps):
         f"raps translate status {URN}",
         sr_id="SR-091",
         slug="translate-status",
-        may_fail=True,
     )
 
 
@@ -46,7 +46,6 @@ def test_sr092_translate_manifest(raps):
         f"raps translate manifest {URN}",
         sr_id="SR-092",
         slug="translate-manifest",
-        may_fail=True,
     )
 
 
@@ -56,7 +55,6 @@ def test_sr093_translate_derivatives(raps):
         f"raps translate derivatives {URN}",
         sr_id="SR-093",
         slug="translate-derivatives",
-        may_fail=True,
     )
 
 
@@ -66,7 +64,6 @@ def test_sr094_translate_download(raps):
         f"raps translate download {URN} -o /tmp/raps-derivative-test/",
         sr_id="SR-094",
         slug="translate-download",
-        may_fail=True,
     )
 
 
@@ -76,7 +73,6 @@ def test_sr095_translate_preset_list(raps):
         "raps translate preset list",
         sr_id="SR-095",
         slug="translate-preset-list",
-        may_fail=True,
     )
 
 
@@ -86,7 +82,6 @@ def test_sr096_translate_preset_create(raps):
         'raps translate preset create "svf2-default" -f svf2',
         sr_id="SR-096",
         slug="translate-preset-create",
-        may_fail=True,
     )
 
 
@@ -96,7 +91,6 @@ def test_sr097_translate_preset_show(raps):
         'raps translate preset show "svf2-default"',
         sr_id="SR-097",
         slug="translate-preset-show",
-        may_fail=True,
     )
 
 
@@ -106,7 +100,6 @@ def test_sr098_translate_preset_use(raps):
         f'raps translate preset use {URN} svf2-default',
         sr_id="SR-098",
         slug="translate-preset-use",
-        may_fail=True,
     )
 
 
@@ -116,7 +109,6 @@ def test_sr099_translate_preset_delete(raps):
         'raps translate preset delete "svf2-default"',
         sr_id="SR-099",
         slug="translate-preset-delete",
-        may_fail=True,
     )
 
 
@@ -134,10 +126,14 @@ def test_sr100_translate_full_pipeline(raps):
     lc = raps.lifecycle(
         "SR-100", "translate-full-pipeline", "Upload -> translate -> poll -> download"
     )
-    lc.step(f"raps object upload {BUCKET_NAME} ./test-data/sample.rvt", may_fail=True)
-    lc.step(f"raps translate start {rvt_urn} --format svf2", may_fail=True)
-    lc.step(f"raps translate status {rvt_urn}", may_fail=True)
-    lc.step(f"raps translate manifest {rvt_urn}", may_fail=True)
+    lc.step(f"raps bucket create -k {BUCKET_NAME} -p transient -r US")
+    lc.step(f"raps object upload {BUCKET_NAME} ./test-data/sample.rvt")
+    result = lc.step(f"raps translate start {rvt_urn} --format svf2")
+    if not result.ok and "capacity exceeded" in result.stderr:
+        pytest.skip("Translation API rate-limited (free tier capacity exceeded)")
+    if result.ok:
+        lc.step(f"raps translate status {rvt_urn}")
+        lc.step(f"raps translate manifest {rvt_urn}")
     lc.assert_all_passed()
 
 
@@ -145,8 +141,8 @@ def test_sr100_translate_full_pipeline(raps):
 @pytest.mark.lifecycle
 def test_sr101_translate_preset_lifecycle(raps):
     lc = raps.lifecycle("SR-101", "translate-preset-lifecycle", "Preset CRUD + use")
-    lc.step('raps translate preset create "ifc-to-svf" -f svf2', may_fail=True)
-    lc.step("raps translate preset list", may_fail=True)
-    lc.step('raps translate preset show "ifc-to-svf"', may_fail=True)
-    lc.step('raps translate preset delete "ifc-to-svf"', may_fail=True)
+    lc.step('raps translate preset create "ifc-to-svf" -f svf2')
+    lc.step("raps translate preset list")
+    lc.step('raps translate preset show "ifc-to-svf"')
+    lc.step('raps translate preset delete "ifc-to-svf"')
     lc.assert_all_passed()

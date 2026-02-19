@@ -125,33 +125,33 @@ run_sample "SR-174" "acc-checklist-templates" \
 
 # SR-175: Facilities manager tracks equipment
 lifecycle_start "SR-175" "asset-tracking-lifecycle" "Facilities manager tracks equipment"
-lifecycle_step 1 "raps acc asset create $PID --category-id $MECH_CAT --description \"Chiller CH-01\" || true"
-lifecycle_step 2 "raps acc asset create $PID --category-id $MECH_CAT --description \"Chiller CH-02\" || true"
-lifecycle_step 3 "raps acc asset list $PID || true"
-lifecycle_step 4 "raps acc asset update $PID $CH01 --status-id $DELIVERED_STATUS || true"
-lifecycle_step 5 "raps acc asset update $PID $CH01 --status-id $INSTALLED_STATUS || true"
-lifecycle_step 6 "raps acc asset get $PID $CH01 || true"
-lifecycle_step 7 "raps acc asset delete $PID $CH02 --yes || true"
+lifecycle_step 1 "raps acc asset create $PID --category-id $MECH_CAT --description \"Chiller CH-01\""
+lifecycle_step 2 "raps acc asset create $PID --category-id $MECH_CAT --description \"Chiller CH-02\""
+lifecycle_step 3 "raps acc asset list $PID"
+lifecycle_step 4 "raps acc asset update $PID $CH01 --status-id $DELIVERED_STATUS"
+lifecycle_step 5 "raps acc asset update $PID $CH01 --status-id $INSTALLED_STATUS"
+lifecycle_step 6 "raps acc asset get $PID $CH01"
+lifecycle_step 7 "raps acc asset delete $PID $CH02 --yes"
 lifecycle_end
 
 # SR-176: GC submits shop drawings
 lifecycle_start "SR-176" "submittal-review-lifecycle" "GC submits shop drawings"
-lifecycle_step 1 "raps acc submittal create $PID --title \"Structural steel shop drawings\" --spec-section \"05 12 00\" || true"
-lifecycle_step 2 "raps acc submittal get $PID $SUBMITTAL_ID || true"
-lifecycle_step 3 "raps acc submittal update $PID $SUBMITTAL_ID --status \"in_review\" || true"
-lifecycle_step 4 "raps acc submittal update $PID $SUBMITTAL_ID --status \"revise_resubmit\" || true"
-lifecycle_step 5 "raps acc submittal update $PID $SUBMITTAL_ID --status \"approved\" || true"
-lifecycle_step 6 "raps acc submittal delete $PID $SUBMITTAL_ID --yes || true"
+lifecycle_step 1 "raps acc submittal create $PID --title \"Structural steel shop drawings\" --spec-section \"05 12 00\""
+lifecycle_step 2 "raps acc submittal get $PID $SUBMITTAL_ID"
+lifecycle_step 3 "raps acc submittal update $PID $SUBMITTAL_ID --status \"in_review\""
+lifecycle_step 4 "raps acc submittal update $PID $SUBMITTAL_ID --status \"revise_resubmit\""
+lifecycle_step 5 "raps acc submittal update $PID $SUBMITTAL_ID --status \"approved\""
+lifecycle_step 6 "raps acc submittal delete $PID $SUBMITTAL_ID --yes"
 lifecycle_end
 
 # SR-177: Inspector completes inspection
 lifecycle_start "SR-177" "checklist-inspection-lifecycle" "Inspector completes inspection"
-lifecycle_step 1 "raps acc checklist templates $PID || true"
-lifecycle_step 2 "raps acc checklist create $PID --title \"Fire stopping inspection B3\" --template-id $TPL || true"
-lifecycle_step 3 "raps acc checklist get $PID $CHECKLIST_ID || true"
-lifecycle_step 4 "raps acc checklist update $PID $CHECKLIST_ID --status \"in_progress\" || true"
-lifecycle_step 5 "raps acc checklist update $PID $CHECKLIST_ID --status \"completed\" || true"
-lifecycle_step 6 "raps acc checklist get $PID $CHECKLIST_ID || true"
+lifecycle_step 1 "raps acc checklist templates $PID"
+lifecycle_step 2 "raps acc checklist create $PID --title \"Fire stopping inspection B3\" --template-id $TPL"
+lifecycle_step 3 "raps acc checklist get $PID $CHECKLIST_ID"
+lifecycle_step 4 "raps acc checklist update $PID $CHECKLIST_ID --status \"in_progress\""
+lifecycle_step 5 "raps acc checklist update $PID $CHECKLIST_ID --status \"completed\""
+lifecycle_step 6 "raps acc checklist get $PID $CHECKLIST_ID"
 lifecycle_end
 
 section_end

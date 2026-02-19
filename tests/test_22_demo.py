@@ -15,7 +15,6 @@ def test_sr310_demo_bucket_lifecycle(raps):
         "raps demo bucket-lifecycle --non-interactive",
         sr_id="SR-310",
         slug="demo-bucket-lifecycle",
-        may_fail=True,
         timeout=120,
     )
 
@@ -28,7 +27,6 @@ def test_sr311_demo_model_pipeline(raps):
         "raps demo model-pipeline --file ./test-data/sample.rvt --non-interactive",
         sr_id="SR-311",
         slug="demo-model-pipeline",
-        may_fail=True,
         timeout=120,
     )
 
@@ -39,7 +37,6 @@ def test_sr312_demo_data_management(raps):
         "raps demo data-management --non-interactive --export ./dm-report.json",
         sr_id="SR-312",
         slug="demo-data-management",
-        may_fail=True,
     )
 
 
@@ -51,6 +48,5 @@ def test_sr313_demo_batch_processing(raps):
         "raps demo batch-processing --input ./test-data/ --non-interactive",
         sr_id="SR-313",
         slug="demo-batch-processing",
-        may_fail=True,
         timeout=120,
     )

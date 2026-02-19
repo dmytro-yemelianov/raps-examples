@@ -13,11 +13,11 @@ section_start "02-config" "Configuration"
 
 # ── Atomic commands ──────────────────────────────────────────────
 
-# SR-030: Show full configuration
+# SR-030: Show full configuration (export current profile)
 run_sample "SR-030" "config-show" \
-  "raps config get output_format" \
+  "raps config profile export -n default" \
   "Expected: Full configuration displayed" \
-  "Review: Output includes client_id, output_format, active profile"
+  "Review: Output includes profile settings as JSON"
 
 # SR-031: Get a single config value
 run_sample "SR-031" "config-get" \
@@ -82,7 +82,7 @@ run_sample "SR-041" "config-context-show" \
 
 # SR-042: Set context to specific hub and project (now works on active staging profile)
 run_sample "SR-042" "config-context-set" \
-  "raps config context set --hub-id $HUB_ID --project-id $PROJECT_ID || true" \
+  "raps config context set hub_id $HUB_ID && raps config context set project_id $PROJECT_ID || true" \
   "Expected: Context set to specified hub and project" \
   "Review: Exit code 0; context show displays the IDs"
 
@@ -110,23 +110,23 @@ raps config profile use default 2>/dev/null || true
 lifecycle_start "SR-044" "config-profile-lifecycle" "Full profile CRUD lifecycle"
 lifecycle_step 1 "raps config profile create test-lifecycle"
 lifecycle_step 2 "raps config profile use test-lifecycle"
-lifecycle_step 3 "raps config set output_format yaml || true"
-lifecycle_step 4 "raps config get output_format || true"
+lifecycle_step 3 "raps config set output_format yaml"
+lifecycle_step 4 "raps config get output_format"
 lifecycle_step 5 "raps config profile export -n test-lifecycle"
-lifecycle_step 6 "raps config profile use default || true"
-lifecycle_step 7 "raps config profile delete test-lifecycle || true"
+lifecycle_step 6 "raps config profile use default"
+lifecycle_step 7 "raps config profile delete test-lifecycle"
 lifecycle_end
 
 # SR-045: Context set and clear lifecycle
 lifecycle_start "SR-045" "config-context-lifecycle" "Context set and clear lifecycle"
 lifecycle_step 1 "raps config profile create ctx-test"
 lifecycle_step 2 "raps config profile use ctx-test"
-lifecycle_step 3 "raps config context set --hub-id $HUB_ID --project-id $PROJECT_ID"
+lifecycle_step 3 "raps config context set hub_id $HUB_ID && raps config context set project_id $PROJECT_ID"
 lifecycle_step 4 "raps config context show"
 lifecycle_step 5 "raps config context clear"
 lifecycle_step 6 "raps config context show"
-lifecycle_step 7 "raps config profile use default || true"
-lifecycle_step 8 "raps config profile delete ctx-test || true"
+lifecycle_step 7 "raps config profile use default"
+lifecycle_step 8 "raps config profile delete ctx-test"
 lifecycle_end
 
 section_end

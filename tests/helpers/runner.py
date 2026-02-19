@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import math
 import os
 import re
 import shlex
@@ -21,6 +22,39 @@ from dataclasses import dataclass, field
 # Lifecycle steps ("SR-063/step1") are folded into the base ID.
 _captured_logs: dict[str, str] = {}
 _captured_lock = threading.Lock()
+
+
+# ---------------------------------------------------------------------------
+# Command record collector for .yr generation
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class CommandRecord:
+    """Structured record of a CLI invocation for .yr script generation."""
+
+    sr_id: str
+    slug: str
+    command: str       # original command (before path resolution)
+    duration: float
+    exit_code: int
+    timed_out: bool
+
+
+_command_records: list[CommandRecord] = []
+_commands_lock = threading.Lock()
+
+
+def get_command_records() -> list[CommandRecord]:
+    """Return a snapshot of collected command records."""
+    with _commands_lock:
+        return list(_command_records)
+
+
+def clear_command_records() -> None:
+    """Clear collected command records."""
+    with _commands_lock:
+        _command_records.clear()
 
 
 def _store_log(sr_id: str, result: "RunResult") -> None:
@@ -173,7 +207,6 @@ class RunResult:
     stderr: str
     duration: float
     timed_out: bool = False
-    may_fail: bool = False
 
     @property
     def ok(self) -> bool:
@@ -197,25 +230,24 @@ class LifecycleContext:
         self.results: list[RunResult] = []
         self._step_num = 0
 
-    def step(self, command: str, *, may_fail: bool = False) -> RunResult:
+    def step(self, command: str) -> RunResult:
         """Execute a lifecycle step and record its result."""
         self._step_num += 1
         result = self.runner.run(
             command,
             sr_id=f"{self.sr_id}/step{self._step_num}",
             slug=f"{self.slug}-step{self._step_num}",
-            may_fail=may_fail,
         )
         self.results.append(result)
         return result
 
     def assert_all_passed(self) -> None:
-        """Assert that no required (non-may_fail) lifecycle steps failed."""
-        failures = [r for r in self.results if not r.ok and not r.may_fail]
+        """Assert that all lifecycle steps passed."""
+        failures = [r for r in self.results if not r.ok]
         if failures:
             lines = [
                 f"Lifecycle {self.sr_id} ({self.slug}): "
-                f"{len(failures)}/{len(self.results)} required steps failed"
+                f"{len(failures)}/{len(self.results)} steps failed"
             ]
             for r in failures:
                 status = "TIMEOUT" if r.timed_out else f"exit {r.exit_code}"
@@ -256,10 +288,10 @@ class RapsRunner:
         *,
         sr_id: str = "",
         slug: str = "",
-        may_fail: bool = False,
         timeout: int | None = None,
     ) -> RunResult:
         """Run a command and return the result."""
+        original_command = command  # preserve before path resolution
         effective_timeout = timeout or self.timeout
         bash = _find_bash()
 
@@ -315,9 +347,21 @@ class RapsRunner:
             stderr=stderr,
             duration=duration,
             timed_out=timed_out,
-            may_fail=may_fail,
         )
         _store_log(sr_id, result)
+
+        # Collect original command for .yr generation
+        if sr_id:
+            with _commands_lock:
+                _command_records.append(CommandRecord(
+                    sr_id=sr_id,
+                    slug=slug,
+                    command=original_command,
+                    duration=duration,
+                    exit_code=exit_code,
+                    timed_out=timed_out,
+                ))
+
         return result
 
     def run_ok(

@@ -84,17 +84,17 @@ run_sample "SR-119" "da-status" \
 
 # SR-120: Register and test a Revit plugin
 lifecycle_start "SR-120" "da-appbundle-lifecycle" "AppBundle create → list → delete"
-lifecycle_step 1 "raps da appbundle create sr-lifecycle-bundle --engine \"Autodesk.Revit+2025\" || true"
+lifecycle_step 1 "raps da appbundle create sr-lifecycle-bundle --engine \"Autodesk.Revit+2025\""
 lifecycle_step 2 "raps da appbundles"
-lifecycle_step 3 "raps da appbundle delete sr-lifecycle-bundle || true"
+lifecycle_step 3 "raps da appbundle delete sr-lifecycle-bundle"
 lifecycle_end
 
 # SR-121: Run and monitor a DA job
 lifecycle_start "SR-121" "da-workitem-lifecycle" "Activity create → run → status → cleanup"
-lifecycle_step 1 "raps da activity create sr-lifecycle-activity --engine \"Autodesk.Revit+2025\" --command-line 'test' --appbundles \"sr-lifecycle-bundle\" || true"
-lifecycle_step 2 "raps da run sr-lifecycle-activity --input \"$INPUT_URL\" --output \"$OUTPUT_URL\" || true"
-lifecycle_step 3 "raps da workitems || true"
-lifecycle_step 4 "raps da activity delete sr-lifecycle-activity || true"
+lifecycle_step 1 "raps da activity create sr-lifecycle-activity --engine \"Autodesk.Revit+2025\" --command-line 'test' --appbundles \"sr-lifecycle-bundle\""
+lifecycle_step 2 "raps da run sr-lifecycle-activity --input \"$INPUT_URL\" --output \"$OUTPUT_URL\""
+lifecycle_step 3 "raps da workitems"
+lifecycle_step 4 "raps da activity delete sr-lifecycle-activity"
 lifecycle_end
 
 section_end

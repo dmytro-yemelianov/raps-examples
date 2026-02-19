@@ -29,15 +29,15 @@ run_sample "SR-231" "reality-formats" \
 
 # SR-232: Create a reality capture job
 run_sample "SR-232" "reality-create" \
-  "raps reality create --name \"Site Survey 2026-02\" -f obj || true" \
+  "raps reality create --name \"Site Survey 2026-02\" --scene-type object -f obj || true" \
   "Expected: Creates a new reality capture job" \
   "Review: Exit 0; output contains job ID"
 
 # SR-233: Upload photos to a job
 run_sample "SR-233" "reality-upload" \
-  "raps reality upload $JOB_ID ./site-photos/* || true" \
-  "Expected: Uploads photos to the reality capture job" \
-  "Review: Exit 0; shows uploaded photo count"
+  "raps reality upload $JOB_ID ./test-data/sample.rvt || true" \
+  "Expected: Uploads file to the reality capture job" \
+  "Review: Exit 0; shows uploaded file count"
 
 # SR-234: Start processing a job
 run_sample "SR-234" "reality-process" \
@@ -67,14 +67,15 @@ run_sample "SR-237" "reality-delete" \
 
 # SR-238: Capture and process construction site
 lifecycle_start "SR-238" "reality-capture-lifecycle" "Capture and process construction site"
-lifecycle_step 1 "raps reality formats" || true
-lifecycle_step 2 "raps reality create --name \"Foundation Survey\" -f obj" || true
-lifecycle_step 3 "raps reality upload $JID ./site-photos/*" || true
-lifecycle_step 4 "raps reality process $JID" || true
-lifecycle_step 5 "raps reality status $JID" || true
-lifecycle_step 6 "raps reality result $JID" || true
-lifecycle_step 7 "raps reality list" || true
-lifecycle_step 8 "raps reality delete $JID" || true
+lifecycle_step 1 "raps reality formats"
+lifecycle_step_capture 2 "raps reality create --name \"Foundation Survey\" --scene-type object -f obj --output json"
+JID=$(echo "$LC_CAPTURED_OUTPUT" | grep -oP '"photoscene_id"\s*:\s*"\K[^"]+' 2>/dev/null || echo "${JID:-}")
+lifecycle_step 3 "raps reality upload $JID ./test-data/sample.rvt"
+lifecycle_step 4 "raps reality process $JID"
+lifecycle_step 5 "raps reality status $JID"
+lifecycle_step 6 "raps reality result $JID"
+lifecycle_step 7 "raps reality list"
+lifecycle_step 8 "raps reality delete $JID"
 lifecycle_end
 
 section_end

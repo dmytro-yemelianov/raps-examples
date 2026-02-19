@@ -95,9 +95,9 @@ fi
 # SR-021: Full 2-legged auth cycle (test→status→inspect→logout→test)
 lifecycle_start "SR-021" "auth-lifecycle-2leg" "Full 2-legged auth cycle"
 lifecycle_step 1 "raps auth test"
-lifecycle_step 2 "raps auth status || true"
-lifecycle_step 3 "raps auth inspect || true"
-lifecycle_step 4 "raps auth logout || true"
+lifecycle_step 2 "raps auth status"
+lifecycle_step 3 "raps auth inspect"
+lifecycle_step 4 "raps auth logout"
 lifecycle_step 5 "raps auth test"
 lifecycle_end
 restore_auth
@@ -113,11 +113,11 @@ run_sample "SR-023" "auth-lifecycle-device" \
 
 # SR-024: Token injection cycle
 lifecycle_start "SR-024" "auth-lifecycle-token-injection" "Token injection cycle"
-lifecycle_step 1 "TOKEN=\$(raps auth inspect --output json 2>/dev/null | python3 -c \"import sys,json; print(json.load(sys.stdin).get('access_token','$EXTERNAL_TOKEN'))\" 2>/dev/null) && raps auth login --token \"\$TOKEN\" || true"
-lifecycle_step 2 "raps auth test || true"
-lifecycle_step 3 "raps auth status || true"
-lifecycle_step 4 "raps auth inspect || true"
-lifecycle_step 5 "raps auth logout || true"
+lifecycle_step 1 "TOKEN=\$(raps auth inspect --output json 2>/dev/null | python3 -c \"import sys,json; print(json.load(sys.stdin).get('access_token','$EXTERNAL_TOKEN'))\" 2>/dev/null) && raps auth login --token \"\$TOKEN\""
+lifecycle_step 2 "raps auth test"
+lifecycle_step 3 "raps auth status"
+lifecycle_step 4 "raps auth inspect"
+lifecycle_step 5 "raps auth logout"
 lifecycle_end
 restore_auth
 
