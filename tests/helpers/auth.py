@@ -102,7 +102,7 @@ class AuthManager:
             else:
                 # Fallback: try auth inspect (token may be redacted on some platforms)
                 proc = subprocess.run(
-                    "raps -o json auth inspect",
+                    "raps --output json auth inspect",
                     shell=True,
                     capture_output=True,
                     text=True,

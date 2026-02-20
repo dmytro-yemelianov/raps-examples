@@ -82,7 +82,7 @@ def test_sr037_config_profile_export(raps):
 def test_sr038_config_profile_import(raps):
     raps.run(
         "New-Item -ItemType Directory -Force -Path ./tmp | Out-Null"
-        "; raps config profile export -o ./tmp/raps-staging-export.json -n staging"
+        "; raps config profile export --out-file ./tmp/raps-staging-export.json -n staging"
         "; raps config profile import ./tmp/raps-staging-export.json --overwrite"
         "; Remove-Item -Force ./tmp/raps-staging-export.json",
         sr_id="SR-038",

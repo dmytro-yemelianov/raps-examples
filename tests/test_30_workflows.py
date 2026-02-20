@@ -217,9 +217,9 @@ def test_sr408_workflow_multi_profile_operations(raps):
 def test_sr409_workflow_pipeline_yaml_automation(raps):
     lc = raps.lifecycle("SR-409", "workflow-pipeline-yaml-automation",
                         "Create, validate, run pipeline")
-    lc.step("raps pipeline sample -o ./wf-pipeline.yaml")
+    lc.step("raps pipeline sample --out-file ./wf-pipeline.yaml")
     lc.step("raps pipeline validate ./wf-pipeline.yaml")
-    lc.step("raps generate files -c 3 -o ./pipeline-input/ --complexity medium")
+    lc.step("raps generate files -c 3 --out-dir ./pipeline-input/ --complexity medium")
     lc.step("raps pipeline run ./wf-pipeline.yaml")
     lc.step("raps admin operation list --limit 1")
     lc.assert_all_passed()
