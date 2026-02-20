@@ -9,6 +9,7 @@ pytestmark = [
 
 RFI_ID = "rfi-demo-001"
 ID = "rfi-demo-001"
+LC_ID = "lc-rfi-001"
 STRUCT_ENG = "demo-struct-eng-001"
 
 
@@ -77,11 +78,11 @@ def test_sr155_rfi_full_lifecycle(raps, ids):
     lc = raps.lifecycle("SR-155", "rfi-full-lifecycle", "Architect raises and resolves an RFI")
     lc.step(f'raps rfi create {project_id} --title "Beam depth at grid D-7"')
     lc.step(f"raps rfi list {project_id}")
-    lc.step(f"raps rfi get {project_id} {ID}")
-    lc.step(f'raps rfi update {project_id} {ID} --assigned-to {STRUCT_ENG} --priority "high"')
+    lc.step(f"raps rfi get {project_id} {LC_ID}")
+    lc.step(f'raps rfi update {project_id} {LC_ID} --assigned-to {STRUCT_ENG} --priority "high"')
     lc.step(
-        f'raps rfi update {project_id} {ID} --status "answered" --answer "Use W14x30, see SK-204"',
+        f'raps rfi update {project_id} {LC_ID} --status "answered" --answer "Use W14x30, see SK-204"',
     )
-    lc.step(f"raps rfi get {project_id} {ID}")
-    lc.step(f"raps rfi delete {project_id} {ID} --yes")
+    lc.step(f"raps rfi get {project_id} {LC_ID}")
+    lc.step(f"raps rfi delete {project_id} {LC_ID} --yes")
     lc.assert_all_passed()

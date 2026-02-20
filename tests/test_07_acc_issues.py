@@ -10,6 +10,7 @@ pytestmark = [
 ISSUE_ID = "8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b"
 COMMENT_ID = "cmt-demo-001"
 ID = "8d5b8b2c-3a1e-467c-9f1b-6c2d9a8e1f5b"
+LC_ID = "lc-issue-001"
 A = "issue-a-demo-001"
 B = "issue-b-demo-002"
 C = "issue-c-demo-003"
@@ -130,12 +131,12 @@ def test_sr140_issue_full_lifecycle(raps, ids):
     lc.step(f"raps issue types {project_id}")
     lc.step(f'raps issue create {project_id} --title "Water damage in corridor B"')
     lc.step(f"raps issue list {project_id}")
-    lc.step(f'raps issue comment add {project_id} {ID} --body "Photo attached via mobile"')
-    lc.step(f"raps issue comment list {project_id} {ID}")
-    lc.step(f'raps issue update {project_id} {ID} --title "Water damage in corridor B - assigned"')
-    lc.step(f'raps issue transition {project_id} {ID} --to "answered"')
-    lc.step(f'raps issue transition {project_id} {ID} --to "closed"')
-    lc.step(f"raps issue delete {project_id} {ID} --yes")
+    lc.step(f'raps issue comment add {project_id} {LC_ID} --body "Photo attached via mobile"')
+    lc.step(f"raps issue comment list {project_id} {LC_ID}")
+    lc.step(f'raps issue update {project_id} {LC_ID} --title "Water damage in corridor B - assigned"')
+    lc.step(f'raps issue transition {project_id} {LC_ID} --to "answered"')
+    lc.step(f'raps issue transition {project_id} {LC_ID} --to "closed"')
+    lc.step(f"raps issue delete {project_id} {LC_ID} --yes")
     lc.assert_all_passed()
 
 

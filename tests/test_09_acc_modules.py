@@ -11,6 +11,7 @@ CATEGORY_ID = "cat-demo-001"
 ASSET_ID = "ast-demo-001"
 STATUS_ID = "st-demo-001"
 SUBMITTAL_ID = "sub-demo-001"
+LC_SUBMITTAL_ID = "lc-sub-001"
 CHECKLIST_ID = "chk-demo-001"
 TEMPLATE_ID = "tpl-demo-001"
 MECH_CAT = "cat-mechanical-001"
@@ -210,11 +211,11 @@ def test_sr176_submittal_review_lifecycle(raps, ids):
         f'raps acc submittal create {pid} --title "Structural steel shop drawings"'
         f' --spec-section "05 12 00"',
     )
-    lc.step(f"raps acc submittal get {pid} {SUBMITTAL_ID}")
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "in_review"')
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "revise_resubmit"')
-    lc.step(f'raps acc submittal update {pid} {SUBMITTAL_ID} --status "approved"')
-    lc.step(f"raps acc submittal delete {pid} {SUBMITTAL_ID} --yes")
+    lc.step(f"raps acc submittal get {pid} {LC_SUBMITTAL_ID}")
+    lc.step(f'raps acc submittal update {pid} {LC_SUBMITTAL_ID} --status "in_review"')
+    lc.step(f'raps acc submittal update {pid} {LC_SUBMITTAL_ID} --status "revise_resubmit"')
+    lc.step(f'raps acc submittal update {pid} {LC_SUBMITTAL_ID} --status "approved"')
+    lc.step(f"raps acc submittal delete {pid} {LC_SUBMITTAL_ID} --yes")
     lc.assert_all_passed()
 
 
