@@ -113,10 +113,10 @@ def test_sr228_folder_permissions_lifecycle(raps, ids, users):
         f' -l view-download-upload-edit --folder "Plans" -f "name:*Active*" -y',
     )
     lc.step("raps admin operation list --limit 1")
-    lc.step(f"raps admin operation status {OP_ID}")
+    lc.step("raps admin operation list --limit 1")
     lc.step(
         f"raps admin folder rights {users.user_folder} -a {account_id}"
         f' -l view-only --folder "Plans" -f "name:*Active*" -y',
     )
-    lc.step(f"raps admin operation status {OP2_ID}")
+    lc.step("raps admin operation list --limit 1")
     lc.assert_all_passed()

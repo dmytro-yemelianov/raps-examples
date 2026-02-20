@@ -172,7 +172,7 @@ def test_sr406_workflow_weekly_admin_operations(raps, ids, users):
     lc.step(f'raps admin project list -a {acct} -f "name:*2024*" --status active')
     lc.step(f'raps admin user update {users.user_old_admin} -a {acct} -r "viewer" --from-role "project_admin" -f "name:*2024*" --dry-run')
     lc.step(f'raps admin user update {users.user_old_admin} -a {acct} -r "viewer" --from-role "project_admin" -f "name:*2024*" -y')
-    lc.step(f"raps admin operation status {OP_ID}")
+    lc.step("raps admin operation list --limit 1")
     lc.step(f"raps admin company-list -a {acct}")
     lc.step(f"raps report issues-summary -a {acct} --status open")
     lc.assert_all_passed()
