@@ -123,10 +123,15 @@ class AuthManager:
         self._has_2leg = None
         self._has_3leg = None
 
-        if self._saved_token:
+        token = self._saved_token
+        # In mock mode, always use the well-known mock 3-legged token
+        if not token and self.target == "mock":
+            token = "mock-3leg-token"
+
+        if token:
             try:
                 subprocess.run(
-                    f'raps auth login --token "{self._saved_token}"',
+                    f'raps auth login --token "{token}" --expires-in 86400 --preset all',
                     shell=True,
                     capture_output=True,
                     timeout=15,
