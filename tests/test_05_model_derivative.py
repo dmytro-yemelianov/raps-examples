@@ -61,7 +61,7 @@ def test_sr093_translate_derivatives(raps):
 @pytest.mark.sr("SR-094")
 def test_sr094_translate_download(raps):
     raps.run(
-        f"raps translate download {URN} -o /tmp/raps-derivative-test/",
+        f"raps translate download {URN} --out-dir /tmp/raps-derivative-test/",
         sr_id="SR-094",
         slug="translate-download",
     )
