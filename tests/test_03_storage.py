@@ -103,7 +103,7 @@ def test_sr057_object_info(raps):
 @pytest.mark.sr("SR-058")
 def test_sr058_object_download(raps):
     raps.run(
-        f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc --out-file ./tmp/raps-download-test.ifc",
+        f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc -o ./tmp/raps-download-test.ifc",
         sr_id="SR-058",
         slug="object-download",
     )
@@ -178,7 +178,7 @@ def test_sr064_object_full_lifecycle(raps):
     lc.step(f"raps object list {BUCKET_NAME}")
     lc.step(f"raps object info {BUCKET_NAME} sample.ifc")
     lc.step(
-        f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc --out-file ./tmp/raps-lifecycle-test.ifc",
+        f"mkdir -p ./tmp && raps object download {BUCKET_NAME} sample.ifc -o ./tmp/raps-lifecycle-test.ifc",
     )
     lc.step(f"raps object delete {BUCKET_NAME} sample.ifc -y")
     lc.assert_all_passed()

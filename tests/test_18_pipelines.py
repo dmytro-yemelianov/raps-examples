@@ -11,7 +11,7 @@ pytestmark = [
 @pytest.mark.sr("SR-270")
 def test_sr270_pipeline_sample(raps):
     raps.run_ok(
-        "raps pipeline sample --out-file ./sample-pipeline.yaml",
+        "raps pipeline sample -o ./sample-pipeline.yaml",
         sr_id="SR-270",
         slug="pipeline-sample",
     )
@@ -42,7 +42,7 @@ def test_sr273_pipeline_author_and_run(raps):
     lc = raps.lifecycle(
         "SR-273", "pipeline-author-and-run", "DevOps creates and runs pipeline"
     )
-    lc.step("raps pipeline sample --out-file ./my-pipeline.yaml")
+    lc.step("raps pipeline sample -o ./my-pipeline.yaml")
     lc.step("raps pipeline validate ./my-pipeline.yaml")
     lc.step("raps pipeline run ./my-pipeline.yaml")
     lc.assert_all_passed()
