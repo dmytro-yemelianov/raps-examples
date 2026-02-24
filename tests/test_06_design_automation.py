@@ -142,3 +142,26 @@ def test_sr121_da_workitem_lifecycle(raps):
     lc.step(f"raps da activity-delete {activity_id}")
     lc.step(f"raps da appbundle-delete {bundle_id}")
     lc.assert_all_passed()
+
+
+@pytest.mark.sr("SR-553")
+@pytest.mark.lifecycle
+def test_sr553_appbundle_upload_lifecycle(raps):
+    """AppBundle create -> upload zip -> delete"""
+    from pathlib import Path
+
+    zip_file = Path("./test-data/sample-bundle.zip")
+    if not zip_file.is_file():
+        pytest.skip("missing ./test-data/sample-bundle.zip")
+    bundle_id = f"SrUpBundle{_TS}"
+    zip_path = str(zip_file).replace("\\", "/")
+    lc = raps.lifecycle(
+        "SR-553", "appbundle-upload-lifecycle",
+        "AppBundle create -> upload zip -> delete",
+    )
+    lc.step(f'raps da appbundle-create -i {bundle_id} -e "Autodesk.Revit+2024"')
+    lc.step(
+        f'raps da appbundle-upload {bundle_id} --file {zip_path} --engine "Autodesk.Revit+2024"'
+    )
+    lc.step(f"raps da appbundle-delete {bundle_id}")
+    lc.assert_all_passed()

@@ -151,6 +151,27 @@ def test_sr062_object_delete(raps):
     )
 
 
+# ── Batch operations ────────────────────────────────────────────
+
+
+@pytest.mark.sr("SR-551")
+def test_sr551_object_batch_copy(raps):
+    raps.run(
+        f"raps object batch-copy {BUCKET_NAME} {DEST_BUCKET} --keys sample.ifc",
+        sr_id="SR-551",
+        slug="object-batch-copy",
+    )
+
+
+@pytest.mark.sr("SR-552")
+def test_sr552_object_batch_rename(raps):
+    raps.run(
+        f"raps object batch-rename {DEST_BUCKET} --from sample --to batch-renamed",
+        sr_id="SR-552",
+        slug="object-batch-rename",
+    )
+
+
 # ── Lifecycles ───────────────────────────────────────────────────
 
 
