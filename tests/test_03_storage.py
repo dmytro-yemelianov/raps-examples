@@ -261,28 +261,28 @@ def test_sr069_object_tag_get(raps):
     )
 
 
-@pytest.mark.sr("SR-070")
-def test_sr070_object_tag_delete(raps):
+@pytest.mark.sr("SR-073")
+def test_sr073_object_tag_delete(raps):
     raps.run(
         f"raps object tag delete {BUCKET_NAME} sample.ifc owner",
-        sr_id="SR-070",
+        sr_id="SR-073",
         slug="object-tag-delete",
     )
 
 
-@pytest.mark.sr("SR-071")
-def test_sr071_object_tag_search(raps):
+@pytest.mark.sr("SR-074")
+def test_sr074_object_tag_search(raps):
     raps.run(
         f"raps object tag search {BUCKET_NAME} env=test",
-        sr_id="SR-071",
+        sr_id="SR-074",
         slug="object-tag-search",
     )
 
 
-@pytest.mark.sr("SR-072")
+@pytest.mark.sr("SR-075")
 @pytest.mark.lifecycle
-def test_sr072_object_tag_lifecycle(raps):
-    lc = raps.lifecycle("SR-072", "object-tag-lifecycle", "Set → get → search → delete")
+def test_sr075_object_tag_lifecycle(raps):
+    lc = raps.lifecycle("SR-075", "object-tag-lifecycle", "Set → get → search → delete")
     lc.step(f"raps object tag set {BUCKET_NAME} sample.ifc project=raps-test")
     lc.step(f"raps object tag get {BUCKET_NAME} sample.ifc")
     lc.step(f"raps object tag search {BUCKET_NAME} project=raps-test")
