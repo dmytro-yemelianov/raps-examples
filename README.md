@@ -77,14 +77,14 @@ pytest -k "sr050 or sr051 or sr052"  # Run multiple
 |---|---------|-------|------|------|
 | 00 | Setup | 3 | None | `test_00_setup.py` |
 | 01 | Auth | 15 | 2-leg | `test_01_auth.py` |
-| 02 | Config | 18 | None | `test_02_config.py` |
+| 02 | Config | 22 | None | `test_02_config.py` |
 | 03 | Storage | 16 | 2-leg | `test_03_storage.py` |
 | 04 | Data Management | 18 | 3-leg | `test_04_data_management.py` |
 | 05 | Model Derivative | 12 | 2-leg | `test_05_model_derivative.py` |
 | 06 | Design Automation | 12 | 2-leg | `test_06_design_automation.py` |
 | 07 | ACC Issues | 12 | 3-leg | `test_07_acc_issues.py` |
 | 08 | ACC RFI | 6 | 3-leg | `test_08_acc_rfi.py` |
-| 09 | ACC Modules | 18 | 3-leg | `test_09_acc_modules.py` |
+| 09 | ACC Modules | 19 | 3-leg | `test_09_acc_modules.py` |
 | 10 | Webhooks | 9 | 2-leg | `test_10_webhooks.py` |
 | 11 | Admin Users | 17 | 3-leg | `test_11_admin_users.py` |
 | 12 | Admin Projects | 6 | 3-leg | `test_12_admin_projects.py` |
@@ -93,14 +93,14 @@ pytest -k "sr050 or sr051 or sr052"  # Run multiple
 | 15 | Reporting | 5 | 3-leg | `test_15_reporting.py` |
 | 16 | Templates | 6 | 3-leg | `test_16_templates.py` |
 | 17 | Plugins | 7 | 2-leg | `test_17_plugins.py` |
-| 18 | Pipelines | 4 | 2-leg | `test_18_pipelines.py` |
+| 18 | Pipelines | 5 | 2-leg | `test_18_pipelines.py` |
 | 19 | API Raw | 5 | 2-leg | `test_19_api_raw.py` |
 | 20 | Generation | 2 | None | `test_20_generation.py` |
 | 21 | Shell & Serve | 6 | None | `test_21_shell_serve.py` |
 | 22 | Demo | 4 | None | `test_22_demo.py` |
 | 23 | Logs | 4 | None | `test_23_logs.py` |
 | 30 | Workflows | 10 | 3-leg | `test_30_workflows.py` |
-| 99 | Cross-Cutting | 32 | None | `test_99_cross_cutting.py` |
+| 99 | Cross-Cutting | 34 | None | `test_99_cross_cutting.py` |
 
 ### Markers
 
@@ -126,7 +126,7 @@ raps-examples/
 │   │   ├── discovery.py         # ID discovery (hub, project, account)
 │   │   ├── test_users.py        # Test user emails from .env
 │   │   └── json_report.py       # JSON report plugin
-│   └── test_*.py                # 25 test files (one per section)
+│   └── test_*.py                # 26 test files (one per section)
 ├── scripts/
 │   ├── audit_secrets.py         # Secrets & PII audit script
 │   ├── generate-run-report.py   # JSON → HTML report generator
