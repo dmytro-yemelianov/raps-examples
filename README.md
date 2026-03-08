@@ -1,6 +1,6 @@
 # RAPS CLI Sample Runs
 
-**281 tests** across **26 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
+**286 tests** across **26 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
 
 Each test runs a real `raps` command (or lifecycle sequence) and records exit code, stdout, stderr, and duration. Results feed into JSON/HTML reports for validation.
 
