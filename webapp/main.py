@@ -45,6 +45,19 @@ def _require_token(token: str = Query(..., alias="token")) -> str:
 # Results merge
 # ---------------------------------------------------------------------------
 
+_SECRET_VAR = re.compile(r'secret|password|token|key|credential', re.IGNORECASE)
+
+
+def _resolve_command(command: str, variables: dict[str, str]) -> str:
+    """Resolve ${var} placeholders, masking secret-looking variable names."""
+    def replace(m: re.Match) -> str:
+        name = m.group(1)
+        if _SECRET_VAR.search(name):
+            return "***"
+        return variables.get(name, m.group(0))
+    return re.sub(r"\$\{(\w+)\}", replace, command)
+
+
 def _sr_id_from_nodeid(nodeid: str) -> str | None:
     """Extract SR-NNN from a pytest node ID.
 
@@ -87,17 +100,21 @@ def _merge_results() -> dict:
         except (json.JSONDecodeError, KeyError):
             pass  # results.json is being written — return stale/empty data
 
+    global_vars = catalog.get("vars", {})
     rows: list[dict] = []
     for section in catalog["sections"]:
         section_marks = section.get("marks", [])
+        section_vars = {**global_vars, **section.get("vars", {})}
         for test in section["tests"]:
             sr_id = test["id"]
+            merged_vars = {**section_vars, **test.get("vars", {})}
             result = results_map.get(sr_id, {"outcome": "not run", "duration": None})
             rows.append({
                 "id": sr_id,
                 "slug": test["slug"],
                 "section": section["id"],
                 "marks": section_marks + test.get("marks", []),
+                "command": _resolve_command(test.get("command", ""), merged_vars),
                 "outcome": result["outcome"],
                 "duration": result["duration"],
             })

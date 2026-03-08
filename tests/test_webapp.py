@@ -95,6 +95,7 @@ def test_merge_with_passed_outcome(tmp_path, monkeypatch):
     assert row["outcome"] == "passed"
     assert abs(row["duration"] - 0.42) < 0.001
     assert row["slug"] == "config-show"
+    assert "command" in row
 
 
 # ---------------------------------------------------------------------------
