@@ -33,6 +33,9 @@ def test_auth_wrong_token_returns_401():
 
 def test_auth_valid_token_returns_200(tmp_path, monkeypatch):
     monkeypatch.setattr("webapp.main.RESULTS_PATH", tmp_path / "results.json")
+    minimal_catalog = {"vars": {}, "sections": []}
+    (tmp_path / "catalog.json").write_text(json.dumps(minimal_catalog))
+    monkeypatch.setattr("webapp.main.CATALOG_PATH", tmp_path / "catalog.json")
     resp = client.get(f"/api/results?token={TOKEN}")
     assert resp.status_code == 200
 
