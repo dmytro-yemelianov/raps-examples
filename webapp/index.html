@@ -112,14 +112,28 @@
   let TOKEN = localStorage.getItem('raps_token') || '';
   let rows = [];
 
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   if (TOKEN) attemptAutoLogin();
 
   async function attemptAutoLogin() {
-    const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
-    if (resp.ok) {
-      showApp();
-      applyData(await resp.json());
-    } else {
+    try {
+      const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
+      if (resp.ok) {
+        showApp();
+        applyData(await resp.json());
+      } else {
+        localStorage.removeItem('raps_token');
+        TOKEN = '';
+      }
+    } catch (_) {
       localStorage.removeItem('raps_token');
       TOKEN = '';
     }
@@ -129,6 +143,11 @@
     TOKEN = document.getElementById('token-input').value.trim();
     const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
     if (resp.status === 401) {
+      document.getElementById('token-error').style.display = 'block';
+      return;
+    }
+    if (!resp.ok) {
+      document.getElementById('token-error').textContent = 'Server error — try again later';
       document.getElementById('token-error').style.display = 'block';
       return;
     }
@@ -143,8 +162,10 @@
   }
 
   async function loadResults() {
-    const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
-    if (resp.ok) applyData(await resp.json());
+    try {
+      const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
+      if (resp.ok) applyData(await resp.json());
+    } catch (_) { /* silent — table keeps previous data */ }
   }
 
   function applyData(data) {
@@ -193,12 +214,12 @@
 
     document.getElementById('tbody').innerHTML = filtered.map(r =>
       '<tr>' +
-      '<td style="color:#94a3b8;font-weight:600">' + r.id + '</td>' +
-      '<td>' + r.slug + '</td>' +
-      '<td style="color:#475569">' + r.section + '</td>' +
-      '<td>' + (r.marks||[]).map(m => '<span class="mark-chip">' + m + '</span>').join('') + '</td>' +
-      '<td><span class="badge badge-' + r.outcome.replace(' ', '-') + '">' + r.outcome + '</span></td>' +
-      '<td style="color:#475569">' + (r.duration != null ? r.duration.toFixed(2) + 's' : '&#x2014;') + '</td>' +
+      '<td style="color:#94a3b8;font-weight:600">' + esc(r.id) + '</td>' +
+      '<td>' + esc(r.slug) + '</td>' +
+      '<td style="color:#475569">' + esc(r.section) + '</td>' +
+      '<td>' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
+      '<td><span class="badge badge-' + esc(r.outcome.replace(/ /g, '-')) + '">' + esc(r.outcome) + '</span></td>' +
+      '<td style="color:#475569">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
       '</tr>'
     ).join('');
   }
@@ -207,37 +228,46 @@
     const btn = document.getElementById('run-btn');
     btn.disabled = true;
     btn.textContent = 'Starting\u2026';
+    try {
+      const resp = await fetch('/run?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
+      if (resp.status === 409) {
+        alert('A run is already in progress');
+        btn.disabled = false; btn.textContent = 'Run Tests';
+        return;
+      }
+      if (!resp.ok) {
+        alert('Failed to start run');
+        btn.disabled = false; btn.textContent = 'Run Tests';
+        return;
+      }
 
-    const resp = await fetch('/run?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
-    if (resp.status === 409) {
-      alert('A run is already in progress');
-      btn.disabled = false; btn.textContent = 'Run Tests';
-      return;
-    }
+      const logPanel  = document.getElementById('log-panel');
+      const logOutput = document.getElementById('log-output');
+      logPanel.style.display = 'block';
+      logOutput.textContent = '';
+      btn.textContent = 'Running\u2026';
 
-    const logPanel  = document.getElementById('log-panel');
-    const logOutput = document.getElementById('log-output');
-    logPanel.style.display = 'block';
-    logOutput.textContent = '';
-    btn.textContent = 'Running\u2026';
-
-    const es = new EventSource('/stream?token=' + encodeURIComponent(TOKEN));
-    es.onmessage = function(e) {
-      if (e.data === '__done__') {
+      const es = new EventSource('/stream?token=' + encodeURIComponent(TOKEN));
+      es.onmessage = function(e) {
+        if (e.data === '__done__') {
+          es.close();
+          btn.disabled = false;
+          btn.textContent = 'Run Tests';
+          loadResults();
+        } else {
+          logOutput.textContent += e.data + '\n';
+          logOutput.scrollTop = logOutput.scrollHeight;
+        }
+      };
+      es.onerror = function() {
         es.close();
         btn.disabled = false;
         btn.textContent = 'Run Tests';
-        loadResults();
-      } else {
-        logOutput.textContent += e.data + '\n';
-        logOutput.scrollTop = logOutput.scrollHeight;
-      }
-    };
-    es.onerror = function() {
-      es.close();
+      };
+    } catch (_) {
       btn.disabled = false;
       btn.textContent = 'Run Tests';
-    };
+    }
   }
 
   document.getElementById('token-input').addEventListener('keydown', function(e) {
