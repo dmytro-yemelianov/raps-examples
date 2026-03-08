@@ -1,6 +1,6 @@
 # RAPS CLI Sample Runs
 
-**263 tests** across **25 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
+**281 tests** across **26 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
 
 Each test runs a real `raps` command (or lifecycle sequence) and records exit code, stdout, stderr, and duration. Results feed into JSON/HTML reports for validation.
 
@@ -71,7 +71,7 @@ pytest -k "sr051"                    # Run single SR
 pytest -k "sr050 or sr051 or sr052"  # Run multiple
 ```
 
-### Sections (25 test files)
+### Sections (26 test files)
 
 | # | Section | Tests | Auth | File |
 |---|---------|-------|------|------|
@@ -98,6 +98,7 @@ pytest -k "sr050 or sr051 or sr052"  # Run multiple
 | 20 | Generation | 2 | None | `test_20_generation.py` |
 | 21 | Shell & Serve | 6 | None | `test_21_shell_serve.py` |
 | 22 | Demo | 4 | None | `test_22_demo.py` |
+| 23 | Logs | 4 | None | `test_23_logs.py` |
 | 30 | Workflows | 10 | 3-leg | `test_30_workflows.py` |
 | 99 | Cross-Cutting | 32 | None | `test_99_cross_cutting.py` |
 
