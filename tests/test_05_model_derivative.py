@@ -196,3 +196,12 @@ def test_sr550_translate_metadata_lifecycle(raps):
         f'raps translate query-properties {meta_urn} {guid} --filter "1,2,3" --output json'
     )
     lc.assert_all_passed()
+
+
+@pytest.mark.sr("SR-102")
+def test_sr102_translate_timeline(raps):
+    raps.run(
+        f"raps translate timeline {URN}",
+        sr_id="SR-102",
+        slug="translate-timeline",
+    )
