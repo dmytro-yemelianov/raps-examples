@@ -77,7 +77,7 @@
     <span>Auth:</span>
     <span id="auth-2leg" class="auth-pill auth-miss">2-leg ···</span>
     <span id="auth-3leg" class="auth-pill auth-miss">3-leg ···</span>
-    <button id="login-btn" onclick="triggerLogin()" style="display:none">Login (browser)</button>
+    <button id="login-btn" onclick="triggerLogin()" style="display:none">Login via device code</button>
   </div>
 
   <div id="filters">
@@ -220,7 +220,7 @@
         if (e.data === '__done__') {
           es.close();
           btn.disabled = false;
-          btn.textContent = 'Login (browser)';
+          btn.textContent = 'Login via device code';
           loadAuth();
         } else {
           logOutput.textContent += e.data + '\n';

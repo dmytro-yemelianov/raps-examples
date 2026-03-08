@@ -218,7 +218,7 @@ def auth_login(token: str = Query(..., alias="token")):
         if _login_proc is not None and _login_proc.poll() is None:
             raise HTTPException(409, "A login is already in progress")
         _login_proc = subprocess.Popen(
-            ["raps", "auth", "login", "--preset", "all"],
+            ["raps", "auth", "login", "--preset", "all", "--device"],
             cwd=ROOT,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
