@@ -6,66 +6,79 @@
   <title>RAPS Test Results</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: ui-monospace, 'Cascadia Code', monospace; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+    body { font-family: ui-monospace, 'Cascadia Code', monospace; background: #0f0f0f; color: #e0e0e0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
 
-    header { background: #1a1a1a; border-bottom: 1px solid #333; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    h1 { font-size: 1.1rem; color: #fff; letter-spacing: 0.05em; }
-    #meta { font-size: 0.8rem; color: #888; flex: 1; }
-    #run-btn { padding: 8px 18px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
+    /* ── Header ── */
+    header { background: #1a1a1a; border-bottom: 1px solid #333; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+    h1 { font-size: 1rem; color: #fff; letter-spacing: 0.05em; }
+    #meta { font-size: 0.75rem; color: #888; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #run-btn { padding: 10px 16px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-family: inherit; min-height: 44px; touch-action: manipulation; }
     #run-btn:disabled { background: #374151; cursor: not-allowed; }
     #run-btn:hover:not(:disabled) { background: #1d4ed8; }
 
-    #auth-bar { padding: 8px 24px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 12px; font-size: 0.78rem; flex-wrap: wrap; }
-    .auth-pill { padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; }
+    /* ── Auth bar ── */
+    #auth-bar { padding: 8px 16px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 8px; font-size: 0.78rem; flex-wrap: wrap; flex-shrink: 0; }
+    .auth-pill { padding: 4px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; }
     .auth-ok   { background: #14532d; color: #4ade80; }
     .auth-miss { background: #450a0a; color: #f87171; }
-    #login-btn { padding: 4px 12px; background: #7c3aed; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-family: inherit; }
+    #login-btn { padding: 8px 14px; background: #7c3aed; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-family: inherit; min-height: 36px; touch-action: manipulation; }
     #login-btn:disabled { background: #374151; cursor: not-allowed; }
     #login-btn:hover:not(:disabled) { background: #6d28d9; }
-    #auth-url-wrap { display: none; align-items: center; gap: 8px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 6px; padding: 4px 12px; }
-    #auth-url-wrap span { font-size: 0.72rem; color: #a5b4fc; }
-    #auth-url-link { font-size: 0.72rem; color: #818cf8; text-decoration: none; font-weight: 600; white-space: nowrap; }
+    #auth-url-wrap { display: none; width: 100%; align-items: center; gap: 8px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 6px; padding: 8px 12px; flex-wrap: wrap; }
+    #auth-url-wrap span { font-size: 0.72rem; color: #a5b4fc; white-space: nowrap; }
+    #auth-url-link { font-size: 0.72rem; color: #818cf8; text-decoration: none; font-weight: 600; word-break: break-all; flex: 1; }
     #auth-url-link:hover { color: #a5b4fc; text-decoration: underline; }
-    #auth-url-dismiss { background: none; border: none; color: #4338ca; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+    #auth-url-dismiss { background: none; border: none; color: #4338ca; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 4px; min-height: 32px; }
 
-    /* Tabs */
-    #tab-bar { background: #151515; border-bottom: 1px solid #222; display: flex; padding: 0 24px; gap: 0; }
-    .tab-btn { padding: 10px 18px; font-size: 0.8rem; font-family: inherit; background: none; border: none; border-bottom: 2px solid transparent; color: #555; cursor: pointer; }
+    /* ── Tabs ── */
+    #tab-bar { background: #151515; border-bottom: 1px solid #222; display: flex; flex-shrink: 0; }
+    .tab-btn { flex: 1; padding: 12px 8px; font-size: 0.82rem; font-family: inherit; background: none; border: none; border-bottom: 2px solid transparent; color: #555; cursor: pointer; touch-action: manipulation; }
     .tab-btn:hover { color: #aaa; }
     .tab-btn.active { color: #e0e0e0; border-bottom-color: #2563eb; }
 
-    /* Results tab */
-    #tab-results { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #filters { padding: 12px 24px; background: #151515; border-bottom: 1px solid #222; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    #filters label { font-size: 0.8rem; color: #aaa; display: flex; align-items: center; gap: 4px; cursor: pointer; }
-    #filters select { background: #1f1f1f; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; font-family: inherit; }
-    #summary-bar { padding: 8px 24px; background: #111; font-size: 0.75rem; color: #555; border-bottom: 1px solid #1a1a1a; }
-    .table-wrap { overflow-x: auto; overflow-y: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    th { text-align: left; padding: 10px 14px; color: #555; border-bottom: 1px solid #222; font-weight: 500; position: sticky; top: 0; background: #0f0f0f; z-index: 1; }
-    td { padding: 8px 14px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
+    /* ── Results tab ── */
+    #tab-results { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+    #filters { padding: 10px 16px; background: #151515; border-bottom: 1px solid #222; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+    #filters label { font-size: 0.8rem; color: #aaa; display: flex; align-items: center; gap: 6px; cursor: pointer; min-height: 36px; }
+    #filters select { background: #1f1f1f; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; padding: 6px 8px; font-size: 0.8rem; font-family: inherit; min-height: 36px; max-width: 160px; }
+    #summary-bar { padding: 6px 16px; background: #111; font-size: 0.72rem; color: #555; border-bottom: 1px solid #1a1a1a; flex-shrink: 0; }
+    .table-wrap { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th { text-align: left; padding: 10px 12px; color: #555; border-bottom: 1px solid #222; font-weight: 500; position: sticky; top: 0; background: #0f0f0f; z-index: 1; white-space: nowrap; }
+    td { padding: 9px 12px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
     tr:hover td { background: #161616; }
 
-    /* Log tab */
-    #tab-log { flex: 1; display: none; flex-direction: column; }
-    #log-output { flex: 1; padding: 14px 24px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; color: #ccc; }
-    #log-clear { padding: 6px 16px; background: #1a1a1a; border: none; border-bottom: 1px solid #222; color: #555; font-family: inherit; font-size: 0.75rem; cursor: pointer; text-align: left; }
+    /* Hide lower-priority columns on small screens */
+    @media (max-width: 640px) {
+      .col-section, .col-marks, .col-duration { display: none; }
+      #filters select { max-width: 100%; width: 100%; }
+      #filters { flex-direction: column; align-items: stretch; gap: 6px; }
+      #filters .filter-checks { display: flex; gap: 12px; flex-wrap: wrap; }
+      td, th { padding: 10px 10px; }
+    }
+
+    /* ── Log tab ── */
+    #tab-log { flex: 1; display: none; flex-direction: column; min-height: 0; }
+    #log-output { flex: 1; padding: 12px 16px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; color: #ccc; -webkit-overflow-scrolling: touch; word-break: break-all; }
+    #log-clear { padding: 8px 16px; background: #1a1a1a; border: none; border-bottom: 1px solid #222; color: #555; font-family: inherit; font-size: 0.75rem; cursor: pointer; text-align: left; flex-shrink: 0; }
     #log-clear:hover { color: #aaa; }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    /* ── Badges / chips ── */
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .badge-passed  { background: #14532d; color: #4ade80; }
     .badge-failed  { background: #450a0a; color: #f87171; }
     .badge-skipped { background: #1c1917; color: #a8a29e; }
     .badge-not-run { background: #111; color: #555; border: 1px solid #2a2a2a; }
     .badge-error   { background: #7c2d12; color: #fb923c; }
-    .mark-chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.68rem; background: #1e293b; color: #7dd3fc; margin-right: 3px; }
+    .mark-chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.66rem; background: #1e293b; color: #7dd3fc; margin-right: 3px; }
 
-    #token-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 12px; }
-    #token-gate input { padding: 10px 14px; background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; border-radius: 6px; font-family: inherit; font-size: 0.9rem; width: 280px; }
-    #token-gate button { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
+    /* ── Token gate ── */
+    #token-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100dvh; gap: 12px; padding: 24px; }
+    #token-gate input { padding: 12px 14px; background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; border-radius: 6px; font-family: inherit; font-size: 1rem; width: 100%; max-width: 320px; }
+    #token-gate button { padding: 12px 24px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 1rem; width: 100%; max-width: 320px; min-height: 48px; touch-action: manipulation; }
     #token-gate button:hover { background: #1d4ed8; }
     #token-error { color: #f87171; font-size: 0.8rem; display: none; }
-    #app { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    #app { display: none; flex: 1; flex-direction: column; overflow: hidden; min-height: 0; }
   </style>
 </head>
 <body>
@@ -113,9 +126,11 @@
         <option>skipped</option>
         <option>not run</option>
       </select>
-      <label><input type="checkbox" value="require_2leg" onchange="renderTable()"> require_2leg</label>
-      <label><input type="checkbox" value="require_3leg" onchange="renderTable()"> require_3leg</label>
-      <label><input type="checkbox" value="lifecycle" onchange="renderTable()"> lifecycle</label>
+      <div class="filter-checks">
+        <label><input type="checkbox" value="require_2leg" onchange="renderTable()"> 2-leg</label>
+        <label><input type="checkbox" value="require_3leg" onchange="renderTable()"> 3-leg</label>
+        <label><input type="checkbox" value="lifecycle" onchange="renderTable()"> lifecycle</label>
+      </div>
     </div>
     <div id="summary-bar">&#x2014;</div>
     <div class="table-wrap">
@@ -124,10 +139,10 @@
           <tr>
             <th>SR-ID</th>
             <th>Command</th>
-            <th>Section</th>
-            <th>Marks</th>
+            <th class="col-section">Section</th>
+            <th class="col-marks">Marks</th>
             <th>Status</th>
-            <th>Duration</th>
+            <th class="col-duration">Duration</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -330,12 +345,12 @@
       }
       html +=
         '<tr>' +
-        '<td style="color:#94a3b8;font-weight:600">' + esc(r.id) + '</td>' +
-        '<td style="font-size:0.75rem;color:#94a3b8">' + esc(r.command) + '</td>' +
-        '<td style="color:#475569">' + esc(r.section) + '</td>' +
-        '<td>' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
+        '<td style="color:#94a3b8;font-weight:600;white-space:nowrap">' + esc(r.id) + '</td>' +
+        '<td style="font-size:0.73rem;color:#94a3b8;word-break:break-all">' + esc(r.command) + '</td>' +
+        '<td class="col-section" style="color:#475569;white-space:nowrap">' + esc(r.section) + '</td>' +
+        '<td class="col-marks">' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
         '<td><span class="badge badge-' + esc(r.outcome.replace(/ /g, '-')) + '">' + esc(r.outcome) + '</span></td>' +
-        '<td style="color:#475569">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
+        '<td class="col-duration" style="color:#475569;white-space:nowrap">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
         '</tr>';
     }
     document.getElementById('tbody').innerHTML = html;
