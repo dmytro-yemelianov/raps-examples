@@ -21,6 +21,13 @@ CATALOG_PATH = ROOT / "tests" / "catalog.json"
 RESULTS_PATH = Path(__file__).parent / "results.json"
 HTML_PATH = Path(__file__).parent / "index.html"
 
+# Load .env from repo root so APS_CLIENT_ID/SECRET are available
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT / ".env")
+except ImportError:
+    pass
+
 # ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
