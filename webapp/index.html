@@ -105,6 +105,7 @@
     <div id="auth-url-wrap">
       <span>Open to authenticate:</span>
       <a id="auth-url-link" href="#" target="_blank" rel="noopener">···</a>
+      <span id="auth-code-wrap" style="display:none">— enter code: <strong id="auth-code" style="color:#c4b5fd;letter-spacing:0.12em"></strong></span>
       <button id="auth-url-dismiss" onclick="document.getElementById('auth-url-wrap').style.display='none'" title="Dismiss">&#x2715;</button>
     </div>
   </div>
@@ -258,6 +259,8 @@
       if (!resp.ok) { alert('Failed to start login'); btn.disabled = false; btn.textContent = 'Login via device code'; return; }
 
       btn.textContent = 'Waiting\u2026';
+      document.getElementById('auth-url-wrap').style.display = 'none';
+      document.getElementById('auth-code-wrap').style.display = 'none';
       switchTab('log');
 
       const es = new EventSource('/stream/auth?token=' + encodeURIComponent(TOKEN));
@@ -269,14 +272,22 @@
           loadAuth();
         } else {
           appendLog(e.data);
-          // Extract URL from device code flow output and show inline
-          const m = e.data.match(/https?:\/\/\S+/);
-          if (m) {
+          // Extract URL
+          const urlM = e.data.match(/https?:\/\/\S+/);
+          if (urlM) {
             const wrap = document.getElementById('auth-url-wrap');
             const link = document.getElementById('auth-url-link');
-            link.href = m[0];
-            link.textContent = m[0];
+            link.href = urlM[0];
+            link.textContent = urlM[0];
             wrap.style.display = 'flex';
+          }
+          // Extract device code (e.g. "ABCD-1234" or "code: XXXX")
+          const codeM = e.data.match(/\b([A-Z0-9]{4,6}[-\s][A-Z0-9]{4,6})\b/) ||
+                        e.data.match(/(?:code|Code)[:\s]+([A-Za-z0-9]{6,})/);
+          if (codeM) {
+            const code = codeM[1].trim();
+            document.getElementById('auth-code').textContent = code;
+            document.getElementById('auth-code-wrap').style.display = 'inline';
           }
         }
       };
