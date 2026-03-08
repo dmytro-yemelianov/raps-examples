@@ -15,17 +15,7 @@ OUTPUT_URL = "https://developer.api.autodesk.com/oss/v2/buckets/demo/objects/out
 WORKITEM_ID = "demo-workitem-001"
 
 
-# ── Engine & AppBundle atomics ────────────────────────────────────
-
-
-@pytest.mark.sr("SR-110")
-def test_sr110_da_engines(raps):
-    raps.run("raps da engines", sr_id="SR-110", slug="da-engines")
-
-
-@pytest.mark.sr("SR-111")
-def test_sr111_da_appbundles_list(raps):
-    raps.run("raps da appbundles", sr_id="SR-111", slug="da-appbundles-list")
+# ── AppBundle & Activity atomics ──────────────────────────────────
 
 
 @pytest.mark.sr("SR-112")

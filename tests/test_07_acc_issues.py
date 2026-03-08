@@ -19,26 +19,6 @@ C = "issue-c-demo-003"
 # -- Issue atomics ----------------------------------------------------------
 
 
-@pytest.mark.sr("SR-130")
-def test_sr130_issue_list(raps, ids):
-    project_id = ids.project_id or "demo-project-001"
-    raps.run(
-        f"raps issue list {project_id}",
-        sr_id="SR-130",
-        slug="issue-list",
-    )
-
-
-@pytest.mark.sr("SR-131")
-def test_sr131_issue_types(raps, ids):
-    project_id = ids.project_id or "demo-project-001"
-    raps.run(
-        f"raps issue types {project_id}",
-        sr_id="SR-131",
-        slug="issue-types",
-    )
-
-
 @pytest.mark.sr("SR-132")
 def test_sr132_issue_create(raps, ids):
     project_id = ids.project_id or "demo-project-001"

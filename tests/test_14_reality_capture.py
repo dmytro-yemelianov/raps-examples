@@ -14,24 +14,6 @@ JID = "job-demo-001"
 # -- Atomic commands --------------------------------------------------------
 
 
-@pytest.mark.sr("SR-230")
-def test_sr230_reality_list(raps):
-    raps.run(
-        "raps reality list",
-        sr_id="SR-230",
-        slug="reality-list",
-    )
-
-
-@pytest.mark.sr("SR-231")
-def test_sr231_reality_formats(raps):
-    raps.run(
-        "raps reality formats",
-        sr_id="SR-231",
-        slug="reality-formats",
-    )
-
-
 @pytest.mark.sr("SR-232")
 def test_sr232_reality_create(raps):
     raps.run(

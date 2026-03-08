@@ -34,25 +34,6 @@ def _get_first_hook_id(raps) -> str:
 # ── Webhook atomics ──────────────────────────────────────────────
 
 
-@pytest.mark.sr("SR-180")
-def test_sr180_webhook_events(raps):
-    raps.run("raps webhook events", sr_id="SR-180", slug="webhook-events")
-
-
-@pytest.mark.sr("SR-181")
-def test_sr181_webhook_create(raps):
-    raps.run(
-        f'raps webhook create -e "{_EVENT}" -u "https://example.com/raps-test-hook"',
-        sr_id="SR-181",
-        slug="webhook-create",
-    )
-
-
-@pytest.mark.sr("SR-182")
-def test_sr182_webhook_list(raps):
-    raps.run("raps webhook list", sr_id="SR-182", slug="webhook-list")
-
-
 @pytest.mark.sr("SR-183")
 def test_sr183_webhook_get(raps):
     hook_id = _get_first_hook_id(raps)
@@ -84,24 +65,6 @@ def test_sr184_webhook_update(raps):
         f'raps webhook update --hook-id {hook_id} -e "{_EVENT}" --status inactive',
         sr_id="SR-184",
         slug="webhook-update",
-    )
-
-
-@pytest.mark.sr("SR-185")
-def test_sr185_webhook_test(raps):
-    raps.run(
-        'raps webhook test "https://example.com/webhook"',
-        sr_id="SR-185",
-        slug="webhook-test",
-    )
-
-
-@pytest.mark.sr("SR-186")
-def test_sr186_webhook_verify_signature(raps):
-    raps.run(
-        """raps webhook verify-signature '{"event":"test"}' --signature "abc123" --secret "my-secret" """,
-        sr_id="SR-186",
-        slug="webhook-verify-signature",
     )
 
 

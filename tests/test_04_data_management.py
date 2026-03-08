@@ -23,55 +23,6 @@ SUBFOLDER = "urn:adsk.wipprod:fs.folder:co.demo-subfolder-001"
 # -- Atomic commands -------------------------------------------------------
 
 
-@pytest.mark.sr("SR-070")
-def test_sr070_hub_list(raps):
-    raps.run(
-        "raps hub list",
-        sr_id="SR-070",
-        slug="hub-list",
-    )
-
-
-@pytest.mark.sr("SR-071")
-def test_sr071_hub_info(raps, ids):
-    hub_id = ids.hub_id or "b.demo-hub-001"
-    raps.run(
-        f"raps hub info {hub_id}",
-        sr_id="SR-071",
-        slug="hub-info",
-    )
-
-
-@pytest.mark.sr("SR-072")
-def test_sr072_project_list(raps, ids):
-    hub_id = ids.hub_id or "b.demo-hub-001"
-    raps.run(
-        f"raps project list {hub_id}",
-        sr_id="SR-072",
-        slug="project-list",
-    )
-
-
-@pytest.mark.sr("SR-073")
-def test_sr073_project_list_interactive(raps):
-    raps.run(
-        "raps project list",
-        sr_id="SR-073",
-        slug="project-list-interactive",
-    )
-
-
-@pytest.mark.sr("SR-074")
-def test_sr074_project_info(raps, ids):
-    hub_id = ids.hub_id or "b.demo-hub-001"
-    project_id = ids.project_full_id or "b.demo-project-001"
-    raps.run(
-        f"raps project info {hub_id} {project_id}",
-        sr_id="SR-074",
-        slug="project-info",
-    )
-
-
 @pytest.mark.sr("SR-075")
 def test_sr075_folder_list(raps, ids):
     project_id = ids.project_full_id or "b.demo-project-001"

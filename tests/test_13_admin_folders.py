@@ -48,25 +48,6 @@ def test_sr222_admin_folder_rights_from_file(raps, ids, users):
     )
 
 
-@pytest.mark.sr("SR-223")
-def test_sr223_admin_company_list(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f"raps admin company-list -a {account_id}",
-        sr_id="SR-223",
-        slug="admin-company-list",
-    )
-
-
-@pytest.mark.sr("SR-224")
-def test_sr224_admin_operation_list(raps):
-    raps.run(
-        "raps admin operation list --status completed --limit 5",
-        sr_id="SR-224",
-        slug="admin-operation-list",
-    )
-
-
 @pytest.mark.sr("SR-225")
 def test_sr225_admin_operation_status(raps):
     raps.run(

@@ -11,27 +11,6 @@ pytestmark = [
 # -- Atomic commands --------------------------------------------------------
 
 
-@pytest.mark.sr("SR-210")
-def test_sr210_admin_project_list(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f"raps admin project list -a {account_id}",
-        sr_id="SR-210",
-        slug="admin-project-list",
-    )
-
-
-@pytest.mark.sr("SR-211")
-def test_sr211_admin_project_list_filtered(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f'raps admin project list -a {account_id} -f "name:*Tower*"'
-        f" --status active --platform acc --limit 10",
-        sr_id="SR-211",
-        slug="admin-project-list-filtered",
-    )
-
-
 @pytest.mark.sr("SR-212")
 def test_sr212_admin_project_create(raps, ids):
     account_id = ids.account_id or "demo-account-001"

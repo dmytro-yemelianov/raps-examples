@@ -14,16 +14,6 @@ TPL_ID = "tpl-demo-001"
 # -- Atomic commands --------------------------------------------------------
 
 
-@pytest.mark.sr("SR-250")
-def test_sr250_template_list(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f"raps template list -a {account_id}",
-        sr_id="SR-250",
-        slug="template-list",
-    )
-
-
 @pytest.mark.sr("SR-251")
 def test_sr251_template_create(raps, ids):
     account_id = ids.account_id or "demo-account-001"

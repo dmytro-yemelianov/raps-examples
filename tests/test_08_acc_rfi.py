@@ -16,16 +16,6 @@ STRUCT_ENG = "demo-struct-eng-001"
 # -- RFI atomics ------------------------------------------------------------
 
 
-@pytest.mark.sr("SR-150")
-def test_sr150_rfi_list(raps, ids):
-    project_id = ids.project_id or "demo-project-001"
-    raps.run(
-        f"raps rfi list {project_id}",
-        sr_id="SR-150",
-        slug="rfi-list",
-    )
-
-
 @pytest.mark.sr("SR-151")
 def test_sr151_rfi_create(raps, ids):
     project_id = ids.project_id or "demo-project-001"

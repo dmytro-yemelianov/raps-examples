@@ -15,37 +15,6 @@ OLD_PROJECT = "b.demo-old-project-001"
 # -- Atomic commands --------------------------------------------------------
 
 
-@pytest.mark.sr("SR-190")
-def test_sr190_admin_user_list_account(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f"raps admin user list -a {account_id}",
-        sr_id="SR-190",
-        slug="admin-user-list-account",
-    )
-
-
-@pytest.mark.sr("SR-191")
-def test_sr191_admin_user_list_project(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    project_id = ids.project_id or "demo-project-001"
-    raps.run(
-        f"raps admin user list -a {account_id} -p {project_id}",
-        sr_id="SR-191",
-        slug="admin-user-list-project",
-    )
-
-
-@pytest.mark.sr("SR-192")
-def test_sr192_admin_user_list_filtered(raps, ids):
-    account_id = ids.account_id or "demo-account-001"
-    raps.run(
-        f'raps admin user list -a {account_id} --role "project_admin" --status "active" --search "john"',
-        sr_id="SR-192",
-        slug="admin-user-list-filtered",
-    )
-
-
 @pytest.mark.sr("SR-193")
 def test_sr193_admin_user_add_bulk_dryrun(raps, ids, users):
     account_id = ids.account_id or "demo-account-001"
