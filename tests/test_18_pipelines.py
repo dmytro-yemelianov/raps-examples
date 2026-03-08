@@ -46,3 +46,14 @@ def test_sr273_pipeline_author_and_run(raps):
     lc.step("raps pipeline validate ./my-pipeline.yaml")
     lc.step("raps pipeline run ./my-pipeline.yaml")
     lc.assert_all_passed()
+
+
+@pytest.mark.sr("SR-274")
+def test_sr274_pipeline_diff(raps):
+    raps.run(
+        "raps pipeline sample --out-file ./pipeline-a.yaml"
+        "; raps pipeline sample --out-file ./pipeline-b.yaml"
+        "; raps pipeline diff ./pipeline-a.yaml ./pipeline-b.yaml",
+        sr_id="SR-274",
+        slug="pipeline-diff",
+    )
