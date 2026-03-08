@@ -70,19 +70,22 @@ def _merge_results() -> dict:
     results_map: dict[str, dict] = {}
     run_meta: dict = {}
     if RESULTS_PATH.exists():
-        raw = json.loads(RESULTS_PATH.read_text())
-        run_meta = {
-            "created": raw.get("created"),
-            "duration": raw.get("duration"),
-            "summary": raw.get("summary", {}),
-        }
-        for test in raw.get("tests", []):
-            sr_id = _sr_id_from_nodeid(test["nodeid"])
-            if sr_id and sr_id not in results_map:
-                results_map[sr_id] = {
-                    "outcome": test.get("outcome", "unknown"),
-                    "duration": test.get("duration"),
-                }
+        try:
+            raw = json.loads(RESULTS_PATH.read_text())
+            run_meta = {
+                "created": raw.get("created"),
+                "duration": raw.get("duration"),
+                "summary": raw.get("summary", {}),
+            }
+            for test in raw.get("tests", []):
+                sr_id = _sr_id_from_nodeid(test["nodeid"])
+                if sr_id and sr_id not in results_map:
+                    results_map[sr_id] = {
+                        "outcome": test.get("outcome", "unknown"),
+                        "duration": test.get("duration"),
+                    }
+        except (json.JSONDecodeError, KeyError):
+            pass  # results.json is being written — return stale/empty data
 
     rows: list[dict] = []
     for section in catalog["sections"]:
@@ -140,7 +143,12 @@ async def stream_output(token: str = Query(..., alias="token")):
     _require_token(token)
 
     async def _lines() -> AsyncIterator[str]:
-        if _run_proc is None or _run_proc.stdout is None:
+        # Wait up to 1s for _run_proc to be assigned after POST /run
+        for _ in range(10):
+            if _run_proc is not None and _run_proc.stdout is not None:
+                break
+            await asyncio.sleep(0.1)
+        else:
             yield "data: No active run\n\n"
             return
         loop = asyncio.get_running_loop()
