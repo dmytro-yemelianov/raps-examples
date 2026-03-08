@@ -266,7 +266,9 @@ def auth_login(token: str = Query(..., alias="token")):
     global _login_proc
     _require_token(token)
     with _login_lock:
-        if _login_proc is not None and _login_proc.poll() is None:
+        if _login_proc is not None:
+            _login_proc.poll()  # reap zombie
+        if _login_proc is not None and _login_proc.returncode is None:
             raise HTTPException(409, "A login is already in progress")
         _login_proc = subprocess.Popen(
             ["stdbuf", "-oL", "raps", "auth", "login", "--preset", "all", "--device"],
