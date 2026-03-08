@@ -235,3 +235,13 @@ def test_sr177_checklist_inspection_lifecycle(raps, ids):
     lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "completed"')
     lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}")
     lc.assert_all_passed()
+
+
+@pytest.mark.sr("SR-178")
+def test_sr178_acc_export(raps, ids):
+    pid = ids.project_id or "demo-project-001"
+    raps.run(
+        f"raps acc export {pid} --out-dir ./tmp/acc-export-sr178",
+        sr_id="SR-178",
+        slug="acc-export",
+    )
