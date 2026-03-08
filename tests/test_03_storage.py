@@ -226,3 +226,65 @@ def test_sr065_batch_upload_lifecycle(raps):
     lc.step(f"raps object list {bkt}")
     lc.step(f"raps bucket delete {bkt} -y")
     lc.assert_all_passed()
+
+
+# ── Object audit ─────────────────────────────────────────────────
+
+
+@pytest.mark.sr("SR-067")
+def test_sr067_object_audit(raps):
+    raps.run(
+        f"raps object audit {BUCKET_NAME}",
+        sr_id="SR-067",
+        slug="object-audit",
+    )
+
+
+# ── Object tag ───────────────────────────────────────────────────
+
+
+@pytest.mark.sr("SR-068")
+def test_sr068_object_tag_set(raps):
+    raps.run(
+        f"raps object tag set {BUCKET_NAME} sample.ifc env=test owner=qa",
+        sr_id="SR-068",
+        slug="object-tag-set",
+    )
+
+
+@pytest.mark.sr("SR-069")
+def test_sr069_object_tag_get(raps):
+    raps.run(
+        f"raps object tag get {BUCKET_NAME} sample.ifc",
+        sr_id="SR-069",
+        slug="object-tag-get",
+    )
+
+
+@pytest.mark.sr("SR-070")
+def test_sr070_object_tag_delete(raps):
+    raps.run(
+        f"raps object tag delete {BUCKET_NAME} sample.ifc owner",
+        sr_id="SR-070",
+        slug="object-tag-delete",
+    )
+
+
+@pytest.mark.sr("SR-071")
+def test_sr071_object_tag_search(raps):
+    raps.run(
+        f"raps object tag search {BUCKET_NAME} env=test",
+        sr_id="SR-071",
+        slug="object-tag-search",
+    )
+
+
+@pytest.mark.sr("SR-072")
+@pytest.mark.lifecycle
+def test_sr072_object_tag_lifecycle(raps):
+    lc = raps.lifecycle("SR-072", "object-tag-lifecycle", "Set → get → search → delete")
+    lc.step(f"raps object tag set {BUCKET_NAME} sample.ifc project=raps-test")
+    lc.step(f"raps object tag get {BUCKET_NAME} sample.ifc")
+    lc.step(f"raps object tag search {BUCKET_NAME} project=raps-test")
+    lc.step(f"raps object tag delete {BUCKET_NAME} sample.ifc project")
+    lc.assert_all_passed()
