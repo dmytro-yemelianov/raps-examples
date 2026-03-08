@@ -113,6 +113,7 @@ def test_run_starts_subprocess(monkeypatch):
     mock_proc.poll.return_value = None
     with patch("webapp.main.subprocess.Popen", return_value=mock_proc):
         resp = client.post(f"/run?token={TOKEN}")
+    monkeypatch.setattr("webapp.main._run_proc", None)  # cleanup
     assert resp.status_code == 200
     assert resp.json()["status"] == "started"
     assert resp.json()["pid"] == 99999

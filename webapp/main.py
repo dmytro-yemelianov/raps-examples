@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import threading
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -29,6 +30,7 @@ app = FastAPI(title="RAPS Test Results")
 
 # Global run state
 _run_proc: subprocess.Popen | None = None
+_run_lock = threading.Lock()
 
 
 def _require_token(token: str = Query(..., alias="token")) -> str:
@@ -60,7 +62,10 @@ def _sr_id_from_nodeid(nodeid: str) -> str | None:
 
 def _merge_results() -> dict:
     """Merge catalog.json test definitions with results.json outcomes."""
-    catalog = json.loads(CATALOG_PATH.read_text())
+    try:
+        catalog = json.loads(CATALOG_PATH.read_text())
+    except FileNotFoundError:
+        raise HTTPException(500, "catalog.json not found")
 
     results_map: dict[str, dict] = {}
     run_meta: dict = {}
@@ -111,20 +116,21 @@ def api_results(token: str = Query(..., alias="token")):
 def run_tests(token: str = Query(..., alias="token")):
     global _run_proc
     _require_token(token)
-    if _run_proc is not None and _run_proc.poll() is None:
-        raise HTTPException(409, "A test run is already in progress")
-    _run_proc = subprocess.Popen(
-        [
-            "python3", "-m", "pytest", "tests/", "-q",
-            "--json-report", f"--json-report-file={RESULTS_PATH}",
-            "--no-header",
-        ],
-        cwd=ROOT,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1,
-    )
+    with _run_lock:
+        if _run_proc is not None and _run_proc.poll() is None:
+            raise HTTPException(409, "A test run is already in progress")
+        _run_proc = subprocess.Popen(
+            [
+                "python3", "-m", "pytest", "tests/", "-q",
+                "--json-report", f"--json-report-file={RESULTS_PATH}",
+                "--no-header",
+            ],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
     return {"status": "started", "pid": _run_proc.pid}
 
 
@@ -137,12 +143,15 @@ async def stream_output(token: str = Query(..., alias="token")):
         if _run_proc is None or _run_proc.stdout is None:
             yield "data: No active run\n\n"
             return
-        loop = asyncio.get_event_loop()
-        while True:
-            line = await loop.run_in_executor(None, _run_proc.stdout.readline)
-            if not line:
-                break
-            yield f"data: {line.rstrip()}\n\n"
+        loop = asyncio.get_running_loop()
+        try:
+            while True:
+                line = await loop.run_in_executor(None, _run_proc.stdout.readline)
+                if not line:
+                    break
+                yield f"data: {line.rstrip()}\n\n"
+        except Exception:
+            pass
         yield "data: __done__\n\n"
 
     return StreamingResponse(
