@@ -284,20 +284,16 @@
       let _authUrl = '', _authCode = '';
 
       function updateAuthPopup() {
-        if (!_authUrl) return;
+        if (!_authUrl || !_authCode) return; // wait until both are known
         const wrap = document.getElementById('auth-url-wrap');
         const link = document.getElementById('auth-url-link');
         const codeWrap = document.getElementById('auth-code-wrap');
         const codeEl = document.getElementById('auth-code');
-        if (_authCode) {
-          const sep = _authUrl.includes('?') ? '&' : '?';
-          link.href = _authUrl + sep + 'user_code=' + encodeURIComponent(_authCode);
-          codeEl.textContent = _authCode;
-          codeWrap.style.display = 'inline';
-        } else {
-          link.href = _authUrl;
-        }
+        const sep = _authUrl.includes('?') ? '&' : '?';
+        link.href = _authUrl + sep + 'user_code=' + encodeURIComponent(_authCode);
         link.textContent = _authUrl;
+        codeEl.textContent = _authCode;
+        codeWrap.style.display = 'inline';
         wrap.style.display = 'flex';
       }
 
