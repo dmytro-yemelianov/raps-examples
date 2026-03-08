@@ -255,12 +255,16 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 def _notify_auth_status(mgr: AuthManager, target: str) -> None:
-    """Warn the user early when authentication is missing."""
+    """Ensure auth is available, triggering browser login for 3-legged if needed."""
     if target == "mock":
         return
 
     has_2leg = mgr.has_2leg()
+
+    # For 3-legged: check first, open browser login if missing
     has_3leg = mgr.has_3leg()
+    if not has_3leg and sys.stdin.isatty():
+        has_3leg = mgr.ensure_3leg()
 
     if has_2leg and has_3leg:
         return
@@ -277,7 +281,7 @@ def _notify_auth_status(mgr: AuthManager, target: str) -> None:
     if not has_2leg:
         lines.append("  Set APS_CLIENT_ID and APS_CLIENT_SECRET env vars")
     if not has_3leg:
-        lines.append("  Run: raps auth login --preset all")
+        lines.append("  3-legged login failed or timed out — those tests will be skipped")
     lines += [
         "",
         "  Tests requiring missing auth will be skipped.",
@@ -285,14 +289,6 @@ def _notify_auth_status(mgr: AuthManager, target: str) -> None:
         "",
     ]
     sys.stderr.write("\n".join(lines) + "\n")
-
-    if sys.stdin.isatty():
-        try:
-            answer = input("Continue? [Y/n] ").strip().lower()
-        except EOFError:
-            answer = ""
-        if answer == "n":
-            pytest.exit("Aborted by user — fix auth and re-run.", returncode=1)
 
 
 # ---------------------------------------------------------------------------

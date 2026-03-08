@@ -26,23 +26,15 @@ class AuthManager:
         self._saved_token: str = ""
 
     def has_2leg(self) -> bool:
-        """Check if 2-legged (client credentials) auth is available."""
+        """Check if 2-legged (client credentials) auth is available via env vars."""
         if self._has_2leg is None:
             if self.target == "mock":
                 self._has_2leg = True
             else:
-                try:
-                    proc = subprocess.run(
-                        "raps auth test --quiet",
-                        shell=True,
-                        capture_output=True,
-                        timeout=15,
-                        cwd=self.cwd,
-                        env=self._env,
-                    )
-                    self._has_2leg = proc.returncode == 0
-                except (subprocess.TimeoutExpired, OSError):
-                    self._has_2leg = False
+                env = self._env or os.environ
+                self._has_2leg = bool(
+                    env.get("APS_CLIENT_ID") and env.get("APS_CLIENT_SECRET")
+                )
         return self._has_2leg
 
     def has_3leg(self) -> bool:
@@ -51,26 +43,58 @@ class AuthManager:
             if self.target == "mock":
                 self._has_3leg = True
             else:
-                try:
-                    proc = subprocess.run(
-                        "raps auth status --output json --quiet",
-                        shell=True,
-                        capture_output=True,
-                        text=True,
-                        timeout=15,
-                        cwd=self.cwd,
-                        env=self._env,
-                    )
-                    if proc.returncode != 0:
-                        self._has_3leg = False
-                    else:
-                        data = json.loads(proc.stdout or "{}")
-                        self._has_3leg = (
-                            data.get("three_legged", {}).get("logged_in") is True
-                        )
-                except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
-                    self._has_3leg = False
+                self._has_3leg = self._check_3leg()
         return self._has_3leg
+
+    def _check_3leg(self) -> bool:
+        """Return True if a valid 3-legged session exists."""
+        try:
+            proc = subprocess.run(
+                "raps auth status --output json --quiet",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=15,
+                cwd=self.cwd,
+                env=self._env,
+            )
+            if proc.returncode != 0:
+                return False
+            data = json.loads(proc.stdout or "{}")
+            return data.get("three_legged", {}).get("logged_in") is True
+        except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
+            return False
+
+    def ensure_3leg(self) -> bool:
+        """Ensure 3-legged auth is available, opening browser login if needed.
+
+        Returns True if logged in after this call.
+        """
+        if self.target == "mock":
+            self._has_3leg = True
+            return True
+
+        if self._check_3leg():
+            self._has_3leg = True
+            return True
+
+        sys.stderr.write("\n[raps] 3-legged auth required — opening browser login...\n")
+        try:
+            proc = subprocess.run(
+                "raps auth login --preset all",
+                shell=True,
+                timeout=300,  # 5 min for the user to complete browser flow
+                cwd=self.cwd,
+                env=self._env,
+            )
+            if proc.returncode == 0:
+                self._has_3leg = self._check_3leg()
+            else:
+                self._has_3leg = False
+        except (subprocess.TimeoutExpired, OSError):
+            self._has_3leg = False
+
+        return bool(self._has_3leg)
 
     def save_token(self) -> None:
         """Save the current 3-legged token for later restoration.
