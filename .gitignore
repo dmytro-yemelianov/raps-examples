@@ -78,3 +78,6 @@ tmp/
 # yr recordings (generated GIFs and logs)
 recordings/
 yr-demos/
+
+# Webapp results data
+webapp/results.json
