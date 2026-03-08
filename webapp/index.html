@@ -47,6 +47,14 @@
     #token-gate button:hover { background: #1d4ed8; }
     #token-error { color: #f87171; font-size: 0.8rem; display: none; }
     #app { display: none; }
+
+    #auth-bar { padding: 8px 24px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 12px; font-size: 0.78rem; }
+    .auth-pill { padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; }
+    .auth-ok   { background: #14532d; color: #4ade80; }
+    .auth-miss { background: #450a0a; color: #f87171; }
+    #login-btn { padding: 4px 12px; background: #7c3aed; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-family: inherit; }
+    #login-btn:disabled { background: #374151; cursor: not-allowed; }
+    #login-btn:hover:not(:disabled) { background: #6d28d9; }
   </style>
 </head>
 <body>
@@ -64,6 +72,13 @@
     <div id="meta">Loading&#x2026;</div>
     <button id="run-btn" onclick="triggerRun()">Run Tests</button>
   </header>
+
+  <div id="auth-bar">
+    <span>Auth:</span>
+    <span id="auth-2leg" class="auth-pill auth-miss">2-leg ···</span>
+    <span id="auth-3leg" class="auth-pill auth-miss">3-leg ···</span>
+    <button id="login-btn" onclick="triggerLogin()" style="display:none">Login (browser)</button>
+  </div>
 
   <div id="filters">
     <select id="f-section" onchange="renderTable()">
@@ -159,6 +174,7 @@
   function showApp() {
     document.getElementById('token-gate').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    loadAuth();
   }
 
   async function loadResults() {
@@ -166,6 +182,53 @@
       const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
       if (resp.ok) applyData(await resp.json());
     } catch (_) { /* silent — table keeps previous data */ }
+  }
+
+  async function loadAuth() {
+    try {
+      const resp = await fetch('/api/auth?token=' + encodeURIComponent(TOKEN));
+      if (!resp.ok) return;
+      const d = await resp.json();
+      const el2 = document.getElementById('auth-2leg');
+      const el3 = document.getElementById('auth-3leg');
+      const btn = document.getElementById('login-btn');
+      el2.textContent = '2-leg ' + (d.two_legged ? '✓' : '✗');
+      el2.className = 'auth-pill ' + (d.two_legged ? 'auth-ok' : 'auth-miss');
+      el3.textContent = '3-leg ' + (d.three_legged ? '✓' : '✗');
+      el3.className = 'auth-pill ' + (d.three_legged ? 'auth-ok' : 'auth-miss');
+      btn.style.display = d.three_legged ? 'none' : 'inline-block';
+    } catch (_) {}
+  }
+
+  async function triggerLogin() {
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.textContent = 'Opening\u2026';
+    try {
+      const resp = await fetch('/auth/login?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
+      if (resp.status === 409) { alert('Login already in progress'); btn.disabled = false; btn.textContent = 'Login (browser)'; return; }
+      if (!resp.ok) { alert('Failed to start login'); btn.disabled = false; btn.textContent = 'Login (browser)'; return; }
+
+      const logPanel  = document.getElementById('log-panel');
+      const logOutput = document.getElementById('log-output');
+      logPanel.style.display = 'block';
+      logOutput.textContent = '';
+      btn.textContent = 'Waiting\u2026';
+
+      const es = new EventSource('/stream/auth?token=' + encodeURIComponent(TOKEN));
+      es.onmessage = function(e) {
+        if (e.data === '__done__') {
+          es.close();
+          btn.disabled = false;
+          btn.textContent = 'Login (browser)';
+          loadAuth();
+        } else {
+          logOutput.textContent += e.data + '\n';
+          logOutput.scrollTop = logOutput.scrollHeight;
+        }
+      };
+      es.onerror = function() { es.close(); btn.disabled = false; btn.textContent = 'Login (browser)'; loadAuth(); };
+    } catch (_) { btn.disabled = false; btn.textContent = 'Login (browser)'; }
   }
 
   function applyData(data) {

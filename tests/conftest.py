@@ -255,16 +255,12 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
 
 def _notify_auth_status(mgr: AuthManager, target: str) -> None:
-    """Ensure auth is available, triggering browser login for 3-legged if needed."""
+    """Warn the user early when authentication is missing."""
     if target == "mock":
         return
 
     has_2leg = mgr.has_2leg()
-
-    # For 3-legged: check first, open browser login if missing
     has_3leg = mgr.has_3leg()
-    if not has_3leg and sys.stdin.isatty():
-        has_3leg = mgr.ensure_3leg()
 
     if has_2leg and has_3leg:
         return
@@ -281,7 +277,7 @@ def _notify_auth_status(mgr: AuthManager, target: str) -> None:
     if not has_2leg:
         lines.append("  Set APS_CLIENT_ID and APS_CLIENT_SECRET env vars")
     if not has_3leg:
-        lines.append("  3-legged login failed or timed out — those tests will be skipped")
+        lines.append("  Use the dashboard to log in: tests.rapscli.xyz")
     lines += [
         "",
         "  Tests requiring missing auth will be skipped.",

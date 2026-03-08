@@ -32,6 +32,10 @@ app = FastAPI(title="RAPS Test Results")
 _run_proc: subprocess.Popen | None = None
 _run_lock = threading.Lock()
 
+# Global auth-login state
+_login_proc: subprocess.Popen | None = None
+_login_lock = threading.Lock()
+
 
 def _require_token(token: str = Query(..., alias="token")) -> str:
     if not _TOKEN:
@@ -172,6 +176,75 @@ async def stream_output(token: str = Query(..., alias="token")):
         try:
             while True:
                 line = await loop.run_in_executor(None, _run_proc.stdout.readline)
+                if not line:
+                    break
+                yield f"data: {line.rstrip()}\n\n"
+        except Exception:
+            pass
+        yield "data: __done__\n\n"
+
+    return StreamingResponse(
+        _lines(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.get("/api/auth")
+def api_auth(token: str = Query(..., alias="token")):
+    """Return 2-legged and 3-legged auth status."""
+    _require_token(token)
+    two_leg = bool(os.environ.get("APS_CLIENT_ID") and os.environ.get("APS_CLIENT_SECRET"))
+    three_leg = False
+    try:
+        proc = subprocess.run(
+            ["raps", "auth", "status", "--output", "json", "--quiet"],
+            capture_output=True, text=True, timeout=15, cwd=ROOT,
+        )
+        if proc.returncode == 0:
+            data = json.loads(proc.stdout or "{}")
+            three_leg = data.get("three_legged", {}).get("logged_in") is True
+    except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
+        pass
+    return {"two_legged": two_leg, "three_legged": three_leg}
+
+
+@app.post("/auth/login")
+def auth_login(token: str = Query(..., alias="token")):
+    """Spawn `raps auth login --preset all` (opens browser on server)."""
+    global _login_proc
+    _require_token(token)
+    with _login_lock:
+        if _login_proc is not None and _login_proc.poll() is None:
+            raise HTTPException(409, "A login is already in progress")
+        _login_proc = subprocess.Popen(
+            ["raps", "auth", "login", "--preset", "all"],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+    return {"status": "started", "pid": _login_proc.pid}
+
+
+@app.get("/stream/auth")
+async def stream_auth(token: str = Query(..., alias="token")):
+    """SSE — streams raps auth login stdout line by line."""
+    _require_token(token)
+
+    async def _lines() -> AsyncIterator[str]:
+        for _ in range(10):
+            if _login_proc is not None and _login_proc.stdout is not None:
+                break
+            await asyncio.sleep(0.1)
+        else:
+            yield "data: No active login\n\n"
+            return
+        loop = asyncio.get_running_loop()
+        try:
+            while True:
+                line = await loop.run_in_executor(None, _login_proc.stdout.readline)
                 if not line:
                     break
                 yield f"data: {line.rstrip()}\n\n"
