@@ -253,8 +253,7 @@ class LifecycleContext:
                 status = "TIMEOUT" if r.timed_out else f"exit {r.exit_code}"
                 lines.append(f"  {r.sr_id}: {r.command} -> {status}")
                 if r.stderr.strip():
-                    # Show first 200 chars of stderr
-                    lines.append(f"    stderr: {r.stderr.strip()[:200]}")
+                    lines.append(f"    stderr: {r.stderr.strip()[:2000]}")
             raise AssertionError("\n".join(lines))
 
 

@@ -92,6 +92,9 @@ def test_sr402_workflow_ci_cd_pipeline(raps):
         if not tr_result.ok and "capacity exceeded" in tr_result.stderr:
             lc.step(f"raps bucket delete {bkt} --yes")
             pytest.skip("Translation API rate-limited (free tier capacity exceeded)")
+        if not tr_result.ok and tr_result.exit_code == 3:
+            lc.step(f"raps bucket delete {bkt} --yes")
+            pytest.skip("Translation API requires 3-legged auth — run `raps auth login` first")
         if tr_result.ok:
             lc.step(f"raps translate status {rvt_urn}")
             lc.step(f"raps translate manifest {rvt_urn}")

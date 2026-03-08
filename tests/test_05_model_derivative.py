@@ -39,6 +39,8 @@ def test_sr100_translate_full_pipeline(raps):
     result = lc.step(f"raps translate start {rvt_urn} --format svf2")
     if not result.ok and "capacity exceeded" in result.stderr:
         pytest.skip("Translation API rate-limited (free tier capacity exceeded)")
+    if not result.ok and result.exit_code == 3:
+        pytest.skip("Translation API requires 3-legged auth — run `raps auth login` first")
     if result.ok:
         lc.step(f"raps translate status {rvt_urn}")
         lc.step(f"raps translate manifest {rvt_urn}")
