@@ -193,3 +193,43 @@ def test_sr045_config_context_lifecycle(raps, ids):
     lc.step("raps config profile use default")
     lc.step("raps config profile delete ctx-test")
     lc.assert_all_passed()
+
+
+# ── Snapshot ──────────────────────────────────────────────────────
+
+
+@pytest.mark.sr("SR-046")
+@pytest.mark.require_2leg
+def test_sr046_snapshot_create(raps):
+    raps.run(
+        "raps snapshot create sr-test-bucket",
+        sr_id="SR-046",
+        slug="snapshot-create",
+    )
+
+
+@pytest.mark.sr("SR-047")
+def test_sr047_snapshot_list(raps):
+    raps.run_ok("raps snapshot list", sr_id="SR-047", slug="snapshot-list")
+
+
+@pytest.mark.sr("SR-048")
+def test_sr048_snapshot_diff(raps):
+    # Diff two non-existent files; command should exit non-zero but not panic
+    raps.run(
+        "raps snapshot diff ./snap-a.json ./snap-b.json",
+        sr_id="SR-048",
+        slug="snapshot-diff",
+    )
+
+
+@pytest.mark.sr("SR-049")
+@pytest.mark.require_2leg
+@pytest.mark.lifecycle
+def test_sr049_snapshot_lifecycle(raps):
+    lc = raps.lifecycle("SR-049", "snapshot-lifecycle", "Create → list → diff")
+    lc.step("raps snapshot create sr-test-bucket --output ./snap-v1.json")
+    lc.step("raps snapshot list")
+    lc.step("raps snapshot create sr-test-bucket --output ./snap-v2.json")
+    lc.step("raps snapshot diff ./snap-v1.json ./snap-v2.json")
+    lc.assert_all_passed()
