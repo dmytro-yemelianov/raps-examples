@@ -282,6 +282,8 @@ def test_sr074_object_tag_search(raps):
 @pytest.mark.sr("SR-075")
 @pytest.mark.lifecycle
 def test_sr075_object_tag_lifecycle(raps):
+    if not Path("./test-data/sample.ifc").is_file():
+        pytest.skip("missing ./test-data/sample.ifc")
     lc = raps.lifecycle("SR-075", "object-tag-lifecycle", "Set → get → search → delete")
     lc.step(f"raps object tag set {BUCKET_NAME} sample.ifc project=raps-test")
     lc.step(f"raps object tag get {BUCKET_NAME} sample.ifc")
