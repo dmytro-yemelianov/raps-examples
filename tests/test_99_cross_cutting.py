@@ -164,3 +164,29 @@ def test_sr543_help_admin_user(raps):
 @pytest.mark.sr("SR-544")
 def test_sr544_help_version(raps):
     raps.run_ok("raps --version", sr_id="SR-544", slug="help-version")
+
+
+# ── --log-file global flag ───────────────────────────────────────
+
+
+@pytest.mark.sr("SR-560")
+def test_sr560_log_file_flag(raps, tmp_path):
+    log_file = tmp_path / "raps-test.log"
+    raps.run_ok(
+        f"raps --log-file {log_file} bucket list",
+        sr_id="SR-560",
+        slug="log-file-flag",
+    )
+
+
+# ── raps lint ────────────────────────────────────────────────────
+
+
+@pytest.mark.sr("SR-561")
+def test_sr561_lint_pipeline(raps):
+    raps.run(
+        "raps pipeline sample --out-file ./lint-test-pipeline.yaml"
+        "; raps lint ./lint-test-pipeline.yaml",
+        sr_id="SR-561",
+        slug="lint-pipeline",
+    )
