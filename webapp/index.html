@@ -47,6 +47,11 @@
     th { text-align: left; padding: 10px 12px; color: #555; border-bottom: 1px solid #222; font-weight: 500; position: sticky; top: 0; background: #0f0f0f; z-index: 1; white-space: nowrap; }
     td { padding: 9px 12px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
     tr:hover td { background: #161616; }
+    tr.has-output { cursor: pointer; }
+    tr.detail-row td { padding: 0; border-bottom: 1px solid #222; background: #0a0a0a; }
+    .detail-content { padding: 12px 14px 14px 28px; font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; color: #9ca3af; word-break: break-all; max-height: 300px; overflow-y: auto; }
+    .detail-content.fail { color: #fca5a5; }
+    .detail-content.skip { color: #6b7280; font-style: italic; }
 
     /* Hide lower-priority columns on small screens */
     @media (max-width: 640px) {
@@ -176,6 +181,19 @@
     document.querySelectorAll('.tab-btn').forEach((b, i) => {
       b.classList.toggle('active', (i === 0) === (name === 'results'));
     });
+  }
+
+  function toggleDetail(id) {
+    const row = document.getElementById(id);
+    if (!row) return;
+    const open = row.style.display !== 'none';
+    row.style.display = open ? 'none' : 'table-row';
+    // flip the arrow indicator
+    const prev = row.previousElementSibling;
+    if (prev) {
+      const arrow = prev.querySelector('span[style*="color:#374151"]');
+      if (arrow) arrow.textContent = open ? '▶' : '▼';
+    }
   }
 
   function appendLog(text) {
@@ -354,15 +372,22 @@
         html += '<tr><td colspan="6" style="padding:10px 14px 4px;color:#4b5563;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid #222;background:#0f0f0f">' + esc(g) + '</td></tr>';
         lastGroup = g;
       }
+      const detailId = 'detail-' + esc(r.id.replace(/[^a-z0-9]/gi, '-'));
+      const hasOutput = r.output != null;
+      const detailClass = r.outcome === 'failed' || r.outcome === 'error' ? 'fail'
+                        : r.outcome === 'skipped' ? 'skip' : '';
       html +=
-        '<tr>' +
-        '<td style="color:#94a3b8;font-weight:600;white-space:nowrap">' + esc(r.id) + '</td>' +
+        '<tr class="' + (hasOutput ? 'has-output' : '') + '" ' + (hasOutput ? 'onclick="toggleDetail(\'' + detailId + '\')"' : '') + '>' +
+        '<td style="color:#94a3b8;font-weight:600;white-space:nowrap">' + esc(r.id) + (hasOutput ? ' <span style="color:#374151;font-size:0.65rem">▶</span>' : '') + '</td>' +
         '<td style="font-size:0.73rem;color:#94a3b8;word-break:break-all">' + esc(r.command) + '</td>' +
         '<td class="col-section" style="color:#475569;white-space:nowrap">' + esc(r.section) + '</td>' +
         '<td class="col-marks">' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
         '<td><span class="badge badge-' + esc(r.outcome.replace(/ /g, '-')) + '">' + esc(r.outcome) + '</span></td>' +
         '<td class="col-duration" style="color:#475569;white-space:nowrap">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
-        '</tr>';
+        '</tr>' +
+        (hasOutput
+          ? '<tr class="detail-row" id="' + detailId + '" style="display:none"><td colspan="6"><div class="detail-content ' + detailClass + '">' + esc(r.output) + '</div></td></tr>'
+          : '');
     }
     document.getElementById('tbody').innerHTML = html;
   }

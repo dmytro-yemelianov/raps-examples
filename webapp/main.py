@@ -124,9 +124,32 @@ def _merge_results() -> dict:
             for test in raw.get("tests", []):
                 sr_id = _sr_id_from_nodeid(test["nodeid"])
                 if sr_id and sr_id not in results_map:
+                    # Extract human-readable output: skip reason or failure traceback
+                    output = None
+                    for phase in ("call", "setup", "teardown"):
+                        lr = test.get(phase, {}).get("longrepr")
+                        if lr:
+                            # Skipped: pytest-json-report encodes as list [file, lineno, reason]
+                            if isinstance(lr, (list, tuple)) and len(lr) == 3:
+                                output = str(lr[2])
+                            elif isinstance(lr, str):
+                                # String tuple repr: "('file', lineno, 'Skipped: reason')"
+                                import ast
+                                try:
+                                    parsed = ast.literal_eval(lr)
+                                    if isinstance(parsed, tuple) and len(parsed) == 3:
+                                        output = str(parsed[2])
+                                    else:
+                                        output = lr
+                                except Exception:
+                                    output = lr
+                            else:
+                                output = str(lr)
+                            break
                     results_map[sr_id] = {
                         "outcome": test.get("outcome", "unknown"),
                         "duration": test.get("duration"),
+                        "output": output,
                     }
         except (json.JSONDecodeError, KeyError):
             pass  # results.json is being written — return stale/empty data
@@ -139,7 +162,7 @@ def _merge_results() -> dict:
         for test in section["tests"]:
             sr_id = test["id"]
             merged_vars = {**section_vars, **test.get("vars", {})}
-            result = results_map.get(sr_id, {"outcome": "not run", "duration": None})
+            result = results_map.get(sr_id, {"outcome": "not run", "duration": None, "output": None})
             rows.append({
                 "id": sr_id,
                 "slug": test["slug"],
@@ -148,6 +171,7 @@ def _merge_results() -> dict:
                 "command": _resolve_command(test.get("command", ""), merged_vars),
                 "outcome": result["outcome"],
                 "duration": result["duration"],
+                "output": result.get("output"),
             })
 
     return {"meta": run_meta, "rows": rows}
