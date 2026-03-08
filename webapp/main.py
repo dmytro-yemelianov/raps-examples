@@ -33,6 +33,26 @@ except ImportError:
 # ---------------------------------------------------------------------------
 _TOKEN = os.environ.get("RAPS_DASHBOARD_TOKEN", "")
 
+# ---------------------------------------------------------------------------
+# Output scrubber — redacts sensitive env var values from streamed output
+# ---------------------------------------------------------------------------
+_SECRET_ENV = re.compile(
+    r"secret|password|token|key|credential|client_id|client_secret", re.IGNORECASE
+)
+_SENSITIVE: list[str] = [
+    v for k, v in os.environ.items()
+    if _SECRET_ENV.search(k) and len(v) > 4
+]
+
+
+def _scrub(line: str) -> str:
+    """Replace sensitive env var values with *** in streamed output."""
+    for secret in _SENSITIVE:
+        if secret in line:
+            line = line.replace(secret, "***")
+    return line
+
+
 app = FastAPI(title="RAPS Test Results")
 
 # Global run state
@@ -185,7 +205,7 @@ async def stream_output(token: str = Query(..., alias="token")):
                 line = await loop.run_in_executor(None, _run_proc.stdout.readline)
                 if not line:
                     break
-                yield f"data: {line.rstrip()}\n\n"
+                yield f"data: {_scrub(line.rstrip())}\n\n"
         except Exception:
             pass
         yield "data: __done__\n\n"
@@ -254,7 +274,7 @@ async def stream_auth(token: str = Query(..., alias="token")):
                 line = await loop.run_in_executor(None, _login_proc.stdout.readline)
                 if not line:
                     break
-                yield f"data: {line.rstrip()}\n\n"
+                yield f"data: {_scrub(line.rstrip())}\n\n"
         except Exception:
             pass
         yield "data: __done__\n\n"
