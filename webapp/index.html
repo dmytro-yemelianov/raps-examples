@@ -212,16 +212,32 @@
     document.getElementById('summary-bar').textContent =
       'Showing ' + filtered.length + ' of ' + rows.length + ' tests';
 
-    document.getElementById('tbody').innerHTML = filtered.map(r =>
-      '<tr>' +
-      '<td style="color:#94a3b8;font-weight:600">' + esc(r.id) + '</td>' +
-      '<td style="font-size:0.75rem;color:#94a3b8">' + esc(r.command) + '</td>' +
-      '<td style="color:#475569">' + esc(r.section) + '</td>' +
-      '<td>' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
-      '<td><span class="badge badge-' + esc(r.outcome.replace(/ /g, '-')) + '">' + esc(r.outcome) + '</span></td>' +
-      '<td style="color:#475569">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
-      '</tr>'
-    ).join('');
+    function cmdGroup(r) {
+      const parts = (r.command || '').trim().split(/\s+/);
+      return parts.length >= 2 ? parts[0] + ' ' + parts[1] : (parts[0] || '');
+    }
+
+    const sorted = [...filtered].sort((a, b) => cmdGroup(a).localeCompare(cmdGroup(b)));
+
+    let html = '';
+    let lastGroup = null;
+    for (const r of sorted) {
+      const g = cmdGroup(r);
+      if (g !== lastGroup) {
+        html += '<tr><td colspan="6" style="padding:10px 14px 4px;color:#4b5563;font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border-bottom:1px solid #222;background:#0f0f0f">' + esc(g) + '</td></tr>';
+        lastGroup = g;
+      }
+      html +=
+        '<tr>' +
+        '<td style="color:#94a3b8;font-weight:600">' + esc(r.id) + '</td>' +
+        '<td style="font-size:0.75rem;color:#94a3b8">' + esc(r.command) + '</td>' +
+        '<td style="color:#475569">' + esc(r.section) + '</td>' +
+        '<td>' + (r.marks||[]).map(m => '<span class="mark-chip">' + esc(m) + '</span>').join('') + '</td>' +
+        '<td><span class="badge badge-' + esc(r.outcome.replace(/ /g, '-')) + '">' + esc(r.outcome) + '</span></td>' +
+        '<td style="color:#475569">' + (r.duration != null ? esc(r.duration.toFixed(2)) + 's' : '&#x2014;') + '</td>' +
+        '</tr>';
+    }
+    document.getElementById('tbody').innerHTML = html;
   }
 
   async function triggerRun() {
