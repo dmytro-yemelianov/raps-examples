@@ -36,10 +36,10 @@
 
     .mark-chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.68rem; background: #1e293b; color: #7dd3fc; margin-right: 3px; }
 
-    #log-panel { margin: 16px 24px; background: #111; border: 1px solid #222; border-radius: 8px; overflow: hidden; display: none; }
+    #log-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #333; z-index: 100; display: none; }
     #log-header { padding: 10px 14px; background: #1a1a1a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #aaa; }
     #log-close { cursor: pointer; color: #666; background: none; border: none; font-size: 1rem; line-height: 1; }
-    #log-output { padding: 14px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; max-height: 400px; overflow-y: auto; color: #ccc; }
+    #log-output { padding: 14px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #ccc; }
 
     #token-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 12px; }
     #token-gate input { padding: 10px 14px; background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; border-radius: 6px; font-family: inherit; font-size: 0.9rem; width: 280px; }
