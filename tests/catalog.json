@@ -1,0 +1,33 @@
+{
+  "vars": {
+    "hub_id": "b.demo-hub-001",
+    "project_id": "b.demo-project-001",
+    "project_full_id": "b.demo-project-001",
+    "account_id": "",
+    "urn": ""
+  },
+  "sections": [
+    {
+      "id": "02-config",
+      "marks": [],
+      "vars": {},
+      "tests": [
+        {
+          "id": "SR-030",
+          "slug": "config-show",
+          "command": "raps config profile export -n default"
+        },
+        {
+          "id": "SR-031",
+          "slug": "config-get",
+          "command": "raps config get client_id"
+        },
+        {
+          "id": "SR-047",
+          "slug": "snapshot-list",
+          "command": "raps snapshot list"
+        }
+      ]
+    }
+  ]
+}
