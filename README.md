@@ -1,6 +1,6 @@
 # RAPS CLI Sample Runs
 
-**286 tests** across **26 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
+**286 tests** across **23 sections** exercising **100+ CLI subcommands** of the [RAPS CLI](https://rapscli.xyz) for Autodesk Platform Services (APS).
 
 Each test runs a real `raps` command (or lifecycle sequence) and records exit code, stdout, stderr, and duration. Results feed into JSON/HTML reports for validation.
 
@@ -71,7 +71,7 @@ pytest -k "sr051"                    # Run single SR
 pytest -k "sr050 or sr051 or sr052"  # Run multiple
 ```
 
-### Sections (26 test files)
+### Sections (23 test files)
 
 | # | Section | Tests | Auth | File |
 |---|---------|-------|------|------|
@@ -90,17 +90,24 @@ pytest -k "sr050 or sr051 or sr052"  # Run multiple
 | 12 | Admin Projects | 6 | 3-leg | `test_12_admin_projects.py` |
 | 13 | Admin Folders | 9 | 3-leg | `test_13_admin_folders.py` |
 | 14 | Reality Capture | 9 | 3-leg | `test_14_reality_capture.py` |
-| 15 | Reporting | 5 | 3-leg | `test_15_reporting.py` |
 | 16 | Templates | 6 | 3-leg | `test_16_templates.py` |
 | 17 | Plugins | 7 | 2-leg | `test_17_plugins.py` |
 | 18 | Pipelines | 5 | 2-leg | `test_18_pipelines.py` |
-| 19 | API Raw | 5 | 2-leg | `test_19_api_raw.py` |
-| 20 | Generation | 2 | None | `test_20_generation.py` |
 | 21 | Shell & Serve | 6 | None | `test_21_shell_serve.py` |
-| 22 | Demo | 4 | None | `test_22_demo.py` |
 | 23 | Logs | 4 | None | `test_23_logs.py` |
 | 30 | Workflows | 10 | 3-leg | `test_30_workflows.py` |
 | 99 | Cross-Cutting | 34 | None | `test_99_cross_cutting.py` |
+| — | Data-Driven Atomics | 124 | mixed | `test_catalog.py` + `catalog.json` |
+
+### Data-Driven Atomics
+
+Self-contained atomic tests are defined in `tests/catalog.json` and run by
+`tests/test_catalog.py`. Each entry specifies an SR-ID, slug, command, and
+optional marks/vars. Variable interpolation: `${hub_id}`, `${project_id}`, etc.
+resolve from the `ids` session fixture (or `RAPS_VAR_HUB_ID` env var overrides).
+
+To add a new atomic test, append an entry to the appropriate section in
+`tests/catalog.json` — no Python required.
 
 ### Markers
 
@@ -126,7 +133,9 @@ raps-examples/
 │   │   ├── discovery.py         # ID discovery (hub, project, account)
 │   │   ├── test_users.py        # Test user emails from .env
 │   │   └── json_report.py       # JSON report plugin
-│   └── test_*.py                # 26 test files (one per section)
+│   ├── catalog.json             # Data-driven atomic test definitions (22 sections, 124 entries)
+│   ├── test_catalog.py          # Parametrize runner for catalog.json
+│   └── test_*.py                # 22 test files (one per section)
 ├── scripts/
 │   ├── audit_secrets.py         # Secrets & PII audit script
 │   ├── generate-run-report.py   # JSON → HTML report generator
@@ -165,6 +174,10 @@ docker compose run --rm benchmarks ./benchmarks/rust-vs-nodejs/run.sh
 ```
 
 ## Contributing
+
+**Adding an atomic test (no Python required):** Append an entry to the appropriate section in `tests/catalog.json`. See existing entries for the schema (SR-ID, slug, command, optional marks/vars).
+
+**Adding a lifecycle or stateful test:**
 
 1. Add new tests in the appropriate `test_XX_*.py` file
 2. Use the next available SR-ID for your section
