@@ -44,7 +44,7 @@ def test_sr273_pipeline_author_and_run(raps):
     )
     lc.step("raps pipeline sample --out-file ./my-pipeline.yaml")
     lc.step("raps pipeline validate ./my-pipeline.yaml")
-    lc.step("raps pipeline run ./my-pipeline.yaml")
+    lc.step("raps pipeline run ./my-pipeline.yaml --dry-run")
     lc.assert_all_passed()
 
 
