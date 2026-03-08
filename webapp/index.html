@@ -6,7 +6,7 @@
   <title>RAPS Test Results</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: ui-monospace, 'Cascadia Code', monospace; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+    body { font-family: ui-monospace, 'Cascadia Code', monospace; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
 
     header { background: #1a1a1a; border-bottom: 1px solid #333; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     h1 { font-size: 1.1rem; color: #fff; letter-spacing: 0.05em; }
@@ -15,17 +15,42 @@
     #run-btn:disabled { background: #374151; cursor: not-allowed; }
     #run-btn:hover:not(:disabled) { background: #1d4ed8; }
 
+    #auth-bar { padding: 8px 24px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 12px; font-size: 0.78rem; flex-wrap: wrap; }
+    .auth-pill { padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; }
+    .auth-ok   { background: #14532d; color: #4ade80; }
+    .auth-miss { background: #450a0a; color: #f87171; }
+    #login-btn { padding: 4px 12px; background: #7c3aed; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-family: inherit; }
+    #login-btn:disabled { background: #374151; cursor: not-allowed; }
+    #login-btn:hover:not(:disabled) { background: #6d28d9; }
+    #auth-url-wrap { display: none; align-items: center; gap: 8px; background: #1e1b4b; border: 1px solid #4338ca; border-radius: 6px; padding: 4px 12px; }
+    #auth-url-wrap span { font-size: 0.72rem; color: #a5b4fc; }
+    #auth-url-link { font-size: 0.72rem; color: #818cf8; text-decoration: none; font-weight: 600; white-space: nowrap; }
+    #auth-url-link:hover { color: #a5b4fc; text-decoration: underline; }
+    #auth-url-dismiss { background: none; border: none; color: #4338ca; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+
+    /* Tabs */
+    #tab-bar { background: #151515; border-bottom: 1px solid #222; display: flex; padding: 0 24px; gap: 0; }
+    .tab-btn { padding: 10px 18px; font-size: 0.8rem; font-family: inherit; background: none; border: none; border-bottom: 2px solid transparent; color: #555; cursor: pointer; }
+    .tab-btn:hover { color: #aaa; }
+    .tab-btn.active { color: #e0e0e0; border-bottom-color: #2563eb; }
+
+    /* Results tab */
+    #tab-results { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     #filters { padding: 12px 24px; background: #151515; border-bottom: 1px solid #222; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     #filters label { font-size: 0.8rem; color: #aaa; display: flex; align-items: center; gap: 4px; cursor: pointer; }
     #filters select { background: #1f1f1f; border: 1px solid #333; color: #e0e0e0; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; font-family: inherit; }
-
     #summary-bar { padding: 8px 24px; background: #111; font-size: 0.75rem; color: #555; border-bottom: 1px solid #1a1a1a; }
-
-    .table-wrap { overflow-x: auto; }
+    .table-wrap { overflow-x: auto; overflow-y: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    th { text-align: left; padding: 10px 14px; color: #555; border-bottom: 1px solid #222; font-weight: 500; position: sticky; top: 0; background: #0f0f0f; }
+    th { text-align: left; padding: 10px 14px; color: #555; border-bottom: 1px solid #222; font-weight: 500; position: sticky; top: 0; background: #0f0f0f; z-index: 1; }
     td { padding: 8px 14px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
     tr:hover td { background: #161616; }
+
+    /* Log tab */
+    #tab-log { flex: 1; display: none; flex-direction: column; }
+    #log-output { flex: 1; padding: 14px 24px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; color: #ccc; }
+    #log-clear { padding: 6px 16px; background: #1a1a1a; border: none; border-bottom: 1px solid #222; color: #555; font-family: inherit; font-size: 0.75rem; cursor: pointer; text-align: left; }
+    #log-clear:hover { color: #aaa; }
 
     .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .badge-passed  { background: #14532d; color: #4ade80; }
@@ -33,28 +58,14 @@
     .badge-skipped { background: #1c1917; color: #a8a29e; }
     .badge-not-run { background: #111; color: #555; border: 1px solid #2a2a2a; }
     .badge-error   { background: #7c2d12; color: #fb923c; }
-
     .mark-chip { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.68rem; background: #1e293b; color: #7dd3fc; margin-right: 3px; }
-
-    #log-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #333; z-index: 100; display: none; }
-    #log-header { padding: 10px 14px; background: #1a1a1a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #aaa; }
-    #log-close { cursor: pointer; color: #666; background: none; border: none; font-size: 1rem; line-height: 1; }
-    #log-output { padding: 14px; font-size: 0.78rem; line-height: 1.6; white-space: pre-wrap; max-height: 300px; overflow-y: auto; color: #ccc; }
 
     #token-gate { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 12px; }
     #token-gate input { padding: 10px 14px; background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; border-radius: 6px; font-family: inherit; font-size: 0.9rem; width: 280px; }
     #token-gate button { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 0.9rem; }
     #token-gate button:hover { background: #1d4ed8; }
     #token-error { color: #f87171; font-size: 0.8rem; display: none; }
-    #app { display: none; }
-
-    #auth-bar { padding: 8px 24px; background: #111; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; gap: 12px; font-size: 0.78rem; }
-    .auth-pill { padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; }
-    .auth-ok   { background: #14532d; color: #4ade80; }
-    .auth-miss { background: #450a0a; color: #f87171; }
-    #login-btn { padding: 4px 12px; background: #7c3aed; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.75rem; font-family: inherit; }
-    #login-btn:disabled { background: #374151; cursor: not-allowed; }
-    #login-btn:hover:not(:disabled) { background: #6d28d9; }
+    #app { display: none; flex: 1; flex-direction: column; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -78,47 +89,54 @@
     <span id="auth-2leg" class="auth-pill auth-miss">2-leg ···</span>
     <span id="auth-3leg" class="auth-pill auth-miss">3-leg ···</span>
     <button id="login-btn" onclick="triggerLogin()" style="display:none">Login via device code</button>
-  </div>
-
-  <div id="filters">
-    <select id="f-section" onchange="renderTable()">
-      <option value="">All sections</option>
-    </select>
-    <select id="f-status" onchange="renderTable()">
-      <option value="">All statuses</option>
-      <option>passed</option>
-      <option>failed</option>
-      <option>skipped</option>
-      <option>not run</option>
-    </select>
-    <label><input type="checkbox" value="require_2leg" onchange="renderTable()"> require_2leg</label>
-    <label><input type="checkbox" value="require_3leg" onchange="renderTable()"> require_3leg</label>
-    <label><input type="checkbox" value="lifecycle" onchange="renderTable()"> lifecycle</label>
-  </div>
-
-  <div id="summary-bar">&#x2014;</div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>SR-ID</th>
-          <th>Command</th>
-          <th>Section</th>
-          <th>Marks</th>
-          <th>Status</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-
-  <div id="log-panel">
-    <div id="log-header">
-      <span>Live output</span>
-      <button id="log-close" onclick="document.getElementById('log-panel').style.display='none'">&#x2715;</button>
+    <div id="auth-url-wrap">
+      <span>Open to authenticate:</span>
+      <a id="auth-url-link" href="#" target="_blank" rel="noopener">···</a>
+      <button id="auth-url-dismiss" onclick="document.getElementById('auth-url-wrap').style.display='none'" title="Dismiss">&#x2715;</button>
     </div>
+  </div>
+
+  <div id="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('results')">Results</button>
+    <button class="tab-btn" onclick="switchTab('log')">Log</button>
+  </div>
+
+  <div id="tab-results">
+    <div id="filters">
+      <select id="f-section" onchange="renderTable()">
+        <option value="">All sections</option>
+      </select>
+      <select id="f-status" onchange="renderTable()">
+        <option value="">All statuses</option>
+        <option>passed</option>
+        <option>failed</option>
+        <option>skipped</option>
+        <option>not run</option>
+      </select>
+      <label><input type="checkbox" value="require_2leg" onchange="renderTable()"> require_2leg</label>
+      <label><input type="checkbox" value="require_3leg" onchange="renderTable()"> require_3leg</label>
+      <label><input type="checkbox" value="lifecycle" onchange="renderTable()"> lifecycle</label>
+    </div>
+    <div id="summary-bar">&#x2014;</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>SR-ID</th>
+            <th>Command</th>
+            <th>Section</th>
+            <th>Marks</th>
+            <th>Status</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-log">
+    <button id="log-clear" onclick="document.getElementById('log-output').textContent=''">Clear</button>
     <pre id="log-output"></pre>
   </div>
 </div>
@@ -134,6 +152,20 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function switchTab(name) {
+    document.getElementById('tab-results').style.display = name === 'results' ? 'flex' : 'none';
+    document.getElementById('tab-log').style.display     = name === 'log'     ? 'flex' : 'none';
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0) === (name === 'results'));
+    });
+  }
+
+  function appendLog(text) {
+    const el = document.getElementById('log-output');
+    el.textContent += text + '\n';
+    el.scrollTop = el.scrollHeight;
   }
 
   if (TOKEN) attemptAutoLogin();
@@ -173,7 +205,7 @@
 
   function showApp() {
     document.getElementById('token-gate').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
+    document.getElementById('app').style.display = 'flex';
     loadAuth();
   }
 
@@ -181,7 +213,7 @@
     try {
       const resp = await fetch('/api/results?token=' + encodeURIComponent(TOKEN));
       if (resp.ok) applyData(await resp.json());
-    } catch (_) { /* silent — table keeps previous data */ }
+    } catch (_) {}
   }
 
   async function loadAuth() {
@@ -192,28 +224,26 @@
       const el2 = document.getElementById('auth-2leg');
       const el3 = document.getElementById('auth-3leg');
       const btn = document.getElementById('login-btn');
-      el2.textContent = '2-leg ' + (d.two_legged ? '✓' : '✗');
+      el2.textContent = '2-leg ' + (d.two_legged ? '\u2713' : '\u2717');
       el2.className = 'auth-pill ' + (d.two_legged ? 'auth-ok' : 'auth-miss');
-      el3.textContent = '3-leg ' + (d.three_legged ? '✓' : '✗');
+      el3.textContent = '3-leg ' + (d.three_legged ? '\u2713' : '\u2717');
       el3.className = 'auth-pill ' + (d.three_legged ? 'auth-ok' : 'auth-miss');
       btn.style.display = d.three_legged ? 'none' : 'inline-block';
+      if (d.three_legged) document.getElementById('auth-url-wrap').style.display = 'none';
     } catch (_) {}
   }
 
   async function triggerLogin() {
     const btn = document.getElementById('login-btn');
     btn.disabled = true;
-    btn.textContent = 'Opening\u2026';
+    btn.textContent = 'Starting\u2026';
     try {
       const resp = await fetch('/auth/login?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
-      if (resp.status === 409) { alert('Login already in progress'); btn.disabled = false; btn.textContent = 'Login (browser)'; return; }
-      if (!resp.ok) { alert('Failed to start login'); btn.disabled = false; btn.textContent = 'Login (browser)'; return; }
+      if (resp.status === 409) { alert('Login already in progress'); btn.disabled = false; btn.textContent = 'Login via device code'; return; }
+      if (!resp.ok) { alert('Failed to start login'); btn.disabled = false; btn.textContent = 'Login via device code'; return; }
 
-      const logPanel  = document.getElementById('log-panel');
-      const logOutput = document.getElementById('log-output');
-      logPanel.style.display = 'block';
-      logOutput.textContent = '';
       btn.textContent = 'Waiting\u2026';
+      switchTab('log');
 
       const es = new EventSource('/stream/auth?token=' + encodeURIComponent(TOKEN));
       es.onmessage = function(e) {
@@ -223,12 +253,20 @@
           btn.textContent = 'Login via device code';
           loadAuth();
         } else {
-          logOutput.textContent += e.data + '\n';
-          logOutput.scrollTop = logOutput.scrollHeight;
+          appendLog(e.data);
+          // Extract URL from device code flow output and show inline
+          const m = e.data.match(/https?:\/\/\S+/);
+          if (m) {
+            const wrap = document.getElementById('auth-url-wrap');
+            const link = document.getElementById('auth-url-link');
+            link.href = m[0];
+            link.textContent = m[0];
+            wrap.style.display = 'flex';
+          }
         }
       };
-      es.onerror = function() { es.close(); btn.disabled = false; btn.textContent = 'Login (browser)'; loadAuth(); };
-    } catch (_) { btn.disabled = false; btn.textContent = 'Login (browser)'; }
+      es.onerror = function() { es.close(); btn.disabled = false; btn.textContent = 'Login via device code'; loadAuth(); };
+    } catch (_) { btn.disabled = false; btn.textContent = 'Login via device code'; }
   }
 
   function applyData(data) {
@@ -309,21 +347,11 @@
     btn.textContent = 'Starting\u2026';
     try {
       const resp = await fetch('/run?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
-      if (resp.status === 409) {
-        alert('A run is already in progress');
-        btn.disabled = false; btn.textContent = 'Run Tests';
-        return;
-      }
-      if (!resp.ok) {
-        alert('Failed to start run');
-        btn.disabled = false; btn.textContent = 'Run Tests';
-        return;
-      }
+      if (resp.status === 409) { alert('A run is already in progress'); btn.disabled = false; btn.textContent = 'Run Tests'; return; }
+      if (!resp.ok) { alert('Failed to start run'); btn.disabled = false; btn.textContent = 'Run Tests'; return; }
 
-      const logPanel  = document.getElementById('log-panel');
-      const logOutput = document.getElementById('log-output');
-      logPanel.style.display = 'block';
-      logOutput.textContent = '';
+      document.getElementById('log-output').textContent = '';
+      switchTab('log');
       btn.textContent = 'Running\u2026';
 
       const es = new EventSource('/stream?token=' + encodeURIComponent(TOKEN));
@@ -333,20 +361,13 @@
           btn.disabled = false;
           btn.textContent = 'Run Tests';
           loadResults();
+          switchTab('results');
         } else {
-          logOutput.textContent += e.data + '\n';
-          logOutput.scrollTop = logOutput.scrollHeight;
+          appendLog(e.data);
         }
       };
-      es.onerror = function() {
-        es.close();
-        btn.disabled = false;
-        btn.textContent = 'Run Tests';
-      };
-    } catch (_) {
-      btn.disabled = false;
-      btn.textContent = 'Run Tests';
-    }
+      es.onerror = function() { es.close(); btn.disabled = false; btn.textContent = 'Run Tests'; };
+    } catch (_) { btn.disabled = false; btn.textContent = 'Run Tests'; }
   }
 
   document.getElementById('token-input').addEventListener('keydown', function(e) {
