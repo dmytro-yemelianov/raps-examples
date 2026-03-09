@@ -110,6 +110,38 @@ def _is_run_alive() -> bool:
     return False
 
 
+def _launch_run(cmd: list[str]) -> "subprocess.Popen[str]":
+    """Launch a subprocess, writing stdout to run.log. Thread-safe.
+
+    Raises HTTPException(409) if a run is already in progress.
+    Returns the Popen object (stdout is NOT a pipe — use run.log for output).
+    """
+    global _run_proc
+    with _run_lock:
+        if _is_run_alive():
+            raise HTTPException(409, "A test run is already in progress")
+        # Clear previous log
+        RUN_LOG_PATH.write_text("")
+        # Open log file; pass to subprocess so it writes directly
+        log_fd = open(RUN_LOG_PATH, "w")
+        proc = subprocess.Popen(
+            cmd,
+            cwd=ROOT,
+            stdout=log_fd,
+            stderr=subprocess.STDOUT,
+        )
+        log_fd.close()   # subprocess inherited the fd; close our handle
+        _write_pid_file(proc.pid)
+        _run_proc = proc
+
+    def _cleanup() -> None:
+        proc.wait()
+        _delete_pid_file()
+    threading.Thread(target=_cleanup, daemon=True).start()
+
+    return proc
+
+
 def _require_token(token: str = Query(..., alias="token")) -> str:
     if not _TOKEN:
         raise HTTPException(500, "RAPS_DASHBOARD_TOKEN not set")

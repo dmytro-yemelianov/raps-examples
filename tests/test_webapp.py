@@ -162,3 +162,40 @@ def test_is_run_alive_dead_pid_in_file(monkeypatch, tmp_path):
     result = _m._is_run_alive()
     assert result is False
     assert not pid_path.exists()
+
+
+# ---------------------------------------------------------------------------
+# _launch_run (Task 2)
+# ---------------------------------------------------------------------------
+
+
+def test_launch_run_creates_log_and_pid(tmp_path, monkeypatch):
+    """_launch_run must write run.log and run.pid, return a Popen."""
+    monkeypatch.setattr("webapp.main.RUN_PID_PATH", tmp_path / "run.pid")
+    monkeypatch.setattr("webapp.main.RUN_LOG_PATH", tmp_path / "run.log")
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    from webapp import main as _m
+    proc = _m._launch_run(["python3", "-c", "print('hello'); import time; time.sleep(0.2)"])
+    try:
+        assert (tmp_path / "run.pid").exists()
+        pid_data = json.loads((tmp_path / "run.pid").read_text())
+        assert pid_data["pid"] == proc.pid
+        proc.wait(timeout=2)
+        import time; time.sleep(0.1)  # let cleanup thread run
+        assert (tmp_path / "run.log").read_text().strip() == "hello"
+        assert not (tmp_path / "run.pid").exists()
+    finally:
+        if proc.poll() is None:
+            proc.kill()
+
+
+def test_launch_run_raises_409_if_running(monkeypatch):
+    """_launch_run must raise HTTPException(409) if a run is in progress."""
+    from fastapi import HTTPException
+    from webapp import main as _m
+
+    fake_proc = type("P", (), {"poll": lambda self: None})()
+    monkeypatch.setattr("webapp.main._run_proc", fake_proc)
+    with pytest.raises(HTTPException) as exc_info:
+        _m._launch_run(["echo", "hi"])
+    assert exc_info.value.status_code == 409
