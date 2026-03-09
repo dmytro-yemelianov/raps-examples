@@ -471,6 +471,14 @@ async def ws_run(websocket: WebSocket):
         await websocket.close()
         return
 
+    await _stream_run_log_to_ws(websocket)
+
+
+async def _stream_run_log_to_ws(websocket: WebSocket) -> None:
+    """Stream run.log lines as structured JSON events to a WebSocket client.
+
+    Handles progress parsing and disconnect. Shared by /ws/run and /ws/stream.
+    """
     passed = failed = skipped = 0
     try:
         async for line in _tail_run_log():
@@ -534,56 +542,7 @@ async def ws_stream(websocket: WebSocket):
         return
 
     await websocket.accept()
-
-    passed = failed = skipped = 0
-    try:
-        async for line in _tail_run_log():
-            try:
-                await websocket.send_json({"type": "log", "text": line})
-            except Exception:
-                return  # client disconnected, run keeps going
-
-            m = _RE_TEST_RESULT.search(line)
-            if m:
-                outcome = m.group(1)
-                if outcome == "PASSED":
-                    passed += 1
-                elif outcome == "FAILED":
-                    failed += 1
-                elif outcome == "SKIPPED":
-                    skipped += 1
-                done = passed + failed + skipped
-                sr_m = _RE_SR_ID.search(line)
-                sr_num = sr_m.group(1) or sr_m.group(2) if sr_m else None
-                current = f"SR-{sr_num}" if sr_num else None
-                try:
-                    await websocket.send_json({
-                        "type": "progress",
-                        "passed": passed,
-                        "failed": failed,
-                        "skipped": skipped,
-                        "total": _TOTAL_TESTS,
-                        "done": done,
-                        "pct": min(100, round(done / _TOTAL_TESTS * 100)),
-                        "current": current,
-                        "sr_id": current,
-                        "outcome": outcome.lower(),
-                    })
-                except Exception:
-                    return
-    except Exception:
-        return
-
-    try:
-        await websocket.send_json({
-            "type": "done",
-            "passed": passed,
-            "failed": failed,
-            "skipped": skipped,
-        })
-        await websocket.close()
-    except Exception:
-        pass
+    await _stream_run_log_to_ws(websocket)
 
 
 @app.get("/", response_class=HTMLResponse)
