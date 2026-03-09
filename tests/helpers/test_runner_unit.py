@@ -1,6 +1,8 @@
 """Unit tests for RapsRunner exit code tracking."""
 from __future__ import annotations
 
+import warnings
+
 from tests.helpers.runner import (
     RunResult,
     _captured_codes,
@@ -58,3 +60,27 @@ def test_lifecycle_steps_fold_into_base_id():
     _store_log("SR-996/step2", _make_result("SR-996/step2", 6))
     assert 0 in _captured_codes["SR-996"]
     assert 6 in _captured_codes["SR-996"]
+
+
+def test_lifecycle_collision_warning():
+    """Direct + step logs for same SR-ID must emit a warning."""
+    clear_captured_logs()
+    # Direct entry first
+    _store_log("SR-995", _make_result("SR-995", 0))
+    # Then a lifecycle step with same base ID — should warn
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _store_log("SR-995/step1", _make_result("SR-995/step1", 0))
+    assert any("SR-995" in str(x.message) for x in w), (
+        "Expected warning about SR-995 receiving both direct and step logs"
+    )
+
+
+def test_no_warning_for_lifecycle_steps_only():
+    """Multiple steps for same base ID must NOT warn."""
+    clear_captured_logs()
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _store_log("SR-994/step1", _make_result("SR-994/step1", 0))
+        _store_log("SR-994/step2", _make_result("SR-994/step2", 3))
+    assert not any("SR-994" in str(x.message) for x in w)

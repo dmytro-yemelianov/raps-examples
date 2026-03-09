@@ -23,6 +23,9 @@ from dataclasses import dataclass, field
 _captured_logs: dict[str, str] = {}
 # Maps base SR-ID -> list of CLI exit codes (structured, avoids log-text parsing)
 _captured_codes: dict[str, list[int]] = {}
+# Tracks whether each base SR-ID received a "direct" or "step" log entry.
+# Used to detect accidental reuse of the same SR-ID for both types.
+_log_types: dict[str, str] = {}  # base_id -> "direct" | "step"
 _captured_lock = threading.Lock()
 
 
@@ -64,6 +67,20 @@ def _store_log(sr_id: str, result: "RunResult") -> None:
     if not sr_id:
         return
     base_id = sr_id.split("/")[0]
+    entry_type = "step" if "/" in sr_id else "direct"
+
+    # Detect mixed direct+step usage for same base ID
+    with _captured_lock:
+        prior = _log_types.get(base_id)
+        if prior is not None and prior != entry_type:
+            import warnings as _warnings
+            _warnings.warn(
+                f"SR-ID collision: '{base_id}' has both direct and lifecycle-step log entries. "
+                f"Check that SR-IDs are not shared between direct tests and lifecycle tests.",
+                stacklevel=3,
+            )
+        _log_types[base_id] = entry_type
+
     status = "TIMEOUT" if result.timed_out else f"exit {result.exit_code}"
     lines = [f"[{sr_id}] {result.slug}: {result.command}"]
     lines.append(f"  -> {status} ({result.duration}s)")
@@ -83,10 +100,11 @@ def _store_log(sr_id: str, result: "RunResult") -> None:
 
 
 def clear_captured_logs() -> None:
-    """Clear accumulated logs and codes."""
+    """Clear accumulated logs, codes, and type tracking."""
     with _captured_lock:
         _captured_logs.clear()
         _captured_codes.clear()
+        _log_types.clear()
 
 
 @functools.cache
