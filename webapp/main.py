@@ -146,6 +146,32 @@ def _launch_run(cmd: list[str]) -> "subprocess.Popen[str]":
     return proc
 
 
+async def _tail_run_log() -> AsyncIterator[str]:
+    """Async generator: replay run.log from start, then follow live output.
+
+    Yields scrubbed lines (without trailing newline).
+    Stops when the file is exhausted AND the run process is no longer alive.
+    """
+    if not RUN_LOG_PATH.exists():
+        return
+    loop = asyncio.get_running_loop()
+    with open(RUN_LOG_PATH, "r") as f:
+        while True:
+            line = await loop.run_in_executor(None, f.readline)
+            if line:
+                yield _scrub(line.rstrip())
+            else:
+                # EOF — check if process still running
+                if _is_run_alive():
+                    await asyncio.sleep(0.05)
+                else:
+                    # Final drain to catch lines written between poll and EOF
+                    remaining = await loop.run_in_executor(None, f.read)
+                    for tail_line in remaining.splitlines():
+                        yield _scrub(tail_line)
+                    break
+
+
 def _require_token(token: str = Query(..., alias="token")) -> str:
     if not _TOKEN:
         raise HTTPException(500, "RAPS_DASHBOARD_TOKEN not set")

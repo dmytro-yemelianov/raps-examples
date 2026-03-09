@@ -199,3 +199,39 @@ def test_launch_run_raises_409_if_running(monkeypatch):
     with pytest.raises(HTTPException) as exc_info:
         _m._launch_run(["echo", "hi"])
     assert exc_info.value.status_code == 409
+
+
+# ---------------------------------------------------------------------------
+# _tail_run_log (Task 3)
+# ---------------------------------------------------------------------------
+import asyncio as _asyncio
+
+
+def test_tail_run_log_reads_existing_content(tmp_path, monkeypatch):
+    """_tail_run_log must yield all lines written to run.log."""
+    log_path = tmp_path / "run.log"
+    log_path.write_text("line1\nline2\nline3\n")
+    monkeypatch.setattr("webapp.main.RUN_LOG_PATH", log_path)
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    from webapp import main as _m
+
+    async def collect():
+        lines = []
+        async for line in _m._tail_run_log():
+            lines.append(line)
+        return lines
+
+    result = _asyncio.run(collect())
+    assert result == ["line1", "line2", "line3"]
+
+
+def test_tail_run_log_no_file_yields_nothing(tmp_path, monkeypatch):
+    """_tail_run_log must yield nothing if run.log does not exist."""
+    monkeypatch.setattr("webapp.main.RUN_LOG_PATH", tmp_path / "run.log")
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    from webapp import main as _m
+
+    async def collect():
+        return [line async for line in _m._tail_run_log()]
+
+    assert _asyncio.run(collect()) == []
