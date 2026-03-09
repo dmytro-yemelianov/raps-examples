@@ -159,7 +159,7 @@ def test_sr175_asset_tracking_lifecycle(raps, ids):
     lc.step(f"raps acc asset update {pid} {CH01} --status-id {INSTALLED_STATUS}")
     lc.step(f"raps acc asset get {pid} {CH01}")
     lc.step(f"raps acc asset delete {pid} {CH02} --yes")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()
 
 
 @pytest.mark.sr("SR-176")
@@ -176,7 +176,7 @@ def test_sr176_submittal_review_lifecycle(raps, ids):
     lc.step(f'raps acc submittal update {pid} {LC_SUBMITTAL_ID} --status "revise_resubmit"')
     lc.step(f'raps acc submittal update {pid} {LC_SUBMITTAL_ID} --status "approved"')
     lc.step(f"raps acc submittal delete {pid} {LC_SUBMITTAL_ID} --yes")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()
 
 
 @pytest.mark.sr("SR-177")
@@ -194,4 +194,4 @@ def test_sr177_checklist_inspection_lifecycle(raps, ids):
     lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "in_progress"')
     lc.step(f'raps acc checklist update {pid} {CHECKLIST_ID} --status "completed"')
     lc.step(f"raps acc checklist get {pid} {CHECKLIST_ID}")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()

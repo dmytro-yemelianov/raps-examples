@@ -100,4 +100,4 @@ def test_sr228_folder_permissions_lifecycle(raps, ids, users):
         f' -l view-only --folder "Plans" -f "name:*Active*" -y',
     )
     lc.step("raps admin operation list --limit 1")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()

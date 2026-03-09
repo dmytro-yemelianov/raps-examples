@@ -33,9 +33,16 @@ Create a `.env` file for API-dependent tests:
 APS_CLIENT_ID=your_client_id
 APS_CLIENT_SECRET=your_client_secret
 APS_CALLBACK_URL=http://localhost:8080/callback
+
+# Required for raps admin tests (ACC account admin)
+# Find in ACC → Account Admin → Custom Integrations
+APS_ACCOUNT_ID=your_account_id_here
+
+# Recommended on headless servers (no OS keychain)
+RAPS_USE_FILE_STORAGE=true
 ```
 
-Without `.env`, auth-dependent tests will be skipped.
+Without `.env`, auth-dependent tests will be skipped. Without `APS_ACCOUNT_ID`, admin tests will be skipped.
 
 ## Execution Modes
 

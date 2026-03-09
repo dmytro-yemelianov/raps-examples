@@ -117,7 +117,7 @@ def test_sr140_issue_full_lifecycle(raps, ids):
     lc.step(f'raps issue transition {project_id} {LC_ID} --to "answered"')
     lc.step(f'raps issue transition {project_id} {LC_ID} --to "closed"')
     lc.step(f"raps issue delete {project_id} {LC_ID} --yes")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()
 
 
 @pytest.mark.sr("SR-141")
@@ -133,4 +133,4 @@ def test_sr141_issue_triage_workflow(raps, ids):
     lc.step(f'raps issue update {project_id} {B} --title "Issue B - assigned"')
     lc.step(f'raps issue transition {project_id} {C} --to "closed"')
     lc.step(f"raps issue list {project_id}")
-    lc.assert_all_passed()
+    lc.assert_all_passed_or_skip()

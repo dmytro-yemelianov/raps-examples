@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
 
@@ -15,6 +16,7 @@ class DiscoveredIds:
     account_id: str = ""
     project_id: str = ""
     project_full_id: str = ""
+    root_folder_id: str = ""  # first top-level folder of the discovered project
     user_email: str = ""
     user_id: str = ""
 
@@ -60,6 +62,10 @@ def discover_ids(
                 ids.hub_id = hub["id"]
                 if ids.hub_id.startswith("b."):
                     ids.account_id = ids.hub_id[2:]
+                elif ids.hub_id.startswith("a."):
+                    # ACC hub: pass the full hub ID; normalize_account_id in the CLI
+                    # handles decoding "a.{base64}" -> "business:{id}" -> account_id
+                    ids.account_id = ids.hub_id
     except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError, KeyError):
         pass
 
@@ -85,6 +91,33 @@ def discover_ids(
                         ids.project_id = ids.project_full_id
         except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError, KeyError):
             pass
+
+    # Discover root folder of the project
+    if ids.hub_id and ids.project_full_id:
+        try:
+            proc = subprocess.run(
+                f"raps project info {ids.hub_id} {ids.project_full_id} --output json --quiet",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=cwd,
+                env=env,
+            )
+            if proc.returncode == 0:
+                info = json.loads(proc.stdout)
+                folders = info.get("top_folders", [])
+                if folders:
+                    ids.root_folder_id = folders[0]["id"]
+        except (subprocess.TimeoutExpired, json.JSONDecodeError, OSError, KeyError):
+            pass
+
+    # Prefer APS_ACCOUNT_ID env var over hub-derived account_id.
+    # The RAPS CLI itself uses this env var as the authoritative account source,
+    # so if it's set it's always a valid admin account UUID.
+    env_account = (env or {}).get("APS_ACCOUNT_ID") or os.environ.get("APS_ACCOUNT_ID", "")
+    if env_account:
+        ids.account_id = env_account
 
     # Discover current user
     try:
