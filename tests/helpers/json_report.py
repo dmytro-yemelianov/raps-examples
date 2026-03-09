@@ -14,19 +14,14 @@ from pathlib import Path
 
 import pytest
 
-import re
-
-from .runner import _captured_logs
-
-_CLI_EXIT_RE = re.compile(r"->\s+(?:exit\s+(\d+)|TIMEOUT)\s+")
+from .runner import _captured_logs, _captured_codes
 
 
-def _parse_worst_cli_exit(log_text: str) -> int | None:
-    """Parse log for CLI exit codes; return worst (max) non-zero, or 0 if all passed."""
-    matches = _CLI_EXIT_RE.findall(log_text)
-    if not matches:
+def _parse_worst_cli_exit(sr_id: str) -> int | None:
+    """Return worst (max) CLI exit code for sr_id, or None if not recorded."""
+    codes = _captured_codes.get(sr_id)
+    if not codes:
         return None
-    codes = [124 if m == "" else int(m) for m in matches]
     return max(codes)
 
 
@@ -127,10 +122,9 @@ class SectionJsonReporter:
         run_log = _captured_logs.get(sr_id, "")
         if run_log:
             run_entry["log"] = run_log
-            # Parse actual CLI exit codes from log (-> exit N or -> TIMEOUT)
-            cli_exit = _parse_worst_cli_exit(run_log)
-            if cli_exit is not None:
-                run_entry["cli_exit_code"] = cli_exit
+        cli_exit = _parse_worst_cli_exit(sr_id)
+        if cli_exit is not None:
+            run_entry["cli_exit_code"] = cli_exit
 
         self._sections[section_name]["runs"].append(run_entry)
 

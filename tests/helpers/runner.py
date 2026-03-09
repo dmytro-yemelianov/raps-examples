@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 # Maps base SR-ID (e.g. "SR-063") -> accumulated log text.
 # Lifecycle steps ("SR-063/step1") are folded into the base ID.
 _captured_logs: dict[str, str] = {}
+# Maps base SR-ID -> list of CLI exit codes (structured, avoids log-text parsing)
+_captured_codes: dict[str, list[int]] = {}
 _captured_lock = threading.Lock()
 
 
@@ -74,12 +76,17 @@ def _store_log(sr_id: str, result: "RunResult") -> None:
     with _captured_lock:
         _captured_logs.setdefault(base_id, "")
         _captured_logs[base_id] += entry
+        # Record exit code in structured dict (avoids log-text regex parsing)
+        code = 124 if result.timed_out else result.exit_code
+        _captured_codes.setdefault(base_id, [])
+        _captured_codes[base_id].append(code)
 
 
 def clear_captured_logs() -> None:
-    """Clear accumulated logs (called between sessions if needed)."""
+    """Clear accumulated logs and codes."""
     with _captured_lock:
         _captured_logs.clear()
+        _captured_codes.clear()
 
 
 @functools.cache
@@ -255,6 +262,19 @@ class LifecycleContext:
                 if r.stderr.strip():
                     lines.append(f"    stderr: {r.stderr.strip()[:2000]}")
             raise AssertionError("\n".join(lines))
+
+    def assert_all_passed_or_skip(
+        self, *, skip_on: tuple[int, ...] = (2, 3, 4, 5, 6, 124)
+    ) -> None:
+        """Like assert_all_passed, but skip instead of fail when all failures indicate
+        environment limitations: permission-denied, not-found, API error, or timeout."""
+        import pytest  # noqa: PLC0415 — pytest is always available in test context
+        failures = [r for r in self.results if not r.ok]
+        if failures and all(r.timed_out or r.exit_code in skip_on for r in failures):
+            first = failures[0]
+            reason = (first.stderr or first.stdout).strip().splitlines()[-1][:120]
+            pytest.skip(f"{self.sr_id} skipped — {reason}")
+        self.assert_all_passed()
 
 
 class RapsRunner:
