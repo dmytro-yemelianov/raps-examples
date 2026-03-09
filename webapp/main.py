@@ -447,8 +447,10 @@ _RE_SR_ID = re.compile(r"test_sr(\d+)_|\[SR-(\d+)-")
 
 @app.websocket("/ws/run")
 async def ws_run(websocket: WebSocket):
-    """WebSocket: starts pytest with -v, streams structured JSON progress events."""
-    global _run_proc
+    """WebSocket: starts pytest with -v, streams structured JSON progress events.
+
+    Disconnecting does NOT kill the test run. Reconnect via /ws/stream to resume.
+    """
     token = websocket.query_params.get("token", "")
     if not _TOKEN or not secrets.compare_digest(token, _TOKEN):
         await websocket.close(code=1008, reason="Unauthorized")
@@ -456,41 +458,26 @@ async def ws_run(websocket: WebSocket):
 
     await websocket.accept()
 
-    with _run_lock:
-        if _run_proc is not None and _run_proc.poll() is None:
-            await websocket.send_json({"type": "error", "text": "A test run is already in progress"})
-            await websocket.close()
-            return
-        _run_proc = subprocess.Popen(
-            [
-                "python3", "-m", "pytest", "tests/", "-v", "--no-header",
-                "-p", "no:xdist",          # disable parallel — need sequential per-test lines
-                "-o", "addopts=",          # clear -q / --dist=loadgroup from pyproject.toml
-                "--tb=short",
-                "--json-report", f"--json-report-file={RESULTS_PATH}",
-            ],
-            cwd=ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        )
+    try:
+        _launch_run([
+            "python3", "-m", "pytest", "tests/", "-v", "--no-header",
+            "-p", "no:xdist",
+            "-o", "addopts=",
+            "--tb=short",
+            "--json-report", f"--json-report-file={RESULTS_PATH}",
+        ])
+    except HTTPException as exc:
+        await websocket.send_json({"type": "error", "text": exc.detail})
+        await websocket.close()
+        return
 
     passed = failed = skipped = 0
-    proc = _run_proc
-    loop = asyncio.get_running_loop()
-    disconnected = False
     try:
-        while True:
-            line = await loop.run_in_executor(None, proc.stdout.readline)
-            if not line:
-                break
-            line = _scrub(line.rstrip())
+        async for line in _tail_run_log():
             try:
                 await websocket.send_json({"type": "log", "text": line})
             except Exception:
-                disconnected = True
-                break
+                return  # client disconnected — process keeps running
 
             m = _RE_TEST_RESULT.search(line)
             if m:
@@ -519,31 +506,84 @@ async def ws_run(websocket: WebSocket):
                         "outcome": outcome.lower(),
                     })
                 except Exception:
-                    disconnected = True
-                    break
+                    return  # client disconnected
     except Exception:
-        disconnected = True
-    finally:
-        # Client disconnected mid-run — terminate the process so it doesn't block future runs
-        if disconnected and proc.poll() is None:
-            proc.terminate()
-            try:
-                await loop.run_in_executor(None, lambda: proc.wait(timeout=5))
-            except Exception:
-                proc.kill()
+        return
 
-    if not disconnected:
-        await loop.run_in_executor(None, proc.wait)
-        try:
-            await websocket.send_json({
-                "type": "done",
-                "passed": passed,
-                "failed": failed,
-                "skipped": skipped,
-            })
-            await websocket.close()
-        except Exception:
-            pass
+    try:
+        await websocket.send_json({
+            "type": "done",
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+        })
+        await websocket.close()
+    except Exception:
+        pass
+
+
+@app.websocket("/ws/stream")
+async def ws_stream(websocket: WebSocket):
+    """WebSocket: reconnect to an in-progress run (no new run started).
+
+    If no run is in progress, streams whatever is in run.log then sends done.
+    """
+    token = websocket.query_params.get("token", "")
+    if not _TOKEN or not secrets.compare_digest(token, _TOKEN):
+        await websocket.close(code=1008, reason="Unauthorized")
+        return
+
+    await websocket.accept()
+
+    passed = failed = skipped = 0
+    try:
+        async for line in _tail_run_log():
+            try:
+                await websocket.send_json({"type": "log", "text": line})
+            except Exception:
+                return  # client disconnected, run keeps going
+
+            m = _RE_TEST_RESULT.search(line)
+            if m:
+                outcome = m.group(1)
+                if outcome == "PASSED":
+                    passed += 1
+                elif outcome == "FAILED":
+                    failed += 1
+                elif outcome == "SKIPPED":
+                    skipped += 1
+                done = passed + failed + skipped
+                sr_m = _RE_SR_ID.search(line)
+                sr_num = sr_m.group(1) or sr_m.group(2) if sr_m else None
+                current = f"SR-{sr_num}" if sr_num else None
+                try:
+                    await websocket.send_json({
+                        "type": "progress",
+                        "passed": passed,
+                        "failed": failed,
+                        "skipped": skipped,
+                        "total": _TOTAL_TESTS,
+                        "done": done,
+                        "pct": min(100, round(done / _TOTAL_TESTS * 100)),
+                        "current": current,
+                        "sr_id": current,
+                        "outcome": outcome.lower(),
+                    })
+                except Exception:
+                    return
+    except Exception:
+        return
+
+    try:
+        await websocket.send_json({
+            "type": "done",
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+        })
+        await websocket.close()
+    except Exception:
+        pass
 
 
 @app.get("/", response_class=HTMLResponse)
