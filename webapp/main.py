@@ -20,6 +20,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 ROOT = Path(__file__).parent.parent
 CATALOG_PATH = ROOT / "tests" / "catalog.json"
 RESULTS_PATH = Path(__file__).parent / "results.json"
+REPORTS_DIR = Path(__file__).parent / "reports"
 RUN_PID_PATH = Path(__file__).parent / "run.pid"
 RUN_LOG_PATH = Path(__file__).parent / "run.log"
 HTML_PATH = Path(__file__).parent / "index.html"
@@ -120,8 +121,12 @@ def _launch_run(cmd: list[str]) -> "subprocess.Popen[str]":
     with _run_lock:
         if _is_run_alive():
             raise HTTPException(409, "A test run is already in progress")
-        # Clear previous log
+        # Clear previous log and section reports
         RUN_LOG_PATH.write_text("")
+        import shutil as _shutil
+        if REPORTS_DIR.exists():
+            _shutil.rmtree(REPORTS_DIR)
+        REPORTS_DIR.mkdir(exist_ok=True)
         # Open log file; pass to subprocess so it writes directly
         log_fd = open(RUN_LOG_PATH, "w")
         proc = subprocess.Popen(
@@ -258,23 +263,51 @@ def _merge_results() -> dict:
                             else:
                                 output = str(lr)
                             break
+                    # Derive section from nodeid (e.g. tests/test_03_storage.py -> 03-storage)
+                    nodeid = test["nodeid"]
+                    section = "python-tests"
+                    sm = re.search(r"test_(\d+)_([^/\.]+)", nodeid)
+                    if sm:
+                        section = sm.group(1) + "-" + sm.group(2).replace("_", "-")
+                    # Derive command from test name
+                    command = nodeid.split("::")[-1]
                     results_map[sr_id] = {
                         "outcome": test.get("outcome", "unknown"),
                         "duration": test.get("duration"),
                         "output": output,
+                        "section": section,
+                        "command": command,
+                        "marks": [],
                     }
         except (json.JSONDecodeError, KeyError):
             pass  # results.json is being written — return stale/empty data
 
+    # Load CLI output logs from per-section JSON files (written by SectionJsonReporter)
+    logs_by_sr_id: dict[str, str] = {}
+    if REPORTS_DIR.exists():
+        for json_file in REPORTS_DIR.glob("*.json"):
+            try:
+                data = json.loads(json_file.read_text())
+                for run in data.get("runs", []):
+                    sr_id = run.get("id", "")
+                    log = run.get("log", "")
+                    if sr_id and log:
+                        logs_by_sr_id[sr_id] = log
+            except (json.JSONDecodeError, OSError):
+                pass
+
     global_vars = catalog.get("vars", {})
+    catalog_ids: set[str] = set()
     rows: list[dict] = []
     for section in catalog["sections"]:
         section_marks = section.get("marks", [])
         section_vars = {**global_vars, **section.get("vars", {})}
         for test in section["tests"]:
             sr_id = test["id"]
+            catalog_ids.add(sr_id)
             merged_vars = {**section_vars, **test.get("vars", {})}
             result = results_map.get(sr_id, {"outcome": "not run", "duration": None, "output": None})
+            output = result.get("output") or logs_by_sr_id.get(sr_id)
             rows.append({
                 "id": sr_id,
                 "slug": test["slug"],
@@ -283,8 +316,24 @@ def _merge_results() -> dict:
                 "command": _resolve_command(test.get("command", ""), merged_vars),
                 "outcome": result["outcome"],
                 "duration": result["duration"],
-                "output": result.get("output"),
+                "output": output,
             })
+
+    # Also include Python-test results not in the catalog
+    for sr_id, result in results_map.items():
+        if sr_id in catalog_ids:
+            continue
+        output = result.get("output") or logs_by_sr_id.get(sr_id)
+        rows.append({
+            "id": sr_id,
+            "slug": sr_id.lower().replace("-", "_"),
+            "section": result.get("section", "python-tests"),
+            "marks": result.get("marks", []),
+            "command": result.get("command", sr_id),
+            "outcome": result["outcome"],
+            "duration": result["duration"],
+            "output": output,
+        })
 
     return {"meta": run_meta, "rows": rows}
 
@@ -305,6 +354,7 @@ def run_tests(token: str = Query(..., alias="token")):
     proc = _launch_run([
         "python3", "-m", "pytest", "tests/", "-q",
         "--json-report", f"--json-report-file={RESULTS_PATH}",
+        f"--json-report-dir={REPORTS_DIR}",
         "--no-header",
     ])
     return {"status": "started", "pid": proc.pid}
@@ -501,6 +551,7 @@ async def ws_run(websocket: WebSocket):
             "-o", "addopts=",
             "--tb=short",
             "--json-report", f"--json-report-file={RESULTS_PATH}",
+            f"--json-report-dir={REPORTS_DIR}",
         ])
     except HTTPException as exc:
         await websocket.send_json({"type": "error", "text": exc.detail})
