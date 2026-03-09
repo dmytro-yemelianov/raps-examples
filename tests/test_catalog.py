@@ -14,12 +14,27 @@ _RAW = json.loads(_CATALOG_PATH.read_text())
 
 
 def _resolve(command: str, variables: dict[str, str]) -> str:
-    """Replace ${name}: RAPS_VAR_NAME env var takes priority over variables dict."""
+    """Replace ${name}: RAPS_VAR_NAME env var takes priority over variables dict.
+
+    Calls pytest.fail() if any ${var} remains unresolved after substitution.
+    """
     def replace(m: re.Match) -> str:
         name = m.group(1)
         env_key = f"RAPS_VAR_{name.upper()}"
         return os.environ.get(env_key, variables.get(name, m.group(0)))
-    return re.sub(r"\$\{(\w+)\}", replace, command)
+
+    resolved = re.sub(r"\$\{(\w+)\}", replace, command)
+
+    unresolved = re.findall(r"\$\{(\w+)\}", resolved)
+    if unresolved:
+        available = sorted(variables.keys())
+        pytest.fail(
+            f"Unresolved catalog variables: {unresolved}\n"
+            f"  Command: {command!r}\n"
+            f"  Available vars: {available}"
+        )
+
+    return resolved
 
 
 def _collect() -> list[pytest.param]:
