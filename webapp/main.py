@@ -5,12 +5,13 @@ import asyncio
 import json
 import os
 import re
+import secrets
 import subprocess
 import threading
 from pathlib import Path
 from typing import AsyncIterator
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, WebSocket
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 # ---------------------------------------------------------------------------
@@ -67,7 +68,7 @@ _login_lock = threading.Lock()
 def _require_token(token: str = Query(..., alias="token")) -> str:
     if not _TOKEN:
         raise HTTPException(500, "RAPS_DASHBOARD_TOKEN not set")
-    if token != _TOKEN:
+    if not secrets.compare_digest(token, _TOKEN):
         raise HTTPException(401, "Invalid token")
     return token
 
@@ -223,15 +224,17 @@ async def stream_output(token: str = Query(..., alias="token")):
         else:
             yield "data: No active run\n\n"
             return
+        proc = _run_proc
         loop = asyncio.get_running_loop()
         try:
             while True:
-                line = await loop.run_in_executor(None, _run_proc.stdout.readline)
+                line = await loop.run_in_executor(None, proc.stdout.readline)
                 if not line:
                     break
                 yield f"data: {_scrub(line.rstrip())}\n\n"
         except Exception:
             pass
+        proc.wait()
         yield "data: __done__\n\n"
 
     return StreamingResponse(
@@ -260,6 +263,31 @@ def api_auth(token: str = Query(..., alias="token")):
     return {"two_legged": two_leg, "three_legged": three_leg}
 
 
+@app.post("/run/abort")
+def run_abort(token: str = Query(..., alias="token")):
+    """Kill any in-progress test run."""
+    _require_token(token)
+    with _run_lock:
+        _kill_run_proc()
+    return {"status": "aborted"}
+
+
+@app.post("/auth/logout")
+def auth_logout(token: str = Query(..., alias="token")):
+    """Run `raps auth logout` to clear the 3-legged token."""
+    _require_token(token)
+    try:
+        proc = subprocess.run(
+            ["raps", "auth", "logout"],
+            capture_output=True, text=True, timeout=15, cwd=ROOT,
+        )
+        if proc.returncode != 0:
+            raise HTTPException(500, f"Logout failed: {proc.stderr.strip()}")
+    except subprocess.TimeoutExpired:
+        raise HTTPException(504, "Logout timed out")
+    return {"status": "logged_out"}
+
+
 @app.post("/auth/login")
 def auth_login(token: str = Query(..., alias="token")):
     """Spawn `raps auth login --preset all` (opens browser on server)."""
@@ -267,9 +295,13 @@ def auth_login(token: str = Query(..., alias="token")):
     _require_token(token)
     with _login_lock:
         if _login_proc is not None:
-            _login_proc.poll()  # reap zombie
-        if _login_proc is not None and _login_proc.returncode is None:
-            raise HTTPException(409, "A login is already in progress")
+            _login_proc.poll()
+            if _login_proc.returncode is None:
+                _login_proc.terminate()
+                try:
+                    _login_proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    _login_proc.kill()
         _login_proc = subprocess.Popen(
             ["stdbuf", "-oL", "raps", "auth", "login", "--preset", "all", "--device"],
             cwd=ROOT,
@@ -294,15 +326,17 @@ async def stream_auth(token: str = Query(..., alias="token")):
         else:
             yield "data: No active login\n\n"
             return
+        proc = _login_proc
         loop = asyncio.get_running_loop()
         try:
             while True:
-                line = await loop.run_in_executor(None, _login_proc.stdout.readline)
+                line = await loop.run_in_executor(None, proc.stdout.readline)
                 if not line:
                     break
                 yield f"data: {_scrub(line.rstrip())}\n\n"
         except Exception:
             pass
+        proc.wait()
         yield "data: __done__\n\n"
 
     return StreamingResponse(
@@ -310,6 +344,123 @@ async def stream_auth(token: str = Query(..., alias="token")):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+def _kill_run_proc() -> None:
+    """Kill _run_proc if it is still running."""
+    global _run_proc
+    if _run_proc is not None and _run_proc.poll() is None:
+        _run_proc.terminate()
+        try:
+            _run_proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            _run_proc.kill()
+
+
+_TOTAL_TESTS = 295  # approximate; used for progress bar
+_RE_TEST_RESULT = re.compile(r"\s+(PASSED|FAILED|SKIPPED)(\s|\[)")
+_RE_SR_ID = re.compile(r"test_sr(\d+)_|\[SR-(\d+)-")
+
+
+@app.websocket("/ws/run")
+async def ws_run(websocket: WebSocket):
+    """WebSocket: starts pytest with -v, streams structured JSON progress events."""
+    global _run_proc
+    token = websocket.query_params.get("token", "")
+    if not _TOKEN or token != _TOKEN:
+        await websocket.close(code=1008, reason="Unauthorized")
+        return
+
+    await websocket.accept()
+
+    with _run_lock:
+        if _run_proc is not None and _run_proc.poll() is None:
+            await websocket.send_json({"type": "error", "text": "A test run is already in progress"})
+            await websocket.close()
+            return
+        _run_proc = subprocess.Popen(
+            [
+                "python3", "-m", "pytest", "tests/", "-v", "--no-header",
+                "-p", "no:xdist",          # disable parallel — need sequential per-test lines
+                "-o", "addopts=",          # clear -q / --dist=loadgroup from pyproject.toml
+                "--tb=short",
+                "--json-report", f"--json-report-file={RESULTS_PATH}",
+            ],
+            cwd=ROOT,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+
+    passed = failed = skipped = 0
+    proc = _run_proc
+    loop = asyncio.get_running_loop()
+    disconnected = False
+    try:
+        while True:
+            line = await loop.run_in_executor(None, proc.stdout.readline)
+            if not line:
+                break
+            line = _scrub(line.rstrip())
+            try:
+                await websocket.send_json({"type": "log", "text": line})
+            except Exception:
+                disconnected = True
+                break
+
+            m = _RE_TEST_RESULT.search(line)
+            if m:
+                outcome = m.group(1)
+                if outcome == "PASSED":
+                    passed += 1
+                elif outcome == "FAILED":
+                    failed += 1
+                elif outcome == "SKIPPED":
+                    skipped += 1
+                done = passed + failed + skipped
+                sr_m = _RE_SR_ID.search(line)
+                sr_num = sr_m.group(1) or sr_m.group(2) if sr_m else None
+                current = f"SR-{sr_num}" if sr_num else None
+                try:
+                    await websocket.send_json({
+                        "type": "progress",
+                        "passed": passed,
+                        "failed": failed,
+                        "skipped": skipped,
+                        "total": _TOTAL_TESTS,
+                        "done": done,
+                        "pct": min(100, round(done / _TOTAL_TESTS * 100)),
+                        "current": current,
+                        "sr_id": current,
+                        "outcome": outcome.lower(),
+                    })
+                except Exception:
+                    disconnected = True
+                    break
+    except Exception:
+        disconnected = True
+    finally:
+        # Client disconnected mid-run — terminate the process so it doesn't block future runs
+        if disconnected and proc.poll() is None:
+            proc.terminate()
+            try:
+                await loop.run_in_executor(None, lambda: proc.wait(timeout=5))
+            except Exception:
+                proc.kill()
+
+    if not disconnected:
+        await loop.run_in_executor(None, proc.wait)
+        try:
+            await websocket.send_json({
+                "type": "done",
+                "passed": passed,
+                "failed": failed,
+                "skipped": skipped,
+            })
+            await websocket.close()
+        except Exception:
+            pass
 
 
 @app.get("/", response_class=HTMLResponse)
