@@ -71,7 +71,7 @@ Invoke-Sample -Id "SR-077" -Slug "folder-rename" `
 
 # SR-078: Get folder permissions
 Invoke-Sample -Id "SR-078" -Slug "folder-rights" `
-  -Command "raps folder rights $env:PROJECT_ID $env:FOLDER_ID" `
+  -Command "raps folder permissions $env:PROJECT_ID $env:FOLDER_ID" `
   -Expects "Expected: Shows permission and access rights for a folder" `
   -Review "Review: Contains permission roles and user access details"
 
@@ -129,7 +129,7 @@ Invoke-LifecycleStep -StepNum 2 -Command "raps folder create $env:PROJECT_ID $en
 Invoke-LifecycleStep -StepNum 3 -Command "raps folder create $env:PROJECT_ID $env:PHASE1 -n 'MEP'"
 Invoke-LifecycleStep -StepNum 4 -Command "raps folder list $env:PROJECT_ID $env:PHASE1"
 Invoke-LifecycleStep -StepNum 5 -Command "raps folder rename $env:PROJECT_ID $env:MEP --name 'MEP Systems'"
-Invoke-LifecycleStep -StepNum 6 -Command "raps folder rights $env:PROJECT_ID $env:PHASE1"
+Invoke-LifecycleStep -StepNum 6 -Command "raps folder permissions $env:PROJECT_ID $env:PHASE1"
 Invoke-LifecycleStep -StepNum 7 -Command "raps folder delete $env:PROJECT_ID $env:MEP"
 Invoke-LifecycleStep -StepNum 8 -Command "raps folder delete $env:PROJECT_ID $env:STRUCTURAL"
 Invoke-LifecycleStep -StepNum 9 -Command "raps folder delete $env:PROJECT_ID $env:PHASE1"

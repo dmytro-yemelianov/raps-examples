@@ -75,7 +75,7 @@ run_sample "SR-077" "folder-rename" \
 
 # SR-078: Get folder permissions
 run_sample "SR-078" "folder-rights" \
-  "raps folder rights $PROJECT_ID $FOLDER_ID || true" \
+  "raps folder permissions $PROJECT_ID $FOLDER_ID || true" \
   "Expected: Shows permission and access rights for a folder" \
   "Review: Contains permission roles and user access details"
 
@@ -133,7 +133,7 @@ lifecycle_step 2 "raps folder create $PROJECT_ID $PHASE1 -n \"Structural\""
 lifecycle_step 3 "raps folder create $PROJECT_ID $PHASE1 -n \"MEP\""
 lifecycle_step 4 "raps folder list $PROJECT_ID $PHASE1"
 lifecycle_step 5 "raps folder rename $PROJECT_ID $MEP --name \"MEP Systems\""
-lifecycle_step 6 "raps folder rights $PROJECT_ID $PHASE1"
+lifecycle_step 6 "raps folder permissions $PROJECT_ID $PHASE1"
 lifecycle_step 7 "raps folder delete $PROJECT_ID $MEP"
 lifecycle_step 8 "raps folder delete $PROJECT_ID $STRUCTURAL"
 lifecycle_step 9 "raps folder delete $PROJECT_ID $PHASE1"

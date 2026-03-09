@@ -55,8 +55,8 @@ lifecycle_step 2 "raps admin project create -a \$ACCT -n \"Hospital Wing B\" -t 
 lifecycle_step 3 "raps admin user add $TEST_USER_PM -a \$ACCT -r \"project_admin\" -f \"name:*Hospital Wing B*\" -y"
 lifecycle_step 4 "raps admin user add $TEST_USER_STRUCT -a \$ACCT -r \"viewer\" -f \"name:*Hospital Wing B*\" -y"
 lifecycle_step 5 "raps admin user add $TEST_USER_MEP -a \$ACCT -r \"viewer\" -f \"name:*Hospital Wing B*\" -y"
-lifecycle_step 6 "raps admin folder rights $TEST_USER_STRUCT -a \$ACCT -l view-download-upload --folder \"Structural\" -f \"name:*Hospital Wing B*\" -y"
-lifecycle_step 7 "raps admin folder rights $TEST_USER_MEP -a \$ACCT -l view-download-upload --folder \"MEP\" -f \"name:*Hospital Wing B*\" -y"
+lifecycle_step 6 "raps admin folder set-permissions $TEST_USER_STRUCT -a \$ACCT -l view-download-upload --folder \"Structural\" -f \"name:*Hospital Wing B*\" -y"
+lifecycle_step 7 "raps admin folder set-permissions $TEST_USER_MEP -a \$ACCT -l view-download-upload --folder \"MEP\" -f \"name:*Hospital Wing B*\" -y"
 lifecycle_step 8 "raps admin user list -p \$NEW_PID"
 lifecycle_step 9 "raps webhook create -e \"dm.version.added\" -u \"https://hooks.co.com/hospital\""
 lifecycle_end

@@ -19,7 +19,7 @@ OP2_ID = "12345678-1234-1234-1234-123456789013"
 def test_sr220_admin_folder_rights_dryrun(raps, ids, users):
     account_id = ids.account_id or "demo-account-001"
     raps.run(
-        f"raps admin folder rights {users.user} -a {account_id}"
+        f"raps admin folder set-permissions {users.user} -a {account_id}"
         f' -l view-download-upload --folder "Plans" -f "name:*Tower*" --dry-run',
         sr_id="SR-220",
         slug="admin-folder-rights-dryrun",
@@ -30,7 +30,7 @@ def test_sr220_admin_folder_rights_dryrun(raps, ids, users):
 def test_sr221_admin_folder_rights_execute(raps, ids, users):
     account_id = ids.account_id or "demo-account-001"
     raps.run(
-        f"raps admin folder rights {users.user} -a {account_id}"
+        f"raps admin folder set-permissions {users.user} -a {account_id}"
         f' -l view-download-upload --folder "Plans" -f "name:*Tower*" -y',
         sr_id="SR-221",
         slug="admin-folder-rights-execute",
@@ -41,7 +41,7 @@ def test_sr221_admin_folder_rights_execute(raps, ids, users):
 def test_sr222_admin_folder_rights_from_file(raps, ids, users):
     account_id = ids.account_id or "demo-account-001"
     raps.run(
-        f"raps admin folder rights {users.user} -a {account_id}"
+        f"raps admin folder set-permissions {users.user} -a {account_id}"
         f" -l folder-control --project-ids ./projects.txt -y",
         sr_id="SR-222",
         slug="admin-folder-rights-from-file",
@@ -86,17 +86,17 @@ def test_sr228_folder_permissions_lifecycle(raps, ids, users):
         "SR-228", "folder-permissions-lifecycle", "Grant, verify, restrict folder access"
     )
     lc.step(
-        f"raps admin folder rights {users.user_folder} -a {account_id}"
+        f"raps admin folder set-permissions {users.user_folder} -a {account_id}"
         f' -l view-download-upload-edit --folder "Plans" -f "name:*Active*" --dry-run',
     )
     lc.step(
-        f"raps admin folder rights {users.user_folder} -a {account_id}"
+        f"raps admin folder set-permissions {users.user_folder} -a {account_id}"
         f' -l view-download-upload-edit --folder "Plans" -f "name:*Active*" -y',
     )
     lc.step("raps admin operation list --limit 1")
     lc.step("raps admin operation list --limit 1")
     lc.step(
-        f"raps admin folder rights {users.user_folder} -a {account_id}"
+        f"raps admin folder set-permissions {users.user_folder} -a {account_id}"
         f' -l view-only --folder "Plans" -f "name:*Active*" -y',
     )
     lc.step("raps admin operation list --limit 1")

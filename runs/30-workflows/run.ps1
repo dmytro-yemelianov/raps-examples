@@ -49,8 +49,8 @@ Invoke-LifecycleStep -StepNum 2 -Command "raps admin project create -a $env:ACCT
 Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add pm@co.com -a $env:ACCT -r `"project_admin`" -f `"name:*Hospital Wing B*`" -y"
 Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add struct@co.com -a $env:ACCT -r `"viewer`" -f `"name:*Hospital Wing B*`" -y"
 Invoke-LifecycleStep -StepNum 5 -Command "raps admin user add mep@co.com -a $env:ACCT -r `"viewer`" -f `"name:*Hospital Wing B*`" -y"
-Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights struct@co.com -a $env:ACCT -l view-download-upload --folder `"Structural`" -f `"name:*Hospital Wing B*`" -y"
-Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights mep@co.com -a $env:ACCT -l view-download-upload --folder `"MEP`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder set-permissions struct@co.com -a $env:ACCT -l view-download-upload --folder `"Structural`" -f `"name:*Hospital Wing B*`" -y"
+Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder set-permissions mep@co.com -a $env:ACCT -l view-download-upload --folder `"MEP`" -f `"name:*Hospital Wing B*`" -y"
 Invoke-LifecycleStep -StepNum 8 -Command "raps admin user list -p $env:NEW_PID"
 Invoke-LifecycleStep -StepNum 9 -Command "raps webhook create -e `"dm.version.added`" -u `"https://hooks.co.com/hospital`""
 End-Lifecycle

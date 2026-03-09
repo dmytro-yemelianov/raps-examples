@@ -106,8 +106,8 @@ lifecycle_step 2 "raps admin project list -a $ACCT --status active -f \"name:*Bu
 lifecycle_step 3 "raps admin user add $TEST_USER_NEW -a $ACCT -r \"project_admin\" -f \"name:*Building*\" --dry-run"
 lifecycle_step 4 "raps admin user add $TEST_USER_NEW -a $ACCT -r \"project_admin\" -f \"name:*Building*\" -y"
 lifecycle_step 5 "raps admin user list -a $ACCT --search \"$TEST_USER_NEW\""
-lifecycle_step 6 "raps admin folder rights $TEST_USER_NEW -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" --dry-run"
-lifecycle_step 7 "raps admin folder rights $TEST_USER_NEW -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" -y"
+lifecycle_step 6 "raps admin folder set-permissions $TEST_USER_NEW -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" --dry-run"
+lifecycle_step 7 "raps admin folder set-permissions $TEST_USER_NEW -a $ACCT -l view-download-upload --folder \"Plans\" -f \"name:*Building*\" -y"
 lifecycle_end
 
 # SR-204: Remove departing employee

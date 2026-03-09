@@ -102,8 +102,8 @@ Invoke-LifecycleStep -StepNum 2 -Command "raps admin project list -a $env:ACCT -
 Invoke-LifecycleStep -StepNum 3 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"name:*Building*`" --dry-run"
 Invoke-LifecycleStep -StepNum 4 -Command "raps admin user add newuser@company.com -a $env:ACCT -r `"project_admin`" -f `"name:*Building*`" -y"
 Invoke-LifecycleStep -StepNum 5 -Command "raps admin user list -a $env:ACCT --search `"newuser@company.com`""
-Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" --dry-run"
-Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder rights newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" -y"
+Invoke-LifecycleStep -StepNum 6 -Command "raps admin folder set-permissions newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" --dry-run"
+Invoke-LifecycleStep -StepNum 7 -Command "raps admin folder set-permissions newuser@company.com -a $env:ACCT -l view-download-upload --folder `"Plans`" -f `"name:*Building*`" -y"
 End-Lifecycle
 
 # SR-204: Remove departing employee

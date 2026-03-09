@@ -86,7 +86,7 @@ Most untested commands are deep CRUD operations (e.g., `acc asset update`, `admi
 | `folder create` | Yes | SR-075 | test_04_data_management.py | In lifecycle |
 | `folder rename` | Yes | SR-076 | test_04_data_management.py | In lifecycle |
 | `folder delete` | Yes | SR-077 | test_04_data_management.py | In lifecycle |
-| `folder rights` | Yes | SR-078 | test_04_data_management.py | |
+| `folder permissions` | Yes | SR-078 | test_04_data_management.py | |
 
 ### item (5 subcommands)
 
@@ -183,7 +183,7 @@ Most untested commands are deep CRUD operations (e.g., `acc asset update`, `admi
 | `admin user remove-from-project` | Yes | SR-195 | test_11_admin_users.py | |
 | `admin user update-in-project` | Yes | SR-196 | test_11_admin_users.py | |
 | `admin user import` | Yes | SR-197 | test_11_admin_users.py | CSV import |
-| `admin folder rights` | Yes | SR-230 | test_13_admin_folders.py | |
+| `admin folder permissions` | Yes | SR-230 | test_13_admin_folders.py | |
 | `admin project list` | Yes | SR-210 | test_12_admin_projects.py | |
 | `admin project create` | Yes | SR-211 | test_12_admin_projects.py | In lifecycle |
 | `admin project update` | Yes | SR-212 | test_12_admin_projects.py | In lifecycle |

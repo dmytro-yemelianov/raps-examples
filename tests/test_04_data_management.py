@@ -58,7 +58,7 @@ def test_sr077_folder_rename(raps, ids):
 def test_sr078_folder_rights(raps, ids):
     project_id = ids.project_full_id or "b.demo-project-001"
     raps.run(
-        f"raps folder rights {project_id} {FOLDER_ID}",
+        f"raps folder permissions {project_id} {FOLDER_ID}",
         sr_id="SR-078",
         slug="folder-rights",
     )

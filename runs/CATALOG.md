@@ -120,7 +120,7 @@ Complete index of all sample runs defined across 25 section scripts.
 | SR-075 | atomic | folder-list | `raps folder list --project $PROJECT_ID --folder $FOLDER_ID` | Lists contents of a specific folder |
 | SR-076 | atomic | folder-create | `raps folder create --project $PROJECT_ID --parent $FOLDER_ID --name "Test Folder"` | Creates a new folder under the specified parent |
 | SR-077 | atomic | folder-rename | `raps folder rename --project $PROJECT_ID --folder $NEW_FOLDER_ID ...` | Renames the specified folder |
-| SR-078 | atomic | folder-rights | `raps folder rights --project $PROJECT_ID --folder $FOLDER_ID` | Shows permission and access rights for a folder |
+| SR-078 | atomic | folder-rights | `raps folder permissions --project $PROJECT_ID --folder $FOLDER_ID` | Shows permission and access rights for a folder |
 | SR-079 | atomic | folder-delete | `raps folder delete --project $PROJECT_ID --folder $NEW_FOLDER_ID --yes` | Deletes the specified folder |
 | SR-080 | atomic | item-info | `raps item info $PROJECT_ID $ITEM_ID` | Shows detailed information for a specific item |
 | SR-081 | atomic | item-versions | `raps item versions $PROJECT_ID $ITEM_ID` | Lists all versions of the specified item |
@@ -267,9 +267,9 @@ Complete index of all sample runs defined across 25 section scripts.
 
 | ID | Type | Slug | Command | Expected |
 |----|------|------|---------|----------|
-| SR-220 | atomic | admin-folder-rights-dryrun | `raps admin folder rights user@company.com --account $ACCT ... --dry-run` | Shows which projects and folders would be affected |
-| SR-221 | atomic | admin-folder-rights-execute | `raps admin folder rights user@company.com --account $ACCT ... --yes` | Grants folder permissions across matching projects |
-| SR-222 | atomic | admin-folder-rights-from-file | `raps admin folder rights user@company.com --account $ACCT --project-ids ... --yes` | Grants folder permissions to projects in file |
+| SR-220 | atomic | admin-folder-rights-dryrun | `raps admin folder permissions user@company.com --account $ACCT ... --dry-run` | Shows which projects and folders would be affected |
+| SR-221 | atomic | admin-folder-rights-execute | `raps admin folder permissions user@company.com --account $ACCT ... --yes` | Grants folder permissions across matching projects |
+| SR-222 | atomic | admin-folder-rights-from-file | `raps admin folder permissions user@company.com --account $ACCT --project-ids ... --yes` | Grants folder permissions to projects in file |
 | SR-223 | atomic | admin-company-list | `raps admin company-list --account $ACCOUNT_ID` | Lists all companies in the account |
 | SR-224 | atomic | admin-operation-list | `raps admin operation list --status completed --limit 5` | Lists recent completed operations |
 | SR-225 | atomic | admin-operation-status | `raps admin operation status $OPERATION_ID` | Shows detailed operation status |

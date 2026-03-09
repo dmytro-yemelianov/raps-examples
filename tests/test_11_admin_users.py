@@ -144,11 +144,11 @@ def test_sr203_new_employee_onboarding(raps, ids, users):
     )
     lc.step(f'raps admin user list -a {account_id} --search "{users.user_new}"')
     lc.step(
-        f"raps admin folder rights {users.user_new} -a {account_id}"
+        f"raps admin folder set-permissions {users.user_new} -a {account_id}"
         f' -l view-download-upload --folder "Plans" -f "name:*Building*" --dry-run',
     )
     lc.step(
-        f"raps admin folder rights {users.user_new} -a {account_id}"
+        f"raps admin folder set-permissions {users.user_new} -a {account_id}"
         f' -l view-download-upload --folder "Plans" -f "name:*Building*" -y',
     )
     lc.assert_all_passed_or_skip()
