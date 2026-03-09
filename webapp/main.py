@@ -301,51 +301,23 @@ def api_results(token: str = Query(..., alias="token")):
 
 @app.post("/run")
 def run_tests(token: str = Query(..., alias="token")):
-    global _run_proc
     _require_token(token)
-    with _run_lock:
-        if _run_proc is not None and _run_proc.poll() is None:
-            raise HTTPException(409, "A test run is already in progress")
-        _run_proc = subprocess.Popen(
-            [
-                "python3", "-m", "pytest", "tests/", "-q",
-                "--json-report", f"--json-report-file={RESULTS_PATH}",
-                "--no-header",
-            ],
-            cwd=ROOT,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        )
-    return {"status": "started", "pid": _run_proc.pid}
+    proc = _launch_run([
+        "python3", "-m", "pytest", "tests/", "-q",
+        "--json-report", f"--json-report-file={RESULTS_PATH}",
+        "--no-header",
+    ])
+    return {"status": "started", "pid": proc.pid}
 
 
 @app.get("/stream")
 async def stream_output(token: str = Query(..., alias="token")):
-    """SSE — streams pytest stdout line by line."""
+    """SSE — streams pytest stdout from run.log (supports reconnect/replay)."""
     _require_token(token)
 
     async def _lines() -> AsyncIterator[str]:
-        # Wait up to 1s for _run_proc to be assigned after POST /run
-        for _ in range(10):
-            if _run_proc is not None and _run_proc.stdout is not None:
-                break
-            await asyncio.sleep(0.1)
-        else:
-            yield "data: No active run\n\n"
-            return
-        proc = _run_proc
-        loop = asyncio.get_running_loop()
-        try:
-            while True:
-                line = await loop.run_in_executor(None, proc.stdout.readline)
-                if not line:
-                    break
-                yield f"data: {_scrub(line.rstrip())}\n\n"
-        except Exception:
-            pass
-        proc.wait()
+        async for line in _tail_run_log():
+            yield f"data: {line}\n\n"
         yield "data: __done__\n\n"
 
     return StreamingResponse(
