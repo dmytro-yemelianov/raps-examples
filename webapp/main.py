@@ -458,6 +458,18 @@ def _kill_run_proc() -> None:
             data = json.loads(RUN_PID_PATH.read_text())
             pid = int(data["pid"])
             os.kill(pid, 15)  # SIGTERM
+            # Wait up to 5 s for the process to exit before declaring it gone.
+            # Without this a new run could start while the old process is still
+            # winding down, causing both to write to run.log concurrently.
+            import time as _time
+            for _ in range(50):
+                _time.sleep(0.1)
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    break
+            else:
+                os.kill(pid, 9)  # SIGKILL if still alive after 5 s
         except (ProcessLookupError, PermissionError, json.JSONDecodeError,
                 KeyError, ValueError, OSError):
             pass
