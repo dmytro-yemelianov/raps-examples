@@ -126,7 +126,6 @@ def test_run_starts_subprocess(monkeypatch):
 # ---------------------------------------------------------------------------
 # Run-state helpers (Task 1)
 # ---------------------------------------------------------------------------
-import json as _json
 
 
 def test_write_and_delete_pid_file(tmp_path, monkeypatch):
@@ -134,7 +133,7 @@ def test_write_and_delete_pid_file(tmp_path, monkeypatch):
     monkeypatch.setattr("webapp.main.RUN_PID_PATH", tmp_path / "run.pid")
     from webapp import main as _m
     _m._write_pid_file(99999)
-    data = _json.loads((tmp_path / "run.pid").read_text())
+    data = json.loads((tmp_path / "run.pid").read_text())
     assert data["pid"] == 99999
     assert "started" in data
     _m._delete_pid_file()
@@ -150,9 +149,13 @@ def test_is_run_alive_no_proc_no_pidfile(monkeypatch, tmp_path):
 
 
 def test_is_run_alive_dead_pid_in_file(monkeypatch, tmp_path):
-    """PID file with a definitely-dead PID → False and file is deleted."""
+    """PID file with a definitely-dead PID → False and file is deleted.
+
+    PID 999999999 exceeds Linux's pid_max (4194304), so os.kill always raises
+    ProcessLookupError — guaranteed dead on Linux/macOS.
+    """
     pid_path = tmp_path / "run.pid"
-    pid_path.write_text(_json.dumps({"pid": 999999999, "started": "x"}))
+    pid_path.write_text(json.dumps({"pid": 999999999, "started": "x"}))
     monkeypatch.setattr("webapp.main.RUN_PID_PATH", pid_path)
     monkeypatch.setattr("webapp.main._run_proc", None)
     from webapp import main as _m

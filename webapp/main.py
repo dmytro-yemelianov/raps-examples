@@ -86,6 +86,8 @@ def _is_run_alive() -> bool:
 
     Checks in-memory _run_proc first, then falls back to run.pid on disk.
     Cleans up a stale PID file if the process is dead.
+
+    Callers that also access _run_proc or _run_log should hold _run_lock.
     """
     # Fast path: in-memory proc still running
     if _run_proc is not None and _run_proc.poll() is None:
@@ -97,9 +99,12 @@ def _is_run_alive() -> bool:
             pid = int(data["pid"])
             os.kill(pid, 0)   # signal 0 = liveness check, raises if dead
             return True       # process alive
-        except (ProcessLookupError, PermissionError):
+        except ProcessLookupError:
             # Process dead — stale PID file, clean up
             _delete_pid_file()
+        except PermissionError:
+            # Process alive but owned by another user — still running
+            return True
         except (json.JSONDecodeError, KeyError, ValueError, OSError):
             _delete_pid_file()
     return False
