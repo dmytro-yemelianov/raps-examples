@@ -928,6 +928,9 @@
   function triggerRun() {
     setRunning(true);
     clearLog();
+    // Reset all rows to "not run" so the table shows the current run, not the previous one
+    rows.forEach(r => r.outcome = 'not run');
+    renderTable();
     updateProgress(0, 0, 0, 0, 295, null);
     document.getElementById('progress-panel').style.display = 'block';
     openRunWs('/ws/run');
