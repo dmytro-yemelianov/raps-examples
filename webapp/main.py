@@ -632,6 +632,54 @@ async def ws_stream(websocket: WebSocket):
     await _stream_run_log_to_ws(websocket)
 
 
+@app.get("/api/commands")
+def api_commands(token: str = Query(..., alias="token")):
+    """Return the full RAPS command tree for graph visualization."""
+    _require_token(token)
+    try:
+        proc = subprocess.run(
+            ["raps", "--help"],
+            capture_output=True, text=True, timeout=10,
+        )
+        # Parse top-level commands from help output
+        commands: dict[str, list[str]] = {}
+        for line in proc.stdout.splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("-") and "  " in line:
+                parts = stripped.split()
+                cmd = parts[0]
+                if cmd.isalpha() and cmd != "help":
+                    commands[cmd] = []
+
+        # Get subcommands for each
+        for cmd in list(commands.keys()):
+            try:
+                sub = subprocess.run(
+                    ["raps", cmd, "--help"],
+                    capture_output=True, text=True, timeout=5,
+                )
+                subs = []
+                in_commands = False
+                for line in sub.stdout.splitlines():
+                    if "Commands:" in line:
+                        in_commands = True
+                        continue
+                    if in_commands:
+                        stripped = line.strip()
+                        if not stripped:
+                            break
+                        parts = stripped.split()
+                        if parts and parts[0] != "help":
+                            subs.append(parts[0])
+                commands[cmd] = subs
+            except (subprocess.TimeoutExpired, OSError):
+                pass
+
+        return {"commands": commands}
+    except (subprocess.TimeoutExpired, OSError) as e:
+        raise HTTPException(500, f"Failed to get commands: {e}")
+
+
 @app.get("/", response_class=HTMLResponse)
 def index(token: str = Query(..., alias="token")):
     _require_token(token)

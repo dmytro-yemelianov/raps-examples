@@ -542,6 +542,47 @@
     #log-scroll .log-skip  { color: var(--text2); }
     #log-scroll .log-head  { color: var(--accent); }
 
+    /* ─── Graph tab ─── */
+    #pane-graph {
+      flex: 1; display: none; flex-direction: column; min-height: 0;
+      position: relative;
+    }
+    #graph-toolbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    #graph-reset-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    #graph-reset-btn:hover { color: var(--text); border-color: var(--text2); }
+    #graph-canvas { flex: 1; display: block; cursor: grab; }
+    #graph-canvas.dragging { cursor: grabbing; }
+    #graph-tooltip {
+      display: none;
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      color: var(--text);
+      pointer-events: none;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -602,6 +643,7 @@
   <div id="tab-bar">
     <button class="tab active" onclick="switchTab('results')">Results <span id="tab-badge">0</span></button>
     <button class="tab" onclick="switchTab('log')">Live Log</button>
+    <button class="tab" onclick="switchTab('graph')">Command Graph</button>
   </div>
 
   <div id="pane-results">
@@ -644,6 +686,15 @@
       <span style="font-size:0.68rem;color:var(--text3)" id="log-status"></span>
     </div>
     <div id="log-scroll"></div>
+  </div>
+
+  <div id="pane-graph">
+    <div id="graph-toolbar">
+      <span style="font-size:0.68rem;color:var(--text2)">Drag nodes · Scroll to zoom · Click to highlight</span>
+      <button id="graph-reset-btn" onclick="resetGraph()">Reset View</button>
+    </div>
+    <canvas id="graph-canvas"></canvas>
+    <div id="graph-tooltip"></div>
   </div>
 </div>
 
@@ -1008,14 +1059,448 @@
   function switchTab(name) {
     document.getElementById('pane-results').style.display = name === 'results' ? 'flex' : 'none';
     document.getElementById('pane-log').style.display     = name === 'log'     ? 'flex' : 'none';
-    document.querySelectorAll('.tab').forEach((b, i) => {
-      b.classList.toggle('active', (i === 0) === (name === 'results'));
-    });
+    document.getElementById('pane-graph').style.display   = name === 'graph'   ? 'flex' : 'none';
+    const tabs = document.querySelectorAll('.tab');
+    const tabMap = ['results', 'log', 'graph'];
+    tabs.forEach((b, i) => b.classList.toggle('active', tabMap[i] === name));
+    if (name === 'graph' && !_graphLoaded) loadGraph();
   }
 
   // ── Enter key on token input ─────────────────────────────────────────────────
   document.getElementById('token-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') submitToken();
+  });
+
+  // ── Command Graph ─────────────────────────────────────────────────────────
+  let _graphLoaded = false;
+  let _graphNodes = [];
+  let _graphEdges = [];
+  let _graphAnim = null;
+  let _graphTransform = { x: 0, y: 0, scale: 1 };
+  let _dragNode = null;
+  let _panStart = null;
+  let _hoveredNode = null;
+  let _selectedNode = null;
+
+  const GRAPH_COLORS = {
+    root:  '#4f8ef7',
+    auth:  '#9b72f7', bucket: '#2dd68c', object: '#2dd68c', translate: '#f0a020',
+    hub:   '#4f8ef7', project:'#4f8ef7', folder: '#4f8ef7', item:    '#4f8ef7',
+    webhook:'#f2506a', da:    '#f0a020', issue:  '#f2506a', acc:     '#f2506a',
+    admin: '#ff6b9d', api:   '#5ac8fa', rfi:    '#f2506a', report:  '#c9d1e0',
+    template:'#c9d1e0', reality:'#f0a020', inspect:'#5ac8fa', plugin: '#9b72f7',
+    config:'#c9d1e0', pipeline:'#2dd68c', snapshot:'#5ac8fa', doctor:'#2dd68c',
+    cache: '#c9d1e0', sync:  '#5ac8fa', schema: '#c9d1e0', marketplace:'#9b72f7',
+    init:  '#4f8ef7', status:'#4f8ef7', generate:'#c9d1e0', demo:   '#c9d1e0',
+    lint:  '#2dd68c', job:   '#f0a020', workflow:'#f0a020', shell:  '#c9d1e0',
+    mcp:   '#9b72f7', docs:  '#c9d1e0', logs:   '#c9d1e0', watch:  '#5ac8fa',
+    completions:'#c9d1e0', man: '#c9d1e0', history:'#c9d1e0', replay:'#c9d1e0',
+    stats: '#c9d1e0', swarm: '#9b72f7',
+  };
+
+  // Category groups for radial layout
+  const CMD_GROUPS = {
+    'Data Management': ['hub','project','folder','item'],
+    'Object Storage':  ['bucket','object'],
+    'Model Derivative':['translate'],
+    'Design Automation':['da','job','pipeline','workflow'],
+    'ACC':             ['issue','rfi','acc','report'],
+    'Admin':           ['admin'],
+    'Auth & Config':   ['auth','config','init','status','doctor'],
+    'Developer Tools': ['api','inspect','schema','plugin','marketplace','mcp','shell','completions'],
+    'Operations':      ['cache','sync','snapshot','logs','watch','lint','generate','demo','template','reality','webhook','docs','man','history','replay','stats','swarm'],
+  };
+
+  async function loadGraph() {
+    _graphLoaded = true;
+    try {
+      const r = await fetch('/api/commands?token=' + encodeURIComponent(TOKEN));
+      if (!r.ok) return;
+      const data = await r.json();
+      buildGraph(data.commands);
+    } catch(e) { console.error('Graph load failed', e); }
+  }
+
+  function buildGraph(commands) {
+    _graphNodes = [];
+    _graphEdges = [];
+
+    const canvas = document.getElementById('graph-canvas');
+    const W = canvas.parentElement.clientWidth;
+    const H = canvas.parentElement.clientHeight - 36; // toolbar
+    const cx = W / 2, cy = H / 2;
+
+    // Root node
+    _graphNodes.push({ id: 'raps', label: 'raps', x: cx, y: cy, vx: 0, vy: 0,
+      r: 22, color: GRAPH_COLORS.root, depth: 0, pinned: true, mass: 3 });
+
+    // Assign angle ranges per group
+    const groupKeys = Object.keys(CMD_GROUPS);
+    const angleStep = (2 * Math.PI) / groupKeys.length;
+    let cmdAngle = {};
+    groupKeys.forEach((g, gi) => {
+      const cmds = CMD_GROUPS[g];
+      const baseAngle = gi * angleStep - Math.PI / 2;
+      cmds.forEach((c, ci) => {
+        cmdAngle[c] = baseAngle + (ci / cmds.length) * angleStep;
+      });
+    });
+
+    // Top-level command nodes
+    const cmdKeys = Object.keys(commands).filter(c => c !== 'help');
+    const radius1 = Math.min(W, H) * 0.28;
+    cmdKeys.forEach((cmd, i) => {
+      const angle = cmdAngle[cmd] ?? (i / cmdKeys.length) * 2 * Math.PI;
+      const x = cx + Math.cos(angle) * radius1 + (Math.random() - 0.5) * 20;
+      const y = cy + Math.sin(angle) * radius1 + (Math.random() - 0.5) * 20;
+      const subs = commands[cmd] || [];
+      const r = Math.max(8, Math.min(16, 8 + subs.length * 0.6));
+      _graphNodes.push({ id: cmd, label: cmd, x, y, vx: 0, vy: 0,
+        r, color: GRAPH_COLORS[cmd] || '#5a6680', depth: 1, pinned: false, mass: 1 + subs.length * 0.2,
+        parent: 'raps', subCount: subs.length });
+      _graphEdges.push({ source: 'raps', target: cmd });
+
+      // Subcommand nodes
+      const radius2 = 55 + subs.length * 4;
+      subs.forEach((sub, si) => {
+        const sa = angle + ((si / subs.length) - 0.5) * (Math.PI * 0.4);
+        const sx = x + Math.cos(sa) * radius2 + (Math.random() - 0.5) * 10;
+        const sy = y + Math.sin(sa) * radius2 + (Math.random() - 0.5) * 10;
+        const nodeId = cmd + '.' + sub;
+        _graphNodes.push({ id: nodeId, label: sub, x: sx, y: sy, vx: 0, vy: 0,
+          r: 4, color: GRAPH_COLORS[cmd] || '#5a6680', depth: 2, pinned: false, mass: 0.5,
+          parent: cmd });
+        _graphEdges.push({ source: cmd, target: nodeId });
+      });
+    });
+
+    // Build lookup
+    _graphNodes._map = {};
+    _graphNodes.forEach(n => _graphNodes._map[n.id] = n);
+
+    initGraphCanvas();
+  }
+
+  function initGraphCanvas() {
+    const canvas = document.getElementById('graph-canvas');
+    const container = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = container.clientWidth * dpr;
+    canvas.height = (container.clientHeight - 36) * dpr;
+    canvas.style.width = container.clientWidth + 'px';
+    canvas.style.height = (container.clientHeight - 36) + 'px';
+
+    _graphTransform = { x: 0, y: 0, scale: 1 };
+
+    // Mouse events
+    canvas.onmousedown = graphMouseDown;
+    canvas.onmousemove = graphMouseMove;
+    canvas.onmouseup = graphMouseUp;
+    canvas.onwheel = graphWheel;
+    canvas.ondblclick = graphDblClick;
+
+    // Touch events
+    canvas.ontouchstart = graphTouchStart;
+    canvas.ontouchmove = graphTouchMove;
+    canvas.ontouchend = graphTouchEnd;
+
+    // Start simulation
+    if (_graphAnim) cancelAnimationFrame(_graphAnim);
+    tickGraph();
+  }
+
+  function tickGraph() {
+    simulateForces();
+    drawGraph();
+    _graphAnim = requestAnimationFrame(tickGraph);
+  }
+
+  function simulateForces() {
+    const nodes = _graphNodes;
+    const edges = _graphEdges;
+    const map = nodes._map;
+    const damping = 0.92;
+    const repulsion = 800;
+    const attraction = 0.008;
+    const idealLen = { 0: 0, 1: 160, 2: 60 };
+
+    // Repulsion (all pairs, chunked for perf)
+    for (let i = 0; i < nodes.length; i++) {
+      const a = nodes[i];
+      if (a.pinned) continue;
+      for (let j = i + 1; j < nodes.length; j++) {
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        // Stronger repulsion for same-depth nodes
+        let rep = repulsion / (dist * dist);
+        if (a.depth === b.depth) rep *= 1.5;
+        if (dist < 30) rep *= 3;
+        const fx = (dx / dist) * rep;
+        const fy = (dy / dist) * rep;
+        if (!a.pinned) { a.vx += fx / a.mass; a.vy += fy / a.mass; }
+        if (!b.pinned) { b.vx -= fx / b.mass; b.vy -= fy / b.mass; }
+      }
+    }
+
+    // Attraction along edges
+    for (const e of edges) {
+      const a = map[e.source], b = map[e.target];
+      if (!a || !b) continue;
+      let dx = b.x - a.x, dy = b.y - a.y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const target = idealLen[b.depth] || 80;
+      const force = (dist - target) * attraction;
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+      if (!a.pinned) { a.vx += fx; a.vy += fy; }
+      if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
+    }
+
+    // Center gravity
+    const canvas = document.getElementById('graph-canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const cxc = canvas.width / dpr / 2, cyc = canvas.height / dpr / 2;
+    for (const n of nodes) {
+      if (n.pinned) continue;
+      n.vx += (cxc - n.x) * 0.0003;
+      n.vy += (cyc - n.y) * 0.0003;
+      n.vx *= damping;
+      n.vy *= damping;
+      n.x += n.vx;
+      n.y += n.vy;
+    }
+  }
+
+  function drawGraph() {
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.width / dpr, H = canvas.height / dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.save();
+    ctx.translate(_graphTransform.x, _graphTransform.y);
+    ctx.scale(_graphTransform.scale, _graphTransform.scale);
+
+    const map = _graphNodes._map;
+    const selId = _selectedNode;
+    const hovId = _hoveredNode;
+
+    // Connected set for highlighting
+    let connSet = null;
+    if (selId) {
+      connSet = new Set([selId]);
+      _graphEdges.forEach(e => {
+        if (e.source === selId) connSet.add(e.target);
+        if (e.target === selId) connSet.add(e.source);
+      });
+    }
+
+    // Edges
+    for (const e of _graphEdges) {
+      const a = map[e.source], b = map[e.target];
+      if (!a || !b) continue;
+      const dimmed = connSet && !connSet.has(e.source) && !connSet.has(e.target);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = dimmed ? 'rgba(28,33,48,0.4)' : 'rgba(44,52,74,0.6)';
+      ctx.lineWidth = b.depth === 2 ? 0.5 : 1;
+      ctx.stroke();
+    }
+
+    // Nodes
+    for (const n of _graphNodes) {
+      const dimmed = connSet && !connSet.has(n.id);
+      const hovered = n.id === hovId;
+      const selected = n.id === selId;
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+
+      if (dimmed) {
+        ctx.fillStyle = 'rgba(30,36,50,0.5)';
+      } else if (selected) {
+        ctx.fillStyle = n.color;
+        ctx.shadowColor = n.color;
+        ctx.shadowBlur = 12;
+      } else if (hovered) {
+        ctx.fillStyle = n.color;
+        ctx.shadowColor = n.color;
+        ctx.shadowBlur = 8;
+      } else {
+        const alpha = n.depth === 2 ? '80' : 'cc';
+        ctx.fillStyle = n.color + alpha;
+      }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Label
+      if (n.depth <= 1 || hovered || selected || (_graphTransform.scale > 1.5 && !dimmed)) {
+        ctx.font = n.depth === 0 ? 'bold 13px JetBrains Mono'
+                 : n.depth === 1 ? '500 10px JetBrains Mono'
+                 : '9px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const ly = n.y + n.r + (n.depth === 0 ? 16 : n.depth === 1 ? 12 : 8);
+        ctx.fillStyle = dimmed ? 'rgba(90,102,128,0.3)'
+                      : (selected || hovered) ? '#fff'
+                      : n.depth === 2 ? 'rgba(201,209,224,0.5)' : 'rgba(201,209,224,0.8)';
+        ctx.fillText(n.label, n.x, ly);
+
+        // Show subcommand count for depth-1 nodes
+        if (n.depth === 1 && n.subCount > 0 && !dimmed) {
+          ctx.font = '8px JetBrains Mono';
+          ctx.fillStyle = 'rgba(90,102,128,0.6)';
+          ctx.fillText(n.subCount + ' sub', n.x, ly + 11);
+        }
+      }
+    }
+
+    ctx.restore();
+  }
+
+  // ── Graph interaction ──────────────────────────────────────────────────────
+  function graphToWorld(ex, ey) {
+    const canvas = document.getElementById('graph-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const cx = ex - rect.left, cy = ey - rect.top;
+    return {
+      x: (cx - _graphTransform.x) / _graphTransform.scale,
+      y: (cy - _graphTransform.y) / _graphTransform.scale
+    };
+  }
+
+  function findNodeAt(wx, wy) {
+    for (let i = _graphNodes.length - 1; i >= 0; i--) {
+      const n = _graphNodes[i];
+      const dx = wx - n.x, dy = wy - n.y;
+      const hitR = Math.max(n.r, 8);
+      if (dx * dx + dy * dy <= hitR * hitR) return n;
+    }
+    return null;
+  }
+
+  function graphMouseDown(e) {
+    const w = graphToWorld(e.clientX, e.clientY);
+    const node = findNodeAt(w.x, w.y);
+    if (node && node.depth > 0) {
+      _dragNode = node;
+      _dragNode._wasPinned = _dragNode.pinned;
+      _dragNode.pinned = true;
+      document.getElementById('graph-canvas').classList.add('dragging');
+    } else {
+      _panStart = { mx: e.clientX, my: e.clientY, tx: _graphTransform.x, ty: _graphTransform.y };
+    }
+  }
+
+  function graphMouseMove(e) {
+    const canvas = document.getElementById('graph-canvas');
+    const w = graphToWorld(e.clientX, e.clientY);
+    if (_dragNode) {
+      _dragNode.x = w.x;
+      _dragNode.y = w.y;
+      _dragNode.vx = 0;
+      _dragNode.vy = 0;
+    } else if (_panStart) {
+      _graphTransform.x = _panStart.tx + (e.clientX - _panStart.mx);
+      _graphTransform.y = _panStart.ty + (e.clientY - _panStart.my);
+      canvas.classList.add('dragging');
+    } else {
+      const node = findNodeAt(w.x, w.y);
+      _hoveredNode = node ? node.id : null;
+      canvas.style.cursor = node ? 'pointer' : 'grab';
+
+      const tip = document.getElementById('graph-tooltip');
+      if (node && node.depth >= 1) {
+        const fullCmd = node.parent ? 'raps ' + node.parent + ' ' + node.label : 'raps ' + node.label;
+        tip.textContent = fullCmd + (node.subCount ? ' (' + node.subCount + ' subcommands)' : '');
+        const rect = canvas.getBoundingClientRect();
+        tip.style.left = (e.clientX - rect.left + 12) + 'px';
+        tip.style.top = (e.clientY - rect.top - 8) + 'px';
+        tip.style.display = 'block';
+      } else {
+        tip.style.display = 'none';
+      }
+    }
+  }
+
+  function graphMouseUp(e) {
+    if (_dragNode) {
+      _dragNode.pinned = _dragNode._wasPinned || false;
+      _dragNode = null;
+    }
+    _panStart = null;
+    document.getElementById('graph-canvas').classList.remove('dragging');
+
+    // Click to select
+    const w = graphToWorld(e.clientX, e.clientY);
+    const node = findNodeAt(w.x, w.y);
+    _selectedNode = (node && node.id !== _selectedNode) ? node.id : null;
+  }
+
+  function graphWheel(e) {
+    e.preventDefault();
+    const canvas = document.getElementById('graph-canvas');
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+    const newScale = Math.max(0.2, Math.min(5, _graphTransform.scale * zoom));
+    const ratio = newScale / _graphTransform.scale;
+    _graphTransform.x = mx - (mx - _graphTransform.x) * ratio;
+    _graphTransform.y = my - (my - _graphTransform.y) * ratio;
+    _graphTransform.scale = newScale;
+  }
+
+  function graphDblClick(e) {
+    const w = graphToWorld(e.clientX, e.clientY);
+    const node = findNodeAt(w.x, w.y);
+    if (node) {
+      node.pinned = !node.pinned;
+    }
+  }
+
+  // Touch support
+  let _touchId = null;
+  function graphTouchStart(e) {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      _touchId = t.identifier;
+      graphMouseDown({ clientX: t.clientX, clientY: t.clientY });
+    }
+  }
+  function graphTouchMove(e) {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === _touchId) {
+        graphMouseMove({ clientX: t.clientX, clientY: t.clientY });
+      }
+    }
+  }
+  function graphTouchEnd(e) {
+    for (const t of e.changedTouches) {
+      if (t.identifier === _touchId) {
+        graphMouseUp({ clientX: t.clientX, clientY: t.clientY });
+        _touchId = null;
+      }
+    }
+  }
+
+  function resetGraph() {
+    _graphTransform = { x: 0, y: 0, scale: 1 };
+    _selectedNode = null;
+    _graphNodes.forEach(n => { n.pinned = n.depth === 0; });
+    _graphLoaded = false;
+    loadGraph();
+  }
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    if (document.getElementById('pane-graph').style.display !== 'none' && _graphLoaded) {
+      initGraphCanvas();
+    }
   });
 </script>
 </body>
