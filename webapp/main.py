@@ -346,6 +346,20 @@ def api_auth(token: str = Query(..., alias="token")):
     return {"two_legged": two_leg, "three_legged": three_leg}
 
 
+@app.get("/api/run-status")
+def api_run_status(token: str = Query(..., alias="token")):
+    """Return whether a test run is currently in progress."""
+    _require_token(token)
+    alive = _is_run_alive()
+    started = None
+    if alive and RUN_PID_PATH.exists():
+        try:
+            started = json.loads(RUN_PID_PATH.read_text()).get("started")
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {"running": alive, "started": started}
+
+
 @app.post("/run/abort")
 def run_abort(token: str = Query(..., alias="token")):
     """Kill any in-progress test run."""
@@ -430,7 +444,7 @@ async def stream_auth(token: str = Query(..., alias="token")):
 
 
 def _kill_run_proc() -> None:
-    """Kill _run_proc if it is still running."""
+    """Kill the running test process (in-memory or PID-file orphan)."""
     global _run_proc
     if _run_proc is not None and _run_proc.poll() is None:
         _run_proc.terminate()
@@ -438,6 +452,16 @@ def _kill_run_proc() -> None:
             _run_proc.wait(timeout=5)
         except subprocess.TimeoutExpired:
             _run_proc.kill()
+    # PID-file orphan: server restarted mid-run
+    if RUN_PID_PATH.exists():
+        try:
+            data = json.loads(RUN_PID_PATH.read_text())
+            pid = int(data["pid"])
+            os.kill(pid, 15)  # SIGTERM
+        except (ProcessLookupError, PermissionError, json.JSONDecodeError,
+                KeyError, ValueError, OSError):
+            pass
+        _delete_pid_file()
 
 
 _TOTAL_TESTS = 295  # approximate; used for progress bar
