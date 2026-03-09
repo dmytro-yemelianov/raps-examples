@@ -367,7 +367,7 @@ async def ws_run(websocket: WebSocket):
     """WebSocket: starts pytest with -v, streams structured JSON progress events."""
     global _run_proc
     token = websocket.query_params.get("token", "")
-    if not _TOKEN or token != _TOKEN:
+    if not _TOKEN or not secrets.compare_digest(token, _TOKEN):
         await websocket.close(code=1008, reason="Unauthorized")
         return
 
