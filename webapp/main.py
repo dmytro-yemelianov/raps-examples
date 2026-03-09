@@ -161,7 +161,11 @@ async def _tail_run_log() -> AsyncIterator[str]:
             if line:
                 yield _scrub(line.rstrip())
             else:
-                # EOF — check if process still running
+                # EOF — check if process still running.
+                # No lock held here: _tail_run_log runs on the event loop;
+                # the only concurrent writer is the _cleanup thread which sets
+                # _run_proc = None. A stale True just adds one extra 50ms
+                # sleep iteration, which is harmless.
                 if _is_run_alive():
                     await asyncio.sleep(0.05)
                 else:

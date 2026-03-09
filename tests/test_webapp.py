@@ -235,3 +235,19 @@ def test_tail_run_log_no_file_yields_nothing(tmp_path, monkeypatch):
         return [line async for line in _m._tail_run_log()]
 
     assert _asyncio.run(collect()) == []
+
+
+def test_tail_run_log_scrubs_secrets(tmp_path, monkeypatch):
+    """_tail_run_log must redact values in _SENSITIVE."""
+    log_path = tmp_path / "run.log"
+    log_path.write_text("token is supersecret123\n")
+    monkeypatch.setattr("webapp.main.RUN_LOG_PATH", log_path)
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    monkeypatch.setattr("webapp.main._SENSITIVE", ["supersecret123"])
+    from webapp import main as _m
+
+    async def collect():
+        return [line async for line in _m._tail_run_log()]
+
+    result = _asyncio.run(collect())
+    assert result == ["token is ***"]
