@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -24,6 +25,7 @@ class AuthManager:
         self._has_2leg: bool | None = None
         self._has_3leg: bool | None = None
         self._saved_token: str = ""
+        self._saved_token_file: str = ""  # raw tokens.json content for file-storage restore
 
     def has_2leg(self) -> bool:
         """Check if 2-legged (client credentials) auth is available via env vars."""
@@ -102,7 +104,16 @@ class AuthManager:
         On Windows: reads from Credential Manager via runs/lib/read-token.ps1
         (RAPS keyring stores as username.service = aps_token.raps).
         On other platforms: uses raps auth inspect --output json (token may be masked).
+        Also saves raw tokens.json content when RAPS_USE_FILE_STORAGE is set.
         """
+        # Fast path: save tokens.json directly when file storage is active
+        env = self._env or {}
+        if env.get("RAPS_USE_FILE_STORAGE"):
+            token_file = Path.home() / ".config" / "raps" / "tokens.json"
+            if token_file.exists():
+                self._saved_token_file = token_file.read_text()
+            return  # skip platform-specific fallback
+
         try:
             if sys.platform == "win32":
                 # Use read-token.ps1 which uses CredRead for aps_token.raps
@@ -146,6 +157,13 @@ class AuthManager:
         """Restore saved 3-legged token after destructive operations."""
         self._has_2leg = None
         self._has_3leg = None
+
+        # Fast path: restore tokens.json directly when file storage is active
+        if self._saved_token_file:
+            token_file = Path.home() / ".config" / "raps" / "tokens.json"
+            token_file.write_text(self._saved_token_file)
+            token_file.chmod(0o600)
+            return  # skip token re-injection code; auth state re-checked lazily on next access
 
         token = self._saved_token
         # In mock mode, always use the well-known mock 3-legged token
