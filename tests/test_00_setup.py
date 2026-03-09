@@ -102,6 +102,7 @@ def _generate_rvt(path: Path) -> None:
 
     Real RVT files are OLE2 compound documents. The magic bytes are
     D0 CF 11 E0 A1 B1 1A E1 followed by a 512-byte header.
+    Padded to 4096 bytes for APS upload compatibility.
     """
     magic = bytes([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
     # OLE2 header: minor version, major version, byte order, sector size, etc.
@@ -112,8 +113,8 @@ def _generate_rvt(path: Path) -> None:
     header[28:30] = b'\xFE\xFF'  # Byte order (little-endian)
     header[30:32] = b'\x09\x00'  # Sector size power (2^9 = 512)
     header[32:34] = b'\x06\x00'  # Mini sector size power (2^6 = 64)
-    # Pad to 1KB with deterministic pattern
-    padding = bytes(range(256)) * 2  # 512 bytes of pattern
+    # Pad to 4096 bytes with deterministic pattern
+    padding = (bytes(range(256)) * 16)[:3584]  # 3584 bytes to reach 4096 total
     path.write_bytes(bytes(header) + padding)
 
 
@@ -121,6 +122,7 @@ def _generate_dwg(path: Path) -> None:
     """Generate a binary file with DWG magic bytes (AutoCAD 2018+ format).
 
     DWG files start with a 6-byte version string (AC1032 for 2018+).
+    Padded to 4096 bytes for APS upload compatibility.
     """
     magic = b'AC1032'  # AutoCAD 2018 format
     # DWG header: magic + version data + padding
@@ -128,8 +130,9 @@ def _generate_dwg(path: Path) -> None:
     header[0:6] = magic
     header[6] = 0x00   # Maintenance version
     header[7] = 0x01   # One byte after version
-    # The rest is zero-padded (minimal valid header)
-    path.write_bytes(bytes(header))
+    # Pad to 4096 bytes with deterministic pattern
+    padding = (bytes(range(256)) * 16)[:3584]  # 3584 bytes to reach 4096 total
+    path.write_bytes(bytes(header) + padding)
 
 
 def _generate_csvs(test_data: Path) -> None:
