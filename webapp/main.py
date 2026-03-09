@@ -135,8 +135,12 @@ def _launch_run(cmd: list[str]) -> "subprocess.Popen[str]":
         _run_proc = proc
 
     def _cleanup() -> None:
+        global _run_proc
         proc.wait()
         _delete_pid_file()
+        with _run_lock:
+            if _run_proc is proc:
+                _run_proc = None
     threading.Thread(target=_cleanup, daemon=True).start()
 
     return proc
