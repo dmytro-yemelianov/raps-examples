@@ -632,46 +632,108 @@ async def ws_stream(websocket: WebSocket):
     await _stream_run_log_to_ws(websocket)
 
 
+def _parse_help_commands(text: str) -> list[dict]:
+    """Parse command names and descriptions from --help output."""
+    results = []
+    in_commands = False
+    for line in text.splitlines():
+        if "Commands:" in line:
+            in_commands = True
+            continue
+        if in_commands:
+            stripped = line.strip()
+            if not stripped:
+                break
+            # Format: "  command-name  Description text here"
+            parts = stripped.split(None, 1)
+            if parts and parts[0] != "help":
+                results.append({
+                    "name": parts[0],
+                    "desc": parts[1].strip() if len(parts) > 1 else "",
+                })
+    return results
+
+
+def _parse_help_options(text: str) -> list[dict]:
+    """Parse option flags and descriptions from --help output."""
+    results = []
+    in_options = False
+    for line in text.splitlines():
+        if line.strip() == "Options:" or line.strip().startswith("Options:"):
+            in_options = True
+            continue
+        if in_options:
+            stripped = line.strip()
+            if not stripped:
+                break
+            # Skip global flags (--output, --no-color, etc.)
+            if stripped.startswith("-h,") or stripped.startswith("-V,"):
+                continue
+            if stripped.startswith("-"):
+                # Extract flag and description
+                parts = stripped.split("  ", 1)
+                flag = parts[0].strip()
+                desc = parts[1].strip() if len(parts) > 1 else ""
+                if flag and not any(g in flag for g in
+                    ["--output", "--no-color", "--quiet", "--verbose", "--debug",
+                     "--log-file", "--profile", "--non-interactive", "--yes",
+                     "--strict", "--timeout", "--max-retries", "--base-delay",
+                     "--max-wait", "--no-retry", "--proxy", "--concurrency",
+                     "--no-cache", "--cache-dir", "--refresh", "--offline"]):
+                    results.append({"flag": flag, "desc": desc})
+    return results
+
+
+def _parse_help_about(text: str) -> str:
+    """Extract the about/description line from --help output."""
+    lines = text.splitlines()
+    # Skip logo lines and blank lines, find first descriptive line
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("Usage:") or stripped.startswith("_"):
+            continue
+        if "|" in stripped or "╲" in stripped or "╱" in stripped or "▄" in stripped:
+            continue
+        if stripped.startswith("raps") or stripped.startswith("RAPS"):
+            continue
+        # Found a descriptive line
+        return stripped
+    return ""
+
+
 @app.get("/api/commands")
 def api_commands(token: str = Query(..., alias="token")):
-    """Return the full RAPS command tree for graph visualization."""
+    """Return the full RAPS command tree with descriptions for graph visualization."""
     _require_token(token)
     try:
         proc = subprocess.run(
             ["raps", "--help"],
             capture_output=True, text=True, timeout=10,
+            env={**os.environ, "RAPS_NO_COLOR": "1", "NO_COLOR": "1"},
         )
-        # Parse top-level commands from help output
-        commands: dict[str, list[str]] = {}
-        for line in proc.stdout.splitlines():
-            stripped = line.strip()
-            if stripped and not stripped.startswith("-") and "  " in line:
-                parts = stripped.split()
-                cmd = parts[0]
-                if cmd.isalpha() and cmd != "help":
-                    commands[cmd] = []
+        top_cmds = _parse_help_commands(proc.stdout)
 
-        # Get subcommands for each
+        commands: dict[str, dict] = {}
+        for tc in top_cmds:
+            cmd = tc["name"]
+            commands[cmd] = {"desc": tc["desc"], "subs": {}}
+
+        # Get subcommands + options for each top-level command
         for cmd in list(commands.keys()):
             try:
                 sub = subprocess.run(
                     ["raps", cmd, "--help"],
                     capture_output=True, text=True, timeout=5,
+                    env={**os.environ, "RAPS_NO_COLOR": "1", "NO_COLOR": "1"},
                 )
-                subs = []
-                in_commands = False
-                for line in sub.stdout.splitlines():
-                    if "Commands:" in line:
-                        in_commands = True
-                        continue
-                    if in_commands:
-                        stripped = line.strip()
-                        if not stripped:
-                            break
-                        parts = stripped.split()
-                        if parts and parts[0] != "help":
-                            subs.append(parts[0])
-                commands[cmd] = subs
+                about = _parse_help_about(sub.stdout)
+                if about:
+                    commands[cmd]["desc"] = about
+                sub_cmds = _parse_help_commands(sub.stdout)
+                options = _parse_help_options(sub.stdout)
+                commands[cmd]["options"] = options
+                for sc in sub_cmds:
+                    commands[cmd]["subs"][sc["name"]] = {"desc": sc["desc"]}
             except (subprocess.TimeoutExpired, OSError):
                 pass
 
