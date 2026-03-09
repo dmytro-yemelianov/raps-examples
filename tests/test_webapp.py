@@ -121,3 +121,41 @@ def test_run_starts_subprocess(monkeypatch):
     assert resp.status_code == 200
     assert resp.json()["status"] == "started"
     assert resp.json()["pid"] == 99999
+
+
+# ---------------------------------------------------------------------------
+# Run-state helpers (Task 1)
+# ---------------------------------------------------------------------------
+import json as _json
+
+
+def test_write_and_delete_pid_file(tmp_path, monkeypatch):
+    """_write_pid_file must create run.pid with pid and started fields."""
+    monkeypatch.setattr("webapp.main.RUN_PID_PATH", tmp_path / "run.pid")
+    from webapp import main as _m
+    _m._write_pid_file(99999)
+    data = _json.loads((tmp_path / "run.pid").read_text())
+    assert data["pid"] == 99999
+    assert "started" in data
+    _m._delete_pid_file()
+    assert not (tmp_path / "run.pid").exists()
+
+
+def test_is_run_alive_no_proc_no_pidfile(monkeypatch, tmp_path):
+    """No in-memory proc and no PID file → False."""
+    monkeypatch.setattr("webapp.main.RUN_PID_PATH", tmp_path / "run.pid")
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    from webapp import main as _m
+    assert _m._is_run_alive() is False
+
+
+def test_is_run_alive_dead_pid_in_file(monkeypatch, tmp_path):
+    """PID file with a definitely-dead PID → False and file is deleted."""
+    pid_path = tmp_path / "run.pid"
+    pid_path.write_text(_json.dumps({"pid": 999999999, "started": "x"}))
+    monkeypatch.setattr("webapp.main.RUN_PID_PATH", pid_path)
+    monkeypatch.setattr("webapp.main._run_proc", None)
+    from webapp import main as _m
+    result = _m._is_run_alive()
+    assert result is False
+    assert not pid_path.exists()

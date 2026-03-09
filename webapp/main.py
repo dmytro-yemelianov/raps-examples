@@ -20,6 +20,8 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 ROOT = Path(__file__).parent.parent
 CATALOG_PATH = ROOT / "tests" / "catalog.json"
 RESULTS_PATH = Path(__file__).parent / "results.json"
+RUN_PID_PATH = Path(__file__).parent / "run.pid"
+RUN_LOG_PATH = Path(__file__).parent / "run.log"
 HTML_PATH = Path(__file__).parent / "index.html"
 
 # Load .env from repo root so APS_CLIENT_ID/SECRET are available
@@ -63,6 +65,44 @@ _run_lock = threading.Lock()
 # Global auth-login state
 _login_proc: subprocess.Popen | None = None
 _login_lock = threading.Lock()
+
+
+def _write_pid_file(pid: int) -> None:
+    """Write run.pid with current PID and ISO timestamp."""
+    from datetime import datetime, timezone
+    RUN_PID_PATH.write_text(json.dumps({
+        "pid": pid,
+        "started": datetime.now(timezone.utc).isoformat(),
+    }))
+
+
+def _delete_pid_file() -> None:
+    """Remove run.pid if it exists."""
+    RUN_PID_PATH.unlink(missing_ok=True)
+
+
+def _is_run_alive() -> bool:
+    """Return True if a test run is currently in progress.
+
+    Checks in-memory _run_proc first, then falls back to run.pid on disk.
+    Cleans up a stale PID file if the process is dead.
+    """
+    # Fast path: in-memory proc still running
+    if _run_proc is not None and _run_proc.poll() is None:
+        return True
+    # Slow path: check disk PID file (handles server-restart case)
+    if RUN_PID_PATH.exists():
+        try:
+            data = json.loads(RUN_PID_PATH.read_text())
+            pid = int(data["pid"])
+            os.kill(pid, 0)   # signal 0 = liveness check, raises if dead
+            return True       # process alive
+        except (ProcessLookupError, PermissionError):
+            # Process dead — stale PID file, clean up
+            _delete_pid_file()
+        except (json.JSONDecodeError, KeyError, ValueError, OSError):
+            _delete_pid_file()
+    return False
 
 
 def _require_token(token: str = Query(..., alias="token")) -> str:
