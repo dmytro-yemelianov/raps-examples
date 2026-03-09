@@ -107,7 +107,7 @@ class AuthManager:
         Also saves raw tokens.json content when RAPS_USE_FILE_STORAGE is set.
         """
         # Fast path: save tokens.json directly when file storage is active
-        env = self._env or {}
+        env = self._env or os.environ
         if env.get("RAPS_USE_FILE_STORAGE"):
             token_file = Path.home() / ".config" / "raps" / "tokens.json"
             if token_file.exists():
